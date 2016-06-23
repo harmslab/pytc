@@ -69,9 +69,13 @@ class GlobalFit:
         self._exp_weights.append(weight)
 
         # Get a list of the possible arguments that could be passed to the model
-        # dQ method       
-        possible_model_args = inspect.getargspec(experiment.model.dQ).args
-        possible_model_args.remove("self")
+        # dQ method.  If the model has dQ_arguments, use that list.  Otherwise, 
+        # just inspect the dQ function.
+        try:
+            possible_model_args = experiment.model.dQ_arguments
+        except AttributeError:
+            possible_model_args = inspect.getargspec(experiment.model.dQ).args
+            possible_model_args.remove("self")
 
         # If no argument mapping is specified, associate global parameter names
         # with local function names. 
