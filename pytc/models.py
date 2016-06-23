@@ -204,7 +204,7 @@ class SingleSiteCompetitor(ITCModel):
         X = dH*(self._mol_fx_st[1:] - self._mol_fx_st[:-1])
         Y = dHcompetitor*(self._mol_fx_sc[1:] - self._mol_fx_sc[:-1])
         
-        to_return = self._cell_volume*S_conc_corr[1:]*(X + Y) + self.S_conc[1:]*dilution_heat
+        to_return = self._cell_volume*S_conc_corr[1:]*(X + Y) + self._T_conc[1:]*dilution_heat
         
         return to_return
         

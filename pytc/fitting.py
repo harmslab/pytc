@@ -8,7 +8,7 @@ experiments.
 __author__ = "Michael J. Harms"
 __date__ = "2016-06-22"
 
-import copy
+import copy, inspect
 import numpy as np
 import scipy.optimize as optimize
 from matplotlib import pyplot as plt
@@ -47,28 +47,57 @@ class GlobalFit:
         self._experiment_list = []
         self._arg_map_list = []
         self._exp_weights = []
+        self._fixed_param = []
 
-    def add_experiment(self,experiment,arg_map,weight=1.0):
+    def add_experiment(self,experiment,arg_map=None,weight=1.0,**fixed_params):
         """
         experiment: an initialized ITCExperiment instance
-        arg_map: dictionary mapping global parameter names to parameters for individual
-                 experiment model parameters.  
+        arg_map: dictionary mapping names of global parameter to names of 
+                 parameters passed to a model dQ function.  If None, the
+                 global names will be passed directly to dQ.
         weight: how much to weight this experiment in the regression relative to other
                 experiments.  Values <1.0 weight this experiment less than others; 
                 values >1.0 weight this more than others.
         """
 
         self._experiment_list.append(experiment)
-        self._arg_map_list.append(copy.copy(arg_map))
         self._exp_weights.append(weight)
 
+        # Get a list of the possible arguments that could be passed to the model
+        # dQ method       
+        possible_model_args = inspect.getargspec(experiment.model.dQ).args
+        possible_model_args.remove("self")
+
+        # If no argument mapping is specified, associate global parameter names
+        # with local function names. 
+        if arg_map == None:
+            arg_map = {}
+            for a in self._index_to_name:
+                if a in possible_model_args:
+                    arg_map[a] = a
+
+        self._arg_map_list.append(copy.copy(arg_map))
+
+        # Fixed parameter values can be passed as keywords to add_experiment.  If
+        # any are present, record them.
+        self._fixed_param.append({}) 
+        if len(fixed_params) != 0:
+            for k in fixed_params.keys():
+                self._fixed_param[-1][k] = fixed_params[k]
+                
         # Make sure that the global parameter values in arg_map are actually found in
-        # the set of global parameters
+        # the set of global parameters, and that the local parameter names are
+        # correct.
         for a in self._arg_map_list[-1].keys():
             try:
                 self._name_to_index[a]
             except KeyError:
-                err = "parameter {} not part of fit\n".format(a)
+                err = "parameter {} not defined in global fit\n".format(a)
+                raise ValueError(err)
+
+            
+            if self._arg_map_list[-1][a] not in possible_model_args:
+                err = "the fitting model does not have an argument named {}\n".format(self._arg_map_list[-1][a])
                 raise ValueError(err)
 
     def _residuals(self,param):
@@ -89,6 +118,9 @@ class GlobalFit:
                 dq_model_param_name = self._arg_map_list[i][a]
                 param_value = param[self._name_to_index[a]]
                 model_param_kwarg[dq_model_param_name] = param_value
+
+            for a in self._fixed_param[i].keys():
+                model_param_kwarg[a] = self._fixed_param[i][a]
 
             # calculate the current value of the model
             calc = e.model_dq(**model_param_kwarg)

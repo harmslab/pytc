@@ -71,7 +71,15 @@ class ITCExperiment:
         dictionary.
         """
         return self._model.dQ(**params)[self._shot_start:]
-        
+       
+    @property
+    def model(self):
+        """
+        Fitting model.
+        """       
+ 
+        return self._model
+ 
     @property
     def heats(self):
         """
