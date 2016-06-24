@@ -40,36 +40,12 @@ class SingleSite(ITCModel):
             
         self._cell_volume = cell_volume
         self._shot_volumes = np.array(shot_volumes)
-        
-        self._determine_titration_conc()
-
-    
-    def _determine_titration_conc(self):
-        """
-        Determine the concentrations of stationary and titrant species in the
-        cell given a set of titration shots and initial concentrations of both 
-        the stationary and titrant species. 
-        """
-        
-        self._volume = np.zeros(len(self._shot_volumes)+1)
-        self._S_conc = np.zeros(len(self._shot_volumes)+1)
-        self._T_conc = np.zeros(len(self._shot_volumes)+1)
-        
-        self._volume[0] = self._cell_volume
-        self._S_conc[0] = self._S_cell
-        self._T_conc[0] = self._T_cell
-        
-        for i in range(len(self._shot_volumes)):
+       
+        # Determinte the concentration of all of the species across the titration 
+        self._S_conc = self._titrate_species(self._S_cell,self._S_syringe)
+        self._T_conc = self._titrate_species(self._T_cell,self._T_syringe)
             
-            self._volume[i+1] = self._volume[i] + self._shot_volumes[i]
-            
-            dilution = self._volume[i]/self._volume[i+1]
-            added = self._shot_volumes[i]/self._volume[i+1]
-            
-            self._S_conc[i+1] = self._S_conc[i]*dilution + self._S_syringe*added
-            self._T_conc[i+1] = self._T_conc[i]*dilution + self._T_syringe*added
-            
-    def dQ(self,K,dH,fx_competent=1.0,dilution_heat=0.0):
+    def dQ(self,K,dH,fx_competent=1.0,dilution_heat=0.0,dilution_intercept=0.0):
         """
         Calculate the heats that would be observed across shots for a given set
         of enthalpies and binding constants for each reaction.
@@ -85,6 +61,6 @@ class SingleSite(ITCModel):
         # ---- Relate mole fractions to heat -----
         X = dH*(self._mol_fx_st[1:] - self._mol_fx_st[:-1])
     
-        to_return = self._cell_volume*S_conc_corr[1:]*X + self._T_conc[1:]*dilution_heat
+        to_return = self._cell_volume*S_conc_corr[1:]*X + (self._T_conc[1:]*dilution_heat + dilution_intercept)
         
         return to_return
