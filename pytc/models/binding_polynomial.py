@@ -44,40 +44,17 @@ class BindingPolynomial(ITCModel):
            
         self._cell_volume = cell_volume
         self._shot_volumes = np.array(shot_volumes)
-        
-        self._determine_titration_conc()
 
+        # Determinte the concentration of all of the species across the titration 
+        self._S_conc = self._titrate_species(self._S_cell,self._S_syringe)
+        self._T_conc = self._titrate_species(self._T_cell,self._T_syringe)
+        
         # Populate the set of arguments for this number of sites.
         self.dQ_arguments = ["beta{}".format(i) for i in range(1,self._num_sites + 1)]
         self.dQ_arguments.extend(["dH{}".format(i) for i in range(1,self._num_sites + 1)])
         self.dQ_arguments.append("fx_competent")
         self.dQ_arguments.append("dilution_heat")
 
-    def _determine_titration_conc(self):
-        """
-        Determine the concentrations of stationary and titrant species in the
-        cell given a set of titration shots and initial concentrations of both 
-        the stationary and titrant species. 
-        """
-        
-        self._volume = np.zeros(len(self._shot_volumes)+1)
-        self._S_conc = np.zeros(len(self._shot_volumes)+1)
-        self._T_conc = np.zeros(len(self._shot_volumes)+1)
-        
-        self._volume[0] = self._cell_volume
-        self._S_conc[0] = self._S_cell
-        self._T_conc[0] = self._T_cell
-        
-        for i in range(len(self._shot_volumes)):
-            
-            self._volume[i+1] = self._volume[i] + self._shot_volumes[i]
-            
-            dilution = self._volume[i]/self._volume[i+1]
-            added = self._shot_volumes[i]/self._volume[i+1]
-            
-            self._S_conc[i+1] = self._S_conc[i]*dilution + self._S_syringe*added
-            self._T_conc[i+1] = self._T_conc[i]*dilution + self._T_syringe*added
-   
     def _dQdT(self,T_free,beta_array,S_total,T_total):
         """
         T_total = T_free + S_total*(dln(P)/dln(T_free)), so:
@@ -96,7 +73,7 @@ class BindingPolynomial(ITCModel):
 
         return T_free + S_total*(numerator/denominator) - T_total
 
-    def dQ(self,fx_competent=1.0,dilution_heat=0.0,**kwargs):
+    def dQ(self,fx_competent=1.0,dilution_heat=0.0,dilution_intercept=0.0,**kwargs):
         """
         Calculate the heats that would be observed across shots for a given set
         of enthalpies and binding constants for each reaction.  This will work 
@@ -116,13 +93,54 @@ class BindingPolynomial(ITCModel):
         # free titrant concentration
         T_conc_free = np.zeros(len(S_conc_corr),dtype=float) 
         for i in range(len(S_conc_corr)):
+
+            # If there's no titrant, nothing is free.  (avoid numerical problems)
+            if self._T_conc[i] == 0:
+                T_conc_free[i] = 0.0
+                continue
+             
+            # Manually check that bounds for root calculation have opposite signs 
+            min_value = self._dQdT(0.0,beta_array,
+                                   S_conc_corr[i],self._T_conc[i])
+            max_value = self._dQdT(self._T_conc[i],beta_array,
+                                   S_conc_corr[i],self._T_conc[i])
+
+            # Uh oh, they have same sign (root optimizer will choke)
+            if min_value*max_value > 0:
+          
+                if max_value < 0:
+                    # root is closest to min --> set to that  
+                    if (max_value < min_value):
+                        T_conc_free[i] = 0.0
+
+                    # root is closest to max --> set to that
+                    else:
+                        T_conc_free[i] = self._T_conc[i]
+                else:
+                    # root is closest to max --> set to that 
+                    if (max_value < min_value):
+                        T_conc_free[i] = self._T_conc[i]
+
+                    # root is closest to min --> set to that  
+                    else:
+                        T_conc_free[i] = 0.0
+                        
+                continue                         
+
             T = scipy.optimize.brentq(self._dQdT,
-                                      0,self._T_conc[i],
+                                      0,self._T_conc[-1],
                                       args=(beta_array,
                                             S_conc_corr[i],
                                             self._T_conc[i]))
+
+            # numerical problems sometimes make T slightly bigger than the total
+            # concentration, so bring down to the correct value
+            if (T > self._T_conc[i]):
+                T = self._T_conc[i]
+
             T_conc_free[i] = T
 
+        # calculate the average enthalpy change
         numerator = np.zeros(len(T_conc_free),dtype=float)
         denominator = np.ones(len(T_conc_free),dtype=float)
         for i in range(len(beta_array)):
@@ -132,6 +150,6 @@ class BindingPolynomial(ITCModel):
         avg_dH = numerator/denominator
         X = avg_dH[1:] - avg_dH[:-1]
 
-        to_return = self._cell_volume*S_conc_corr[1:]*X + self._T_conc[1:]*dilution_heat
+        to_return = self._cell_volume*S_conc_corr[1:]*X + (self._T_conc[1:]*dilution_heat + dilution_intercept)
 
         return to_return
