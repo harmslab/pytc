@@ -129,8 +129,8 @@ class BindingPolynomial(ITCModel):
             numerator   += dH_array[i]*beta_array[i]*(T_conc_free**(i+1))
             denominator +=             beta_array[i]*(T_conc_free**(i+1))
  
-        Q = numerator/denominator
-        X = Q[1:] - Q[:-1]
+        avg_dH = numerator/denominator
+        X = avg_dH[1:] - avg_dH[:-1]
 
         to_return = self._cell_volume*S_conc_corr[1:]*X + self._T_conc[1:]*dilution_heat
 
