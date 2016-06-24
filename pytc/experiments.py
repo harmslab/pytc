@@ -32,8 +32,8 @@ class ITCExperiment:
         self._read_heats_file()
 
         # Initialize model using information read from heats file
-        self._model = model(P_cell=self.stationary_cell_conc,
-                            A_syringe=self.titrant_syringe_conc,
+        self._model = model(S_cell=self.stationary_cell_conc,
+                            T_syringe=self.titrant_syringe_conc,
                             cell_volume=self.cell_volume,
                             shot_volumes=self._shots,**model_kwargs)
         
@@ -71,7 +71,15 @@ class ITCExperiment:
         dictionary.
         """
         return self._model.dQ(**params)[self._shot_start:]
-        
+       
+    @property
+    def model(self):
+        """
+        Fitting model.
+        """       
+ 
+        return self._model
+ 
     @property
     def heats(self):
         """
