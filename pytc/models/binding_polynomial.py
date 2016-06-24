@@ -86,7 +86,7 @@ class BindingPolynomial(ITCModel):
         for i in range(self._num_sites):
             beta_array[i] = kwargs["beta{}".format(i+1)]
             dH_array[i]   = kwargs["dH{}".format(i+1)]
-       
+      
         S_conc_corr = self._S_conc*fx_competent
        
         # Find the root of the derivative of the binding polynomial, giving the

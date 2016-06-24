@@ -177,6 +177,10 @@ class GlobalFit:
                     # Get out of loop so the warning only appears once.
                     break
 
+        self._bounds = []
+        for i in range(len(self._fit_param_array)):
+            self._bounds.append([None,None])
+
         # Set starting value for fit
         self._fit_param = self._fit_param_array
  
@@ -217,6 +221,15 @@ class GlobalFit:
             plt.plot(e.mole_ratio,e.heats,"o",color=color_list[i])
             plt.plot(e.mole_ratio,calc,color=color_list[i],linewidth=1.5)
         
+    def update_guesses(self,new_guesses):
+        """
+        Update the guesses for this fit.
+        """
+
+        for g in new_guesses.keys():
+            self._param_guesses[g] = new_guesses[g]
+            self._fit_param_array[self._name_to_index[g]] = self._param_guesses[g]
+ 
     
     @property
     def fit_param(self):
@@ -256,4 +269,5 @@ class GlobalFit:
         param_names.sort()
 
         return param_names
- 
+
+
