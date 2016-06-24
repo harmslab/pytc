@@ -45,39 +45,16 @@ class Blank(ITCModel):
         self._cell_volume = cell_volume
         self._shot_volumes = np.array(shot_volumes)
         
-        self._determine_titration_conc()
-
-    
-    def _determine_titration_conc(self):
-        """
-        Determine the concentrations of titrant species in the cell given a set
-        of titration shots and initial concentration of the stationary species. 
-        """
-        
-        self._volume = np.zeros(len(self._shot_volumes)+1)
-        self._S_conc = np.zeros(len(self._shot_volumes)+1)
-        self._T_conc = np.zeros(len(self._shot_volumes)+1)
-        
-        self._volume[0] = self._cell_volume
-        self._S_conc[0] = self._S_cell
-        self._T_conc[0] = self._T_cell
-        
-        for i in range(len(self._shot_volumes)):
+        # Determinte the concentration of all of the species across the titration 
+        self._S_conc = self._titrate_species(self._S_cell,self._S_syringe)
+        self._T_conc = self._titrate_species(self._T_cell,self._T_syringe)
             
-            self._volume[i+1] = self._volume[i] + self._shot_volumes[i]
-            
-            dilution = self._volume[i]/self._volume[i+1]
-            added = self._shot_volumes[i]/self._volume[i+1]
-            
-            self._S_conc[i+1] = self._S_conc[i]*dilution + self._S_syringe*added
-            self._T_conc[i+1] = self._T_conc[i]*dilution + self._T_syringe*added
-            
-    def dQ(self,dilution_heat):
+    def dQ(self,dilution_heat,dilution_intercept):
         """
         Calculate heat of dilution as a function of titrant concentration in 
         the cell.
         """
         
-        to_return = self._T_conc[1:]*dilution_heat
+        to_return = self._T_conc[1:]*dilution_heat + dilution_intercept
         
         return to_return

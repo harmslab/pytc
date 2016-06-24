@@ -177,6 +177,10 @@ class GlobalFit:
                     # Get out of loop so the warning only appears once.
                     break
 
+        self._bounds = []
+        for i in range(len(self._fit_param_array)):
+            self._bounds.append([None,None])
+
         # Set starting value for fit
         self._fit_param = self._fit_param_array
  
@@ -202,7 +206,6 @@ class GlobalFit:
             warnings.warn(warn)
             return      
  
- 
         if color_list == None:
             N = len(self._experiment_list)
             color_list = [plt.cm.brg(i/N) for i in range(N)]
@@ -218,25 +221,53 @@ class GlobalFit:
             plt.plot(e.mole_ratio,e.heats,"o",color=color_list[i])
             plt.plot(e.mole_ratio,calc,color=color_list[i],linewidth=1.5)
         
+    def update_guesses(self,new_guesses):
+        """
+        Update the guesses for this fit.
+        """
+
+        for g in new_guesses.keys():
+            self._param_guesses[g] = new_guesses[g]
+            self._fit_param_array[self._name_to_index[g]] = self._param_guesses[g]
+ 
     
     @property
     def fit_param(self):
         """
-        Return the fit results as a dictionary that keys parameter name to fit value.
+        Return the fit results as a dictionary that keys parameter name to fit
+        value.  This will only return parameters that were actually part of the
+        fit.
         """
        
         try:
- 
             out_dict = {}
-            for i, a in enumerate(self._index_to_name):
-                out_dict[a] = self._fit_param[i]
-       
-            for a in self._fixed_global_param.keys():
-                out_dict[a] = self._fixed_global_param[a]
+            for a in self.param_names:
+                out_dict[a] = self._fit_param[self._name_to_index[a]]
+        
+                try:
+                    out_dict[a] = self._fixed_global_param[a]
+                except KeyError:
+                    pass
         
         # If the fit has not been run, return an empty dictionary    
         except AttributeError:
             out_dict = {}
 
         return out_dict
-        
+
+    @property
+    def param_names(self):
+        """
+        Return all parameter names *that are actually part of fit*.
+        """
+   
+        param_names = [] 
+        for a in self._arg_map_list:
+            param_names.extend(list(a.keys()))
+               
+        param_names = list(dict([(p,0) for p in param_names]).keys())
+        param_names.sort()
+
+        return param_names
+
+

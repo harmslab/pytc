@@ -17,13 +17,40 @@ class ITCModel:
     """
     
     def __init__(self):
+
         pass
     
     def dQ(self):
         pass
     
+    def _titrate_species(self,cell_conc,syringe_conc):
+        """
+        Determine the concentrations of stationary and titrant species in the
+        cell given a set of titration shots and initial concentrations of both 
+        the stationary and titrant species. 
+        """
+        
+        volume = np.zeros(len(self._shot_volumes)+1)
+        out_conc = np.zeros(len(self._shot_volumes)+1)
+        
+        volume[0] = self._cell_volume
+        out_conc[0] = cell_conc
+       
+        for i in range(len(self._shot_volumes)):
+            
+            volume[i+1] = volume[i] + self._shot_volumes[i]
+            dilution = volume[i]/volume[i+1]
+            added = self._shot_volumes[i]/volume[i+1]
+            
+            out_conc[i+1] = out_conc[i]*dilution + syringe_conc*added
+
+        return out_conc
+
     @property
     def mole_ratio(self):
-        
+        """
+        Molar ratio of titrant to stationary species.
+        """   
+     
         return self._T_conc[1:]/self._S_conc[1:]
 
