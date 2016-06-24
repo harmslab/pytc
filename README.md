@@ -1,10 +1,12 @@
 #pytc
 A python software package for analyzing Isothermal Titration Calorimetry data
-(python + ITC --> pytc).  
+(Python + ITC --> pytc).  
 
-See the Documentation.ipynb jupyter notebook for full descriptions of models.
+See the `model-documention.ipynb` jupyter notebook for full descriptions of models.
 
 ##Quick Start
+Open the `template.ipynb` jupyter notebook for an example fit.
+
 ```Python
 import pytc
 
