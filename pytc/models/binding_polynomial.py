@@ -8,6 +8,7 @@ __author__ = "Michael J. Harms"
 __date__ = "2016-06-22"
 
 import numpy as np
+import scipy.optimize 
 from .base import ITCModel
 
 class BindingPolynomial(ITCModel):
@@ -77,7 +78,7 @@ class BindingPolynomial(ITCModel):
             self._S_conc[i+1] = self._S_conc[i]*dilution + self._S_syringe*added
             self._T_conc[i+1] = self._T_conc[i]*dilution + self._T_syringe*added
    
-    def _dQdT(self,T_free,beta_list,S_total,T_total):
+    def _dQdT(self,T_free,beta_array,S_total,T_total):
         """
         T_total = T_free + S_total*(dln(P)/dln(T_free)), so:
         0 = T_free + S_total*(dln(P)/dln(T_free)) - T_total
@@ -89,54 +90,48 @@ class BindingPolynomial(ITCModel):
         P = (beta1*T_free**1) *  b2*T**2
         """
     
-        i_array = np.arange(len(beta_list),dtype=float)
-        numerator =       np.sum(i_array*beta_list[i]*(T_free**i_array))
-        denominator = 1 + np.sum(        beta_list[i]*(T_free**i_array))
+        i_array = np.arange(len(beta_array),dtype=float) + 1
+        numerator =       np.sum(i_array*beta_array*(T_free**i_array))
+        denominator = 1 + np.sum(        beta_array*(T_free**i_array))
 
         return T_free + S_total*(numerator/denominator) - T_total
 
-    def _get_dQ(self,beta_array,dH_array,fx_competent,dilution_heat):
+    def dQ(self,fx_competent=1.0,dilution_heat=0.0,**kwargs):
         """
-        Method for calculating dQ for an arbitrary-order binding polynomial. 
+        Calculate the heats that would be observed across shots for a given set
+        of enthalpies and binding constants for each reaction.  This will work 
+        for an arbitrary-order binding polynomial.
         """
 
+        # Populate fitting parameter arrays
+        beta_array = np.zeros(self._num_sites,dtype=float)
+        dH_array = np.zeros(self._num_sites,dtype=float)
+        for i in range(self._num_sites):
+            beta_array[i] = kwargs["beta{}".format(i+1)]
+            dH_array[i]   = kwargs["dH{}".format(i+1)]
+       
         S_conc_corr = self._S_conc*fx_competent
        
         # Find the root of the derivative of the binding polynomial, giving the
         # free titrant concentration
         T_conc_free = np.zeros(len(S_conc_corr),dtype=float) 
         for i in range(len(S_conc_corr)):
-            T = scipy.optimize.findminbound(self.dQdT,0,T_total[i],
-                                            args=(beta_array,
-                                                  S_conc_corr[i],
-                                                  T_total[i]))
-            T_conc_free[i] = T[0]
+            T = scipy.optimize.brentq(self._dQdT,
+                                      0,self._T_conc[i],
+                                      args=(beta_array,
+                                            S_conc_corr[i],
+                                            self._T_conc[i]))
+            T_conc_free[i] = T
 
         numerator = np.zeros(len(T_conc_free),dtype=float)
         denominator = np.ones(len(T_conc_free),dtype=float)
-        for i in range(len(beta_list)):
-            numerator   += dH_array[i]*beta_list[i]*(T_conc_free**(i))
-            denominator +=             beta_list[i]*(T_conc_free**(i))
-      
+        for i in range(len(beta_array)):
+            numerator   += dH_array[i]*beta_array[i]*(T_conc_free**(i+1))
+            denominator +=             beta_array[i]*(T_conc_free**(i+1))
+ 
         Q = numerator/denominator
         X = Q[1:] - Q[:-1]
 
         to_return = self._cell_volume*S_conc_corr[1:]*X + self._T_conc[1:]*dilution_heat
 
         return to_return
-
-    def dQ(self,fx_competent=1.0,dilution_heat=0.0,**kwargs):
-        """
-        Calculate the heats that would be observed across shots for a given set
-        of enthalpies and binding constants for each reaction.
-        """
-        
-        beta_array = np.zeros(self._num_sites,dtype=float)
-        dH_array = np.zeros(self._num_sites,dtype=float)
-
-        for i in range(self._num_sites):
-            beta_array[i] = kwargs["beta{}".format(i+1)]
-            dH_array[i] =   kwargs["dH{}".format(i+1)]
-        
-        return self._get_dQ(beta_array,dH_array,fx_competent,dilution_heat)
-

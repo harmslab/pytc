@@ -81,8 +81,8 @@ class SingleSite(ITCModel):
         ST = (b - np.sqrt((b)**2 - 4*S_conc_corr*self._T_conc))/2
     
         self._mol_fx_st = ST/S_conc_corr
-        self._mol_fx_s = 1 - self._mol_fx_st
-        
+        #self._mol_fx_s = 1 - self._mol_fx_st
+ 
         # ---- Relate mole fractions to heat -----
         X = dH*(self._mol_fx_st[1:] - self._mol_fx_st[:-1])
     

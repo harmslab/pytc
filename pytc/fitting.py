@@ -179,11 +179,12 @@ class GlobalFit:
 
         # Set starting value for fit
         self._fit_param = self._fit_param_array
-        
+ 
         # Do the actual fit
         fit_param, covariance, info_dict, message, error = optimize.leastsq(self._residuals,
                                                                             x0=self._fit_param_array,
                                                                             full_output=True)
+
         # Store the result
         self._fit_param = fit_param
     
