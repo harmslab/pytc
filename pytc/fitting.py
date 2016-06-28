@@ -70,14 +70,14 @@ class GlobalFit:
         """
 
         # Go through all global parameters
-        for k in self._global_alias_mapping.keys():
+        for k in self._global_param_alias_mapping.keys():
     
             # If the experiment links to that
-            for expt in self._global_alias_mapping[k]:
+            for expt in self._global_param_alias_mapping[k]:
                 if expt_number == expt[0]:
-                    self._global_alias_mapping[k].remove(expt)
+                    self._global_param_alias_mapping[k].remove(expt)
                 
-                    if len(self._global_alias_mapping[k]) == 0:
+                    if len(self._global_param_alias_mapping[k]) == 0:
                         self.remove_global(k)
 
         self._experiment_list.pop(expt_number)
@@ -89,39 +89,33 @@ class GlobalFit:
         """
 
         # Make sure the experimental paramter is actually in the experiment
-        if expt_param not in self._experiment_list[expt_number].param_names:
+        if expt_param not in self._experiment_list[expt_number].model.param_names:
             err = "Parameter {} not in experiment {}\n".format(expt_param,expt_number)
             raise ValueError(err)
 
-        # Make sure global name is not duplicated
-        if global_param_name in self._global_param_names:
-            err = "Duplicate global parameter name ({})\n".format(global_param_name)
-            raise ValueError(err)
+        # Update the alias from the experiment side
+        self._experiment_list[expt_number].model.update_aliases({expt_param:
+                                                                 global_param_name})
 
-        if global_param_name not in self._param_names:
+        e = self._experiment_list[expt_number]         
+        if global_param_name not in self._global_param_names:
         
-            e = self._experiment_list[expt_number]         
-
-            # Update the alias from the experiment side
-            self._experiment_list[expt_number].update_aliases({expt_param:
-                                                               global_param_name})
-           
             # Update the alias from the global fitting side 
             self._global_param_names.append(global_param_name)
-            self._global_param_guesses[global_param_name] = e.param_guesses[expt_param]
-            self._global_alias_mapping[global_param_name] = [(expt_number,expt_param)]
+            self._global_param_guesses[global_param_name] = e.model.param_guesses[expt_param]
+            self._global_param_alias_mapping[global_param_name] = [(expt_number,expt_param)]
             try:
-                self._global_fixed_param[global_param_name] = e.fixed_param[expt_param]
+                self._global_fixed_param[global_param_name] = e.model.fixed_param[expt_param]
             except KeyError:
                 pass
 
-            self._global_param_ranges[global_param_name] = e.param_ranges[expt_param]
+            self._global_param_ranges[global_param_name] = e.model.param_ranges[expt_param]
 
         else:
 
             # Only add link between experiment and the global guess if the link is
             # not already recorded.
-            if experiment not in [m[0] for m in self._global_alias_mapping[global_param_name]]:
+            if expt_number not in [m[0] for m in self._global_param_alias_mapping[global_param_name]]:
                 self._global_param_alias_mapping[global_param_name].append((expt_number,expt_param))
 
     def unlink_from_global(self,expt_number,expt_param,global_param_name):
@@ -131,7 +125,7 @@ class GlobalFit:
         """
 
         # Make sure the experimental paramter is actually in the experiment
-        if expt_param not in self._experiment_list[expt_number].param_names:
+        if expt_param not in self._experiment_list[expt_number].model.param_names:
             err = "Parameter {} not in experiment {}\n".format(expt_param,expt_number)
             raise ValueError(err)
 
@@ -146,7 +140,7 @@ class GlobalFit:
             self.remove_global(global_param_name)
 
         # remove expt --> global link 
-        self._experiment_list[expt_number].update_aliases({expt_param_name:None})
+        self._experiment_list[expt_number].model.update_aliases({expt_param:None})
  
     
     def remove_global(self,global_param_name):
@@ -159,13 +153,16 @@ class GlobalFit:
             raise ValueError(err)
 
         # Remove expt->global mapping from each experiment
-        for exptr in self._global_param_alias_mapping:
-            expt_number = expt[0]
-            expt_params = self._experiment_list[expt_number].param_aliases.keys()
-            for p in expt_params:
-                if self._experiment_list[expt_number].param_aliases[p] == "global_param_name":
-                    self._experiment_list[expt_number].update_aliases({p:None})
-                    break
+        for k in self._global_param_alias_mapping.keys():
+
+            for expt in self._global_param_alias_mapping[k]:
+
+                expt_number = expt[0]
+                expt_params = self._experiment_list[expt_number].model.param_aliases.keys()
+                for p in expt_params:
+                    if self._experiment_list[expt_number].model.param_aliases[p] == "global_param_name":
+                        self._experiment_list[expt_number].model.update_aliases({p:None})
+                        break
      
         # Remove global data 
         self._global_param_names.remove(global_param_name)
@@ -186,7 +183,7 @@ class GlobalFit:
         """
 
         model_param_kwarg = dict([(p,param[self._name_to_index[(i,p)]])
-                                  for p in e.param_names])
+                                  for p in e.model.param_names])
         return e.model_dq(**model_param_kwarg)
 
     def _residuals(self,param):
@@ -232,17 +229,17 @@ class GlobalFit:
         # Go through individual experiments
         for i, e in enumerate(self._experiment_list):
            
-            for p in e.param_names:
+            for p in e.model.param_names:
 
                 # If it's a local parameter...
-                if p not in list(e.param_aliases.keys()):
+                if p not in list(e.model.param_aliases.keys()):
                     self._name_to_index[(i,p)] = index_counter
-                    guesses.append(e.param_guesses[p])
+                    guesses.append(e.model.param_guesses[p])
                     index_counter += 1
 
                 # Global parameters
                 else:
-                    g_name = e.param_aliases[p]
+                    g_name = e.model.param_aliases[p]
                     self._name_to_index[(i,p)] = self._name_to_index[g_name]
 
         # fit_param_array holds the parameter values that will be fit by 
@@ -306,9 +303,9 @@ class GlobalFit:
         for i, e in enumerate(self._experiment_list):
 
             local_out_param.append({})
-            for p in e.param_names:
-                if p not in e.param_aliases:
-                    local_out_param[-1][p] = self._fit_param[self._name_to_index[(i,p)]
+            for p in e.model.param_names:
+                if p not in e.model.param_aliases:
+                    local_out_param[-1][p] = self._fit_param[self._name_to_index[(i,p)]]
 
         return global_out_param, local_out_param
 
@@ -325,15 +322,16 @@ class GlobalFit:
 
         final_param_names = [] 
         for e in self._experiment_list:
-            param_names = copy.copy(e.param_names)
-           
+
+            param_names = copy.copy(e.model.param_names)
+          
             # Part of the global command names. 
-            for k in e.aliases.keys():
+            for k in e.model.param_aliases.keys():
                 param_names.remove(k)
              
             final_param_names.append(param_names)
 
-        return self._global_names, final_param_names  
+        return self._global_param_names, final_param_names  
 
     #--------------------------------------------------------------------------
     # parameter guesses
@@ -347,14 +345,14 @@ class GlobalFit:
         
         final_param_guesses = [] 
         for e in self._experiment_list:
-            param_guesses = copy.copy(e.param_guesses)
+            param_guesses = copy.copy(e.model.param_guesses)
 
-            for k in e.param_aliases.keys():
+            for k in e.model.param_aliases.keys():
                 param_guesses.pop(k)
 
             final_param_guesses.append(param_guesses)
 
-        return self._global_guesses, final_param_guesses
+        return self._global_param_guesses, final_param_guesses
 
     def update_guess(self,param_name,param_guess,experiment_number=None):
         """
@@ -385,14 +383,14 @@ class GlobalFit:
 
         final_param_ranges = [] 
         for e in self._experiment_list:
-            param_ranges = copy.copy(e.param_ranges)
+            param_ranges = copy.copy(e.model.param_ranges)
 
-            for k in e.param_ranges.keys():
+            for k in e.model.param_ranges.keys():
                 param_ranges.pop(k)
 
             final_param_ranges.append(param_ranges)
 
-        return self._global_ranges, final_param_ranges
+        return self._global_param_ranges, final_param_ranges
 
     #--------------------------------------------------------------------------
     # fixed parameters 
@@ -406,9 +404,9 @@ class GlobalFit:
 
         final_fixed_param = [] 
         for e in self._experiment_list:
-            fixed_param = copy.copy(e.fixed_param)
+            fixed_param = copy.copy(e.model.fixed_param)
 
-            for k in e.param_ranges.keys():
+            for k in e.model.param_ranges.keys():
                 fixed_param.pop(k)
 
             final_fixed_param.append(fixed_param)
@@ -428,9 +426,8 @@ class GlobalFit:
 
         expt_to_global = []
         for e in self._experiment_list:
-            expt_to_global.append(copy.copy(e.param_aliases))
+            expt_to_global.append(copy.copy(e.model.param_aliases))
 
        
-        return self._global_alias_mapping, expt_to_global
+        return self._global_param_alias_mapping, expt_to_global
 
-         

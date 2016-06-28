@@ -95,7 +95,7 @@ class ITCModel:
             return self._param_guesses
         except AttributeError:
             self._initialize_param_guesses()
-     
+    
         return self._param_guesses
 
     def _initialize_param_guesses(self):
@@ -103,7 +103,11 @@ class ITCModel:
         Initialize parameter guesses.
         """
 
-        self._param_guesses = inspect.getargspec(self.dQ).defaults
+        a = inspect.getargspec(self.dQ)
+        args = a.args
+        args.remove("self")
+        defaults = a.defaults
+        self._param_guesses = dict(zip(args,defaults))
 
     def update_guesses(self,param_guesses):
         """
@@ -195,18 +199,18 @@ class ITCModel:
         """
 
         try:
-            tmp = self._param_alias
+            tmp = self._param_aliases
         except AttributeError:
             self._initialize_param_aliases()
 
         for p in param_alias.keys():
-            if p == None:
+            if param_alias[p] == None:
                 try:
-                    self._param_alias.pop(p)
+                    self._param_aliases.pop(p)
                 except KeyError:
                     pass
             else:
-                self._param_alias[p] = param_alias[p]
+                self._param_aliases[p] = param_alias[p]
 
     # -------------------------------------------------------------------------
     # parameter ranges 
