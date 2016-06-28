@@ -45,15 +45,10 @@ class BindingPolynomial(ITCModel):
         self._cell_volume = cell_volume
         self._shot_volumes = np.array(shot_volumes)
 
-        # Determinte the concentration of all of the species across the titration 
+        # Determine the concentration of all of the species across the titration 
         self._S_conc = self._titrate_species(self._S_cell,self._S_syringe)
         self._T_conc = self._titrate_species(self._T_cell,self._T_syringe)
         
-        # Populate the set of arguments for this number of sites.
-        self.dQ_arguments = ["beta{}".format(i) for i in range(1,self._num_sites + 1)]
-        self.dQ_arguments.extend(["dH{}".format(i) for i in range(1,self._num_sites + 1)])
-        self.dQ_arguments.append("fx_competent")
-        self.dQ_arguments.append("dilution_heat")
 
     def _dQdT(self,T_free,beta_array,S_total,T_total):
         """
@@ -153,3 +148,34 @@ class BindingPolynomial(ITCModel):
         to_return = self._cell_volume*S_conc_corr[1:]*X + (self._T_conc[1:]*dilution_heat + dilution_intercept)
 
         return to_return
+
+    @property
+    def _initialize_param_names(self):
+        """
+        Populate the names of the arguments for this number of sites.
+        """
+
+        self._param_names = ["beta{}".format(i) for i in range(1,self._num_sites + 1)]
+        self._param_names.extend(["dH{}".format(i) for i in range(1,self._num_sites + 1)])
+        self._param_names.extend(inspect.getargspec(self.dQ).args)
+
+    @property
+    def _initialize_param_guesses(self):
+        """
+        Guesses for each parameter in the model.
+        """
+       
+        defined_param = inspect.getargspect(self.dQ).args
+        defined_defaults = inspect.getargspec(self.dQ).defaults
+
+        self._param_guesses = dict(zip(defined_param,defined_defaults))
+        for p in self.param_names:
+            if p.startswith("beta"):
+                self._param_guesses[p] = 1e6
+            elif p.startswith("dH"):
+                self._param_guesses[p] = -4000
+            else:
+                if p not in self._param_guesses.keys():
+                    self._param_guesses[p] = 1.0
+                
+
