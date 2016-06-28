@@ -34,6 +34,7 @@ class GlobalFit:
         # List of experiments and the weight to apply for each experiment
         self._experiment_dict = {}
         self._exp_weights = {}
+        self._expt_list_stable_order = []
 
     def add_experiment(self,experiment,param_guesses=None,
                        fixed_param=None,param_aliases=None,weight=1.0):
@@ -54,6 +55,7 @@ class GlobalFit:
         # Record the experiment
         self._experiment_dict[name] = experiment
         self._exp_weights[name] = weight
+        self._expt_list_stable_order.append(name)
 
         if param_guesses != None:
             self._experiment_dict[name].update_guesses(param_guesses)
@@ -64,6 +66,7 @@ class GlobalFit:
         if param_aliases != None:
             for p in param_aliases:
                 self.link_to_global(-1,p,param_aliases[p])
+
 
     def remove_experiment(self,expt):
         """
@@ -85,6 +88,7 @@ class GlobalFit:
                         self.remove_global(k)
 
         self._experiment_dict.pop(expt_name)
+        self._expt_list_stable_order.remove(expt_name)
                           
     def link_to_global(self,expt,expt_param,global_param_name):
         """
@@ -312,7 +316,7 @@ class GlobalFit:
 
         # Local parameters
         local_out_param = []
-        for expt_name in self._experiment_dict.keys():
+        for expt_name in self._expt_list_stable_order:
             e = self._experiment_dict[expt_name]
 
             local_out_param.append({})
@@ -334,10 +338,10 @@ class GlobalFit:
         """
 
         final_param_names = [] 
-        for expt_name in self._experiment_dict.keys():
+        for expt_name in self._expt_list_stable_order:
             e = self._experiment_dict[expt_name]
 
-            param_names = copy.copy(e.model.param_names)
+            param_names = copy.deepcopy(e.model.param_names)
           
             # Part of the global command names. 
             for k in e.model.param_aliases.keys():
@@ -358,9 +362,9 @@ class GlobalFit:
         """
         
         final_param_guesses = [] 
-        for expt_name in self._experiment_dict.keys():
+        for expt_name in self._expt_list_stable_order:
             e = self._experiment_dict[expt_name]
-            param_guesses = copy.copy(e.model.param_guesses)
+            param_guesses = copy.deepcopy(e.model.param_guesses)
 
             for k in e.model.param_aliases.keys():
                 param_guesses.pop(k)
@@ -383,7 +387,7 @@ class GlobalFit:
         if expt == None:
             self._global_param_guesses[param_name] = param_guess
         else:
-            self._experiment_dict[expt.experiment_id].param_guesses[param_name] = param_guess 
+            self._experiment_dict[expt.experiment_id].model.param_guesses[param_name] = param_guess 
            
     #--------------------------------------------------------------------------
     # parameter ranges 
@@ -396,11 +400,11 @@ class GlobalFit:
         """
 
         final_param_ranges = [] 
-        for expt_name in self._experiment_dict.keys():
+        for expt_name in self._expt_list_stable_order:
             e = self._experiment_dict[expt_name]
-            param_ranges = copy.copy(e.model.param_ranges)
+            param_ranges = copy.deepcopy(e.model.param_ranges)
 
-            for k in e.model.param_ranges.keys():
+            for k in e.model.param_aliases.keys():
                 param_ranges.pop(k)
 
             final_param_ranges.append(param_ranges)
@@ -418,12 +422,16 @@ class GlobalFit:
         """
 
         final_fixed_param = [] 
-        for expt_name in self._experiment_dict.keys():
+        for expt_name in self._expt_list_stable_order:
             e = self._experiment_dict[expt_name]
-            fixed_param = copy.copy(e.model.fixed_param)
 
-            for k in e.model.param_ranges.keys():
-                fixed_param.pop(k)
+            fixed_param = copy.deepcopy(e.model.fixed_param)
+
+            for k in e.model.param_aliases.keys():
+                try:
+                    fixed_param.pop(k)
+                except KeyError:
+                    pass
 
             final_fixed_param.append(fixed_param)
 
@@ -441,10 +449,21 @@ class GlobalFit:
         """
 
         expt_to_global = []
-        for expt_name in self._experiment_dict.keys():
+        for expt_name in self._expt_list_stable_order:
             e = self._experiment_dict[expt_name]
-            expt_to_global.append(copy.copy(e.model.param_aliases))
+            expt_to_global.append(copy.deepcopy(e.model.param_aliases))
 
        
         return self._global_param_alias_mapping, expt_to_global
 
+    @property
+    def experiments(self):
+        """
+        Return a list of associated experiments.
+        """
+
+        out = []
+        for expt_name in self._expt_list_stable_order:
+            out.append(self._experiment_dict[expt_name])
+
+        return out 
