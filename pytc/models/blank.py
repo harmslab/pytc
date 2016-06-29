@@ -49,7 +49,7 @@ class Blank(ITCModel):
         self._S_conc = self._titrate_species(self._S_cell,self._S_syringe)
         self._T_conc = self._titrate_species(self._T_cell,self._T_syringe)
             
-    def dQ(self,dilution_heat,dilution_intercept):
+    def dQ(self,dilution_heat=0,dilution_intercept=0):
         """
         Calculate heat of dilution as a function of titrant concentration in 
         the cell.

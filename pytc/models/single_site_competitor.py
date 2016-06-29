@@ -55,7 +55,7 @@ class SingleSiteCompetitor(ITCModel):
         self._T_conc = self._titrate_species(self._T_cell,self._T_syringe)
         self._C_conc = self._titrate_species(self._C_cell,self._C_syringe)
                  
-    def dQ(self,K,Kcompetitor,dH,dHcompetitor,fx_competent=1.0,dilution_heat=0.0,dilution_intercept=0.0):
+    def dQ(self,K=1e6,Kcompetitor=1e6,dH=-4000,dHcompetitor=-4000,fx_competent=1.0,dilution_heat=0.0,dilution_intercept=0.0):
         """
         Calculate the heats that would be observed across shots for a given set
         of enthalpies and binding constants for each reaction.

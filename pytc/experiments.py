@@ -7,6 +7,7 @@ Classes for loading experimental ITC data and associating those data with a mode
 __author__ = "Michael J. Harms"
 __date__ = "2016-06-22"
 
+import random, string
 import numpy as np
 
 class ITCExperiment:
@@ -36,6 +37,10 @@ class ITCExperiment:
                             T_syringe=self.titrant_syringe_conc,
                             cell_volume=self.cell_volume,
                             shot_volumes=self._shots,**model_kwargs)
+
+        self._experiment_id = "".join([random.choice(string.ascii_letters)
+                                       for i in range(20)])
+
         
     def _read_heats_file(self):
         """
@@ -93,4 +98,12 @@ class ITCExperiment:
         Return the mole ratio of titrant to stationary.
         """
         return self._model.mole_ratio[self._shot_start:]
-        
+      
+    @property
+    def experiment_id(self):
+        """
+        Return a unique experimental id.
+        """
+
+        return self._experiment_id
+ 
