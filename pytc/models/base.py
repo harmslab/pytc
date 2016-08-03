@@ -12,35 +12,43 @@ import numpy as np
 
 class ITCModel:
     """
-    Base class from which all ITC models should be sub-classed.  
+    Base class from which all ITC models should be sub-classed.
     """
-    
+
+    # --------------------------------------------------------------------------
+    # These three methods need to be defined for each subclass.
+
     def __init__(self):
         pass
-    
+
+    def initialize_param(self):
+        pass
+
+    @property
     def dQ(self):
-        
-        return np.array([],dtype=float)
-    
+        return None
+
+    # --------------------------------------------------------------------------
+
     def _titrate_species(self,cell_conc,syringe_conc):
         """
         Determine the concentrations of stationary and titrant species in the
-        cell given a set of titration shots and initial concentrations of both 
-        the stationary and titrant species. 
+        cell given a set of titration shots and initial concentrations of both
+        the stationary and titrant species.
         """
-        
+
         volume = np.zeros(len(self._shot_volumes)+1)
         out_conc = np.zeros(len(self._shot_volumes)+1)
-        
+
         volume[0] = self._cell_volume
         out_conc[0] = cell_conc
-       
+
         for i in range(len(self._shot_volumes)):
-            
+
             volume[i+1] = volume[i] + self._shot_volumes[i]
             dilution = volume[i]/volume[i+1]
             added = self._shot_volumes[i]/volume[i+1]
-            
+
             out_conc[i+1] = out_conc[i]*dilution + syringe_conc*added
 
         return out_conc
@@ -48,14 +56,23 @@ class ITCModel:
     @property
     def mole_ratio(self):
         """
-        Molar ratio of titrant to stationary species.  If not yet initialized, 
+        Molar ratio of titrant to stationary species.  If not yet initialized,
         send return empty array.
-        """   
-    
-        try: 
+        """
+
+        try:
             return self._T_conc[1:]/self._S_conc[1:]
         except AttributeError:
             return np.array([],dtype=float)
+
+    @property
+    def dilution_heats(self):
+        """
+        Return the heat of dilution.
+        """
+
+        return self._T_conc[1:]*self.param_values["dilution_heat"] + self.param_values["dilution_intercept"]
+
 
     # -------------------------------------------------------------------------
     # parameter names
@@ -78,9 +95,48 @@ class ITCModel:
         Initialize the parameter names.
         """
 
-        self._param_names = inspect.getargspec(self.dQ).args
+        self._param_names = inspect.getargspec(self.initialize_param).args
         self._param_names.remove("self")
         self._param_names.sort()
+
+    # -------------------------------------------------------------------------
+    # parameter values
+
+    @property
+    def param_values(self):
+        """
+        Values for each parameter in the model.
+        """
+
+        try:
+            return self._param_values
+        except AttributeError:
+            self._initialize_param_values()
+
+        return self._param_values
+
+    def _initialize_param_values(self):
+        """
+        Initialize parameter values.
+        """
+
+        self._param_values = {}
+        for p in self.param_names:
+            self._param_values[p] = self.param_guesses[p]
+
+    def update_values(self,param_values):
+        """
+        Update parameter values for fit. param_values is a dictionary with
+        with some number of parameter names.
+        """
+
+        try:
+            tmp = self._param_values
+        except AttributeError:
+            self._initialize_param_values()
+
+        for p in param_values.keys():
+            self._param_values[p] = param_values[p]
 
     # -------------------------------------------------------------------------
     # parameter guesses
@@ -90,12 +146,12 @@ class ITCModel:
         """
         Guesses for each parameter in the model.
         """
-   
+
         try:
             return self._param_guesses
         except AttributeError:
             self._initialize_param_guesses()
-    
+
         return self._param_guesses
 
     def _initialize_param_guesses(self):
@@ -103,7 +159,7 @@ class ITCModel:
         Initialize parameter guesses.
         """
 
-        a = inspect.getargspec(self.dQ)
+        a = inspect.getargspec(self.initialize_param)
         args = a.args
         args.remove("self")
         defaults = a.defaults
@@ -137,7 +193,7 @@ class ITCModel:
         except AttributeError:
             self._initialize_fixed_param()
 
-        return self._fixed_param 
+        return self._fixed_param
 
     def _initialize_fixed_param(self):
         """
@@ -145,12 +201,12 @@ class ITCModel:
         """
 
         self._fixed_param = {}
-       
+
 
     def update_fixed(self,fixed_param):
         """
         Fix parameters.  fixed_param is a dictionary of parameters keyed to their
-        fixed values.  If the value is None, the parameter is removed from the 
+        fixed values.  If the value is None, the parameter is removed from the
         fixed parameters dictionary and will float.
         """
 
@@ -213,7 +269,7 @@ class ITCModel:
                 self._param_aliases[p] = param_alias[p]
 
     # -------------------------------------------------------------------------
-    # parameter ranges 
+    # parameter ranges
 
     @property
     def param_ranges(self):
@@ -230,9 +286,9 @@ class ITCModel:
 
     def _initialize_param_ranges(self):
         """
-        Guess at parameter ranges.  Rather hacked at the moment.  Replace this 
+        Guess at parameter ranges.  Rather hacked at the moment.  Replace this
         function in a subclass if you want to have more sophisticated control
-        of parameter ranges. 
+        of parameter ranges.
         """
 
         self._param_ranges = {}
@@ -251,7 +307,7 @@ class ITCModel:
     def update_ranges(self,param_ranges):
         """
         Update parameter ranges.  param_ranges is a dictionary of paramters
-        keyed to two-entry lists/tuples or ranges. 
+        keyed to two-entry lists/tuples or ranges.
         """
 
         try:
@@ -259,11 +315,11 @@ class ITCModel:
         except AttributeError:
             self._initialize_param_ranges()
 
-        for p in param_ranges.keys(): 
+        for p in param_ranges.keys():
             if type(param_ranges[p]) in (list,tuple) and len(param_ranges[p]) == 2:
                 self._param_ranges[p] = param_ranges[p]
                 continue
-            else: 
+            else:
                 err = "parameter range {} is invalid for parameter {}. ".format(param_ranges[p],p)
                 err += "Must be a tuple or list of length 2.\n"
-                raise ValueError(err)            
+                raise ValueError(err)
