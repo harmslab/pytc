@@ -15,8 +15,7 @@ from matplotlib import pyplot as plt
 
 class GlobalFit:
     """
-    Class for regressing some binding model against an arbitrary number of
-    ITC experiments.
+    Class for regressing models against an arbitrary number of ITC experiments.
     """
 
     def __init__(self):
@@ -273,7 +272,6 @@ class GlobalFit:
                     self._global_param_guesses[param_key] = fit_param[i]
 
 
-
     def plot(self,color_list=None,correct_molar_ratio=False,subtract_dilution=False):
         """
         Plot the experimental data and fit results.
@@ -316,7 +314,7 @@ class GlobalFit:
     def fit_param(self):
         """
         Return the fit results as a dictionary that keys parameter name to fit
-        value.  This is a tuple with global parameter first, then a list of
+        value.  This is a tuple with global parameters first, then a list of
         dictionaries for each local fit.
         """
 
@@ -465,32 +463,36 @@ class GlobalFit:
 
         return self._global_fixed_param, final_fixed_param
 
-    def update_fixed(self,param_name,param_value,expt=None):
+    def fix(self,expt=None,**kwargs):
         """
-        Update a fixed parameter for the fit.  If the experiment is None,
-        set a global parameter.  If the param_value is None, make the parameter
-        float.
+        Fix fit parameters.  If expt is None, set a global parameter. Otherwise,
+        fix individual experiment parameters.  kwargs takes individual fit
+        parameter names and values.
             param_name: name of parameter to set
             param_guess: value to set parameter to
             expt_name: name of experiment
 
         """
 
-        if param_value == None:
+        if expt == None:
+            for k in kwargs.keys():
+                self._global_fixed_param[k] = kwargs[k]
+        else:
+            self._expt_dict[expt.experiment_id].model.update_fixed(kwargs)
 
-            if expt == None:
+    def unfix(self,*args,expt=None):
+
+        if expt == None:
+            for a in args:
                 try:
-                    self._global_fixed_param.pop(param_name)
+                    self._global_fixed_param.pop(a)
                 except KeyError:
                     pass
-            else:
-                self._expt_dict[expt.experiment_id].model.update_fixed({param_name:param_value})
-
         else:
-            if expt == None:
-                self._global_fixed_param[param_name] = param_value
-            else:
-                self._expt_fixed_param[(expt.experiment_id,p)] = param_value
+            for a in args:
+                self._expt_dict[expt.experiment_id].model.update_fixed({a:None})
+
+
     #--------------------------------------------------------------------------
     # parameter aliases
 

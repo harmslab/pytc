@@ -27,6 +27,7 @@ class ITCExperiment:
         """
 
         self._dh_file = dh_file
+        self._pretty_name = dh_file[:-3]
         self._shot_start = shot_start
 
         # Load in heats

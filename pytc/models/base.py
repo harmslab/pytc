@@ -216,13 +216,14 @@ class ITCModel:
             self._initialize_fixed_param()
 
         for p in fixed_param.keys():
-            if p == None:
+            if fixed_param[p] == None:
                 try:
                     self._fixed_param.pop(p)
                 except KeyError:
                     pass
             else:
                 self._fixed_param[p] = fixed_param[p]
+                self.update_values(fixed_param)
 
     # -------------------------------------------------------------------------
     # parameter aliases
