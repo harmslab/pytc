@@ -13,6 +13,8 @@ import numpy as np
 import scipy.optimize as optimize
 from matplotlib import pyplot as plt
 
+import fit_param
+
 class GlobalFit:
     """
     Class for regressing models against an arbitrary number of ITC experiments.
@@ -117,7 +119,7 @@ class GlobalFit:
             except KeyError:
                 pass
 
-            self._global_param_ranges[global_param_name] = e.model.param_ranges[expt_param]
+            self._global_param_ranges[global_param_name] = e.model.param_guess_ranges[expt_param]
 
         else:
 
@@ -405,7 +407,7 @@ class GlobalFit:
         final_param_ranges = []
         for expt_name in self._expt_list_stable_order:
             e = self._expt_dict[expt_name]
-            param_ranges = copy.deepcopy(e.model.param_ranges)
+            param_ranges = copy.deepcopy(e.model.param_guess_ranges)
 
             for k in e.model.param_aliases.keys():
                 param_ranges.pop(k)

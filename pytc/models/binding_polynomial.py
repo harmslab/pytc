@@ -57,29 +57,20 @@ class BindingPolynomial(ITCModel):
         for each parameter in the model.
         """
 
-        self._param_names = ["beta{}".format(i) for i in range(1,self._num_sites + 1)]
-        self._param_names.extend(["dH{}".format(i) for i in range(1,self._num_sites + 1)])
-        self._param_names.extend(inspect.getargspec(self.initialize_param).args)
-        self._param_names.remove("self")
-        self._param_names.sort()
+        # Build polynomial parameters, depending on the number of sites in the model
+        param_names = ["beta{}".format(i) for i in range(1,self._num_sites + 1)]
+        param_guesses = [1e6 for i in range(self._num_sites)]
+        param_names.extend(["dH{}".format(i) for i in range(1,self._num_sites + 1)])
+        param_guesses.extend([-4000.0 for i in range(self._num_sites)])
 
-        self._param_guesses = {}
-        for p in self.param_names:
-            if p.startswith("beta"):
-                self._param_guesses[p] = 1e6
-            elif p.startswith("dH"):
-                self._param_guesses[p] = -4000
-            else:
-                if p not in self._param_guesses.keys():
-                    self._param_guesses[p] = 1.0
+        # Grab parameters defined in the function definition above
+        param_names.extend(inspect.getargspec(self.initialize_param).args)
+        param_names.remove("self")
+        param_guesses.extend(inspect.getargspec(self.initialize_param).defaults)
 
-        # Grab any parameters specified at the function call
-        defined_param = inspect.getargspec(self.initialize_param).args
-        defined_defaults = inspect.getargspec(self.initialize_param).defaults
-        for i in range(len(defined_defaults)):
-            print(defined_param[i+1])
-            print(defined_defaults[i])
-            self._param_guesses[defined_param[i+1]] = defined_defaults[i]
+        # Initialize parameters
+        self._initialize_param(param_names,param_guesses)
+
 
     def _dQdT(self,T_free,beta_array,S_total,T_total):
         """

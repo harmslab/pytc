@@ -54,8 +54,7 @@ class Blank(ITCModel):
         Initialize the fitting parameters.
         """
 
-        self._initialize_param_names()
-        self._initialize_param_guesses()
+        self._initialize_params()
 
     @property
     def dQ(self):
