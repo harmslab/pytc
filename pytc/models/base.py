@@ -9,7 +9,7 @@ __date__ = "2016-06-22"
 
 import inspect
 import numpy as np
-from .. import fit_param
+from . import fit_param
 
 class ITCModel:
     """
@@ -76,7 +76,8 @@ class ITCModel:
 
     def _initialize_param(self,param_names=None,param_guesses=None):
         """
-        Initialize the parameters.
+        Initialize the parameters.  If param_names is None, the parameter
+        names and guesses are determined by inspection of self.initialize_param.
         """
 
         self._params = {}
@@ -154,14 +155,14 @@ class ITCModel:
     # parameter ranges
 
     @property
-    def param_ranges(self):
+    def param_guess_ranges(self):
         """
         Return parameter ranges.
         """
 
         return dict([(p,self._params[p].guess_range) for p in self._param_names])  
 
-    def update_ranges(self,param_ranges):
+    def update_guess_ranges(self,param_ranges):
         """
         Update parameter ranges.  param_ranges is a dictionary of paramters
         keyed to two-entry lists/tuples or ranges.
@@ -209,14 +210,14 @@ class ITCModel:
 
         return dict([(p,self._params[p].bounds) for p in self._param_names])  
 
-    def update_ranges(self,bounds):
+    def update_bounds(self,bounds):
         """
         Update parameter bounds.  bounds is a dictionary of paramters
         keyed to two-entry lists/tuples or ranges.
         """
 
         for p in bounds.keys():
-            self._params[p].guess_range = param_ranges[p]
+            self._params[p].bounds = bounds[p]
 
     # -------------------------------------------------------------------------
     # parameter aliases

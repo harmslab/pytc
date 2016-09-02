@@ -60,7 +60,7 @@ class SingleSiteCompetitor(ITCModel):
         Initialize the fitting parameters.
         """
 
-        self._initialize_params()
+        self._initialize_param()
 
     @property
     def dQ(self):

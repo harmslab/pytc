@@ -13,8 +13,6 @@ import numpy as np
 import scipy.optimize as optimize
 from matplotlib import pyplot as plt
 
-import fit_param
-
 class GlobalFit:
     """
     Class for regressing models against an arbitrary number of ITC experiments.
@@ -235,11 +233,8 @@ class GlobalFit:
             for p in e.model.param_names:
 
                 # If the parameter is fixed, ignore it.
-                try:
-                    e.model.fixed_param[p]
+                if e.model.fixed_param[p]:
                     continue
-                except KeyError:
-                    pass
 
                 # If the paramter is global, ignore it.
                 try:

@@ -1,3 +1,9 @@
+__description__ = \
+"""
+Main class for holding fit parameters, including guesses, values, ranges, etc.
+"""
+__date__ = "2016-09-02"
+__author__ = "Michael J. Harms"
 
 import copy
 
@@ -102,6 +108,8 @@ class FitParameter:
                 self._guess = 1.0
             else:
                 self._guess = 1.0
+
+        self._value = self._guess
 
     #--------------------------------------------------------------------------
     # parameter guess_range
