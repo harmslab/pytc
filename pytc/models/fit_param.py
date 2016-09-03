@@ -213,4 +213,11 @@ class FitParameter:
         Set alias.
         """
 
+        try:
+            if self._alias != None and self._alias != a and a != None:
+                err = "Could not set alias to {:} because it is already set to {:}".format(a,self._alias)
+                raise ValueError(err)
+        except AttributeError:
+            pass
+
         self._alias = a

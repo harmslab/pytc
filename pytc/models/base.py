@@ -111,6 +111,17 @@ class ITCModel:
         return self._param_names
 
     # -------------------------------------------------------------------------
+    # parameter objects
+
+    @property
+    def parameters(self):
+        """
+        Return FitParam objects associated with the model.
+        """
+
+        return self._params
+
+    # -------------------------------------------------------------------------
     # parameter values
 
     @property
