@@ -18,14 +18,14 @@ class SingleSiteCompetitor(ITCModel):
     doi:10.1006/abio.1999.4402
     http://www.sciencedirect.com/science/article/pii/S0003269799944020
     """
- 
-    def __init__(self,            
+
+    def __init__(self,
                  S_cell=100e-6,S_syringe=0.0,
                  T_cell=0.0,   T_syringe=1000e-6,
                  C_cell=200e-6,C_syringe=0.0,
                  cell_volume=300.0,
                  shot_volumes=[2.5 for i in range(30)]):
-                 
+
         """
         S_cell: stationary concentration in cell in M
         S_syringe: stationary concentration in syringe in M
@@ -34,55 +34,62 @@ class SingleSiteCompetitor(ITCModel):
         C_cell: competitor concentration cell in M
         C_syringe: competitor concentration syringe in M
         cell_volume: cell volume, in uL
-        shot_volumes: list of shot volumes, in uL. 
+        shot_volumes: list of shot volumes, in uL.
         shot_start: first shot to use in fit
         """
-        
+
         self._S_cell = S_cell
         self._S_syringe = S_syringe
-         
+
         self._T_cell = T_cell
         self._T_syringe = T_syringe
-        
+
         self._C_cell = C_cell
         self._C_syringe = C_syringe
-        
+
         self._cell_volume = cell_volume
         self._shot_volumes = np.array(shot_volumes)
-        
-        # Determine the concentration of all of the species across the titration 
+
+        # Determine the concentration of all of the species across the titration
         self._S_conc = self._titrate_species(self._S_cell,self._S_syringe)
         self._T_conc = self._titrate_species(self._T_cell,self._T_syringe)
         self._C_conc = self._titrate_species(self._C_cell,self._C_syringe)
-                 
-    def dQ(self,K=1e6,Kcompetitor=1e6,dH=-4000,dHcompetitor=-4000,fx_competent=1.0,dilution_heat=0.0,dilution_intercept=0.0):
+
+    def initialize_param(self,K=1e6,Kcompetitor=1e6,dH=-4000,dHcompetitor=-4000,fx_competent=1.0,dilution_heat=0.0,dilution_intercept=0.0):
+        """
+        Initialize the fitting parameters.
+        """
+
+        self._initialize_param()
+
+    @property
+    def dQ(self):
         """
         Calculate the heats that would be observed across shots for a given set
         of enthalpies and binding constants for each reaction.
         """
-    
+
         # ----- Determine mole fractions -----
-        S_conc_corr = self._S_conc*fx_competent
-    
-        c_a = K*S_conc_corr
-        c_b = Kcompetitor*S_conc_corr
+        S_conc_corr = self._S_conc*self.param_values["fx_competent"]
+
+        c_a = self.param_values["K"]*S_conc_corr
+        c_b = self.param_values["Kcompetitor"]*S_conc_corr
         r_a = self._T_conc/S_conc_corr
         r_b = self._C_conc/S_conc_corr
-        
+
         alpha = 1/c_a + 1/c_b + r_a + r_b - 1
         beta = (r_a - 1)/c_b + (r_b - 1)/c_a + 1/(c_a*c_b)
         gamma = -1/(c_a*c_b)
         theta = np.arccos((-2*alpha**3 + 9*alpha*beta - 27*gamma)/(2*np.sqrt((alpha**2 - 3*beta)**3)))
-    
+
         self._mol_fx_s = (2*np.sqrt(alpha**2 - 3*beta) * np.cos(theta/3) - alpha)/3
         self._mol_fx_st = r_a*self._mol_fx_s/(1/c_a + self._mol_fx_s)
         self._mol_fx_sc = r_b*self._mol_fx_s/(1/c_b + self._mol_fx_s)
-    
+
         # ---- Relate mole fractions to heat -----
-        X = dH*(self._mol_fx_st[1:] - self._mol_fx_st[:-1])
-        Y = dHcompetitor*(self._mol_fx_sc[1:] - self._mol_fx_sc[:-1])
-        
-        to_return = self._cell_volume*S_conc_corr[1:]*(X + Y) + (self._T_conc[1:]*dilution_heat + dilution_intercept)
-        
+        X = self.param_values["dH"]*(self._mol_fx_st[1:] - self._mol_fx_st[:-1])
+        Y = self.param_values["dHcompetitor"]*(self._mol_fx_sc[1:] - self._mol_fx_sc[:-1])
+
+        to_return = self._cell_volume*S_conc_corr[1:]*(X + Y) + self.dilution_heats
+
         return to_return
-        
