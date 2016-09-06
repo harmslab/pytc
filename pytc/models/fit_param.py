@@ -6,6 +6,7 @@ __date__ = "2016-09-02"
 __author__ = "Michael J. Harms"
 
 import copy
+import numpy as np
 
 class FitParameter:
     """
@@ -193,8 +194,9 @@ class FitParameter:
                 raise ValueError(err)
         
             self._bounds = tuple(copy.deepcopy(b))
+            
         else:
-            self._bounds = (None,None)
+            self._bounds = (-np.inf,np.inf)
 
     #--------------------------------------------------------------------------
     # parameter alias

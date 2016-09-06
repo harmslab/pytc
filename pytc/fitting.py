@@ -196,12 +196,15 @@ class GlobalFit:
         """
 
         self._float_param = []
+        self._float_bounds = [[],[]]
         self._float_param_mapping = []
         float_param_counter = 0
 
         # Go through global variables
         for k in self._global_param_mapping.keys():
             self._float_param.append(self._global_params[k].guess)
+            self._float_bounds[0].append(self._global_params[k].bounds[0])
+            self._float_bounds[1].append(self._global_params[k].bounds[1])
             self._float_param_mapping.append(k)
             float_param_counter += 1
 
@@ -225,17 +228,25 @@ class GlobalFit:
 
                 # If not fixed or global, append the parameter to the list of
                 # floating parameters
-                self._float_param_mapping.append((k,p))
                 self._float_param.append(e.model.param_guesses[p])
+                self._float_bounds[0].append(e.model.bounds[p][0])
+                self._float_bounds[1].append(e.model.bounds[p][1])
+                self._float_param_mapping.append((k,p))
 
                 float_param_counter += 1
 
         self._float_param = np.array(self._float_param,dtype=float)
 
+
         # Do the actual fit
-        fit_param, covariance, info_dict, message, error = optimize.leastsq(self._residuals,
-                                                                            x0=self._float_param,
-                                                                            full_output=True)
+        #fit_param, covariance, info_dict, message, error = optimize.least_squares(self._residuals,
+        #                                                                          x0=self._float_param) #,
+                                                                                #  bounds=self._float_bounds)
+        
+        fit = optimize.least_squares(self._residuals, x0=self._float_param,bounds=self._float_bounds)
+
+        fit_param = fit.x
+
         # Store the result
         for i in range(len(fit_param)):
             param_key = self._float_param_mapping[i]
@@ -482,6 +493,55 @@ class GlobalFit:
             for a in args:
                 self._expt_dict[expt.experiment_id].model.update_fixed({a:None})
 
+
+    #--------------------------------------------------------------------------
+    # parameter bounds
+
+    @property
+    def param_bounds(self):
+        """
+        Return the parameter bounds for each fit parameter. This is a tuple.
+        Global parameters are first, a list of local parameter ranges are next.
+        """
+
+        global_param_bounds = {}
+        for p in self._global_param_names:
+            global_param_bounds[p] = copy.deepcopy(self._global_params[p].bounds)
+
+        final_param_bounds = []
+        for expt_name in self._expt_list_stable_order:
+            e = self._expt_dict[expt_name]
+            param_bounds = copy.deepcopy(e.model.bounds)
+
+            for k in e.model.param_aliases.keys():
+                param_bounds.pop(k)
+
+            final_param_bounds.append(param_bounds)
+
+
+        return global_param_bounds, final_param_bounds
+
+    def update_bounds(self,param_name,param_bounds,expt=None):
+        """
+        Update the bounds of a parameter for this fit.  If the experiment is None,
+        set a global parameter.  Otherwise, set the specified experiment.
+
+            param_name: name of parameter to set
+            param_bounds value to set parameter to
+            expt_name: name of experiment
+        """
+
+        try:
+            if len(param_bounds) != 2:
+                raise TypeError
+        except TypeError:
+            err = "Parameter bounds must be a list or tuple of length 2"
+            raise TypeError(err)
+
+        if expt == None:
+            self._global_params[param_name].bounds = bounds
+        else:
+            self._expt_dict[expt.experiment_id].model.bounds({param_name:bounds})
 
     #--------------------------------------------------------------------------
     # parameter aliases
