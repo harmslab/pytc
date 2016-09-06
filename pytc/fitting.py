@@ -320,6 +320,25 @@ class GlobalFit:
 
         return global_out_param, local_out_param
 
+    @property
+    def fit_error(self):
+        """
+        Return the param error as a dictionary that keys parameter name to fit
+        value.  This is a tuple with global parameters first, then a list of
+        dictionaries for each local fit.
+        """
+
+        # Global parameters
+        global_out_error = {}
+        for g in self._global_param_names:
+            global_out_error[g] = self._global_params[g].error
+
+        # Local parameters
+        local_out_error = []
+        for expt_name in self._expt_list_stable_order:
+            local_out_error.append(self._expt_dict[expt_name].model.param_errors)
+
+        return global_out_error, local_out_error
 
     #--------------------------------------------------------------------------
     # parameter names
