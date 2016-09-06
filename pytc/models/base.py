@@ -143,6 +143,27 @@ class ITCModel:
             self._params[p].value = param_values[p]
 
     # -------------------------------------------------------------------------
+    # parameter errors
+
+    @property
+    def param_errors(self):
+        """
+        Errors for each parameter in the model.
+        """
+
+        return dict([(p,self._params[p].error) for p in self._param_names])  
+ 
+
+    def update_errors(self,param_errors):
+        """
+        Update parameter error for fit. param_errors is a dictionary with
+        with some number of parameter names.
+        """
+
+        for p in param_errors.keys():
+            self._params[p].error = param_errors[p]
+
+    # -------------------------------------------------------------------------
     # parameter guesses
 
     @property

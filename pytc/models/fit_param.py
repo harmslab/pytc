@@ -41,6 +41,7 @@ class FitParameter:
         self.alias = alias
         
         self.value = self.guess
+        self.error = 0.0
 
     #--------------------------------------------------------------------------
     # parameter name
@@ -79,6 +80,25 @@ class FitParameter:
             self._value = v
         else:
             self._value = self.guess
+
+    #--------------------------------------------------------------------------
+    # parameter value
+
+    @property
+    def error(self):
+        """
+        Error of the parameter.
+        """
+
+        return self._error
+
+    @error.setter
+    def error(self,e):
+        """
+        Set the error of the parameter.
+        """
+
+        self._error = e
 
     #--------------------------------------------------------------------------
     # parameter guess

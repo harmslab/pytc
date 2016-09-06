@@ -237,15 +237,15 @@ class GlobalFit:
 
         self._float_param = np.array(self._float_param,dtype=float)
 
-
         # Do the actual fit
-        #fit_param, covariance, info_dict, message, error = optimize.least_squares(self._residuals,
-        #                                                                          x0=self._float_param) #,
-                                                                                #  bounds=self._float_bounds)
-        
         fit = optimize.least_squares(self._residuals, x0=self._float_param,bounds=self._float_bounds)
-
         fit_param = fit.x
+
+        # Determine the covariance matrix (Jacobian * residual variance)
+        pcov = fit.jac*(np.sum(fit.fun**2)/(len(fit.fun)-len(fit.x)))
+
+        # Estimates of parameter uncertainty
+        error = np.absolute(np.diagonal(pcov))**0.5
 
         # Store the result
         for i in range(len(fit_param)):
@@ -254,10 +254,12 @@ class GlobalFit:
                 k = param_key[0]
                 p = param_key[1]
                 self._expt_dict[k].model.update_values({p:fit_param[i]})
+                self._expt_dict[k].model.update_errors({p:error[i]})
             else:
                 for k, p in self._global_param_mapping[param_key]:
                     self._expt_dict[k].model.update_values({p:fit_param[i]})
                     self._global_params[param_key].value = fit_param[i]
+                    self._global_params[param_key].error = error[i]
 
 
     def plot(self,color_list=None,correct_molar_ratio=False,subtract_dilution=False):
