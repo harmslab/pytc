@@ -184,6 +184,7 @@ class GlobalFit:
                 for k, p in self._global_param_mapping[param_key]:
                     self._expt_dict[k].model.update_values({p:param[i]})
 
+
         for k in self._expt_dict.keys():
             all_residuals.extend(self._expt_weights[k]*(self._expt_dict[k].heats - self._expt_dict[k].dQ))
 
@@ -560,9 +561,9 @@ class GlobalFit:
             raise TypeError(err)
 
         if expt == None:
-            self._global_params[param_name].bounds = bounds
+            self._global_params[param_name].bounds = param_bounds
         else:
-            self._expt_dict[expt.experiment_id].model.bounds({param_name:bounds})
+            self._expt_dict[expt.experiment_id].model.bounds({param_name:param_bounds})
 
     #--------------------------------------------------------------------------
     # parameter aliases
