@@ -109,6 +109,11 @@ class ITCExperiment:
         return self._model.param_values
 
     @property
+    def param_errors(self):
+
+        return self._model.param_errors
+
+    @property
     def model(self):
         """
         Fitting model.

@@ -184,6 +184,7 @@ class GlobalFit:
                 for k, p in self._global_param_mapping[param_key]:
                     self._expt_dict[k].model.update_values({p:param[i]})
 
+
         for k in self._expt_dict.keys():
             all_residuals.extend(self._expt_weights[k]*(self._expt_dict[k].heats - self._expt_dict[k].dQ))
 
@@ -237,15 +238,15 @@ class GlobalFit:
 
         self._float_param = np.array(self._float_param,dtype=float)
 
-
         # Do the actual fit
-        #fit_param, covariance, info_dict, message, error = optimize.least_squares(self._residuals,
-        #                                                                          x0=self._float_param) #,
-                                                                                #  bounds=self._float_bounds)
-        
         fit = optimize.least_squares(self._residuals, x0=self._float_param,bounds=self._float_bounds)
-
         fit_param = fit.x
+
+        # Determine the covariance matrix (Jacobian * residual variance)
+        pcov = fit.jac*(np.sum(fit.fun**2)/(len(fit.fun)-len(fit.x)))
+
+        # Estimates of parameter uncertainty
+        error = np.absolute(np.diagonal(pcov))**0.5
 
         # Store the result
         for i in range(len(fit_param)):
@@ -254,10 +255,12 @@ class GlobalFit:
                 k = param_key[0]
                 p = param_key[1]
                 self._expt_dict[k].model.update_values({p:fit_param[i]})
+                self._expt_dict[k].model.update_errors({p:error[i]})
             else:
                 for k, p in self._global_param_mapping[param_key]:
                     self._expt_dict[k].model.update_values({p:fit_param[i]})
                     self._global_params[param_key].value = fit_param[i]
+                    self._global_params[param_key].error = error[i]
 
 
     def plot(self,color_list=None,correct_molar_ratio=False,subtract_dilution=False):
@@ -318,6 +321,25 @@ class GlobalFit:
 
         return global_out_param, local_out_param
 
+    @property
+    def fit_error(self):
+        """
+        Return the param error as a dictionary that keys parameter name to fit
+        value.  This is a tuple with global parameters first, then a list of
+        dictionaries for each local fit.
+        """
+
+        # Global parameters
+        global_out_error = {}
+        for g in self._global_param_names:
+            global_out_error[g] = self._global_params[g].error
+
+        # Local parameters
+        local_out_error = []
+        for expt_name in self._expt_list_stable_order:
+            local_out_error.append(self._expt_dict[expt_name].model.param_errors)
+
+        return global_out_error, local_out_error
 
     #--------------------------------------------------------------------------
     # parameter names
@@ -539,9 +561,9 @@ class GlobalFit:
             raise TypeError(err)
 
         if expt == None:
-            self._global_params[param_name].bounds = bounds
+            self._global_params[param_name].bounds = param_bounds
         else:
-            self._expt_dict[expt.experiment_id].model.bounds({param_name:bounds})
+            self._expt_dict[expt.experiment_id].model.bounds({param_name:param_bounds})
 
     #--------------------------------------------------------------------------
     # parameter aliases
