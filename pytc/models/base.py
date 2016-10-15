@@ -9,7 +9,7 @@ __date__ = "2016-06-22"
 
 import inspect
 import numpy as np
-from . import fit_param
+from .. import fit_param
 
 class ITCModel:
     """

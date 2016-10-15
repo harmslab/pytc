@@ -39,6 +39,8 @@ class ITCExperiment:
                             cell_volume=self.cell_volume,
                             shot_volumes=self._shots,**model_kwargs)
 
+        self.model.initialize_param()
+
         self._experiment_id = "".join([random.choice(string.ascii_letters)
                                        for i in range(20)])
 

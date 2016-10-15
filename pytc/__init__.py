@@ -13,3 +13,4 @@ from . import fitting
 
 from .experiments import ITCExperiment
 from .fitting import GlobalFit
+from .proton_linked import ProtonLinked
