@@ -240,7 +240,7 @@ class GlobalFit:
 
         # Do the actual fit
         fit = optimize.least_squares(self._residuals, x0=self._float_param,bounds=self._float_bounds)
-        fit_param = fit.x
+        fit_parameters = fit.x
 
         # Determine the covariance matrix (Jacobian * residual variance)
         pcov = fit.jac*(np.sum(fit.fun**2)/(len(fit.fun)-len(fit.x)))
@@ -249,17 +249,17 @@ class GlobalFit:
         error = np.absolute(np.diagonal(pcov))**0.5
 
         # Store the result
-        for i in range(len(fit_param)):
+        for i in range(len(fit_parameters)):
             param_key = self._float_param_mapping[i]
             if len(param_key) == 2:
                 k = param_key[0]
                 p = param_key[1]
-                self._expt_dict[k].model.update_values({p:fit_param[i]})
+                self._expt_dict[k].model.update_values({p:fit_parameters[i]})
                 self._expt_dict[k].model.update_errors({p:error[i]})
             else:
                 for k, p in self._global_param_mapping[param_key]:
-                    self._expt_dict[k].model.update_values({p:fit_param[i]})
-                    self._global_params[param_key].value = fit_param[i]
+                    self._expt_dict[k].model.update_values({p:fit_parameters[i]})
+                    self._global_params[param_key].value = fit_parameters[i]
                     self._global_params[param_key].error = error[i]
 
 
@@ -293,8 +293,8 @@ class GlobalFit:
                         pass
 
                     if subtract_dilution:
-                        heats = heats - dilution
-                        calc = calc - dilution
+                        heats = heats - e.dilution_heats
+                        calc = calc - e.dilution_heats
 
             plt.plot(mr,heats,"o",color=color_list[i])
 
@@ -563,7 +563,7 @@ class GlobalFit:
         if expt == None:
             self._global_params[param_name].bounds = param_bounds
         else:
-            self._expt_dict[expt.experiment_id].model.bounds({param_name:param_bounds})
+            self._expt_dict[expt.experiment_id].model.update_bounds({param_name:param_bounds})
 
     #--------------------------------------------------------------------------
     # parameter aliases
