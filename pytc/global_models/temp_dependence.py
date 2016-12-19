@@ -8,11 +8,13 @@ __date__ = "2016-10-12"
 
 import numpy as np
 import scipy.optimize as optimize
-from . import global_fit, fit_param
 from matplotlib import pyplot as plt
 import copy
 
-class ProtonLinked(global_fit.GlobalFit):
+from .. import fit_param
+from .base import GlobalFit
+
+class TempDependence(GlobalFit):
     """
     """
 
@@ -21,39 +23,11 @@ class ProtonLinked(global_fit.GlobalFit):
         Set up the main binding model to fit.
         """
 
-        super(ProtonLinked, self).__init__()
+        super(TempDependence, self).__init__()
 
-        self._expt_ionization_enthalpy = {}
-        self._global_param_names.append("num_protons")
-        self._global_params["num_protons"] = fit_param.FitParameter("num_protons",guess=0.0)
-
-    def add_experiment(self,experiment,ionization_enthalpy,param_guesses=None,
-                       fixed_param=None,param_aliases=None,weight=1.0):
-        """
-        experiment: an initialized ITCExperiment instance
-        ionization_enthalpy: ionization enthalpy for this buffer
-        param_guesses: a dictionary of parameter guesses (need not be complete)
-        fixed_param: a dictionary of parameters to be fixed, with value being
-                     fixed_value.
-        param_aliases: dictionary keying local experiment parameters to global
-                       parameters.
-        weight: how much to weight this experiment in the regression relative to other
-                experiments.  Values <1.0 weight this experiment less than others;
-                values >1.0 weight this more than others.
-        """
-
-        super(ProtonLinked, self).add_experiment(experiment,
-                                                 param_guesses,fixed_param,
-                                                 param_aliases,weight)
-        self._expt_ionization_enthalpy[experiment.experiment_id] = ionization_enthalpy
-
-    def remove_experiment(self,experiment):
-        """
-        Remove an experiment from the analysis.
-        """
-
-        super(ProtonLinked,self).remove_experiment(experiment)
-        self._expt_ionization_enthalpy.pop(expt_name)
+        # dCp will be the first parameter (param[0])
+        self._global_param_names.append("dCp")
+        self._global_params["dCp"] = fit_param.FitParameter("dCp",guess=0.0)
 
     def _residuals(self,param=None):
         """
@@ -70,19 +44,20 @@ class ProtonLinked(global_fit.GlobalFit):
                 k = param_key[0]
                 p = param_key[1]
 
-                # add offset to enthalpy
+                # param[0] is heat capacity (slope vs. temperature)
                 if p.startswith("dH"):
-                    value_to_pass = param[i] + param[0]*self._expt_ionization_enthalpy[k]
+                    value_to_pass = param[i] + param[0]*self._expt_dict[k].temperature
                 else:
                     value_to_pass = param[i]
 
                 self._expt_dict[k].model.update_values({p:value_to_pass})
+
             else:
                 for k, p in self._global_param_mapping[param_key]:
             
-                    # add offset to enthalpy
+                    # param[0] is heat capacity (slope vs. temperature)
                     if p.startswith("dH"):
-                        value_to_pass = param[i] + param[0]*self._expt_ionization_enthalpy[k]
+                        value_to_pass = param[i] + param[0]*self._expt_dict[k].temperature
                     else:
                         value_to_pass = param[i]
 
@@ -100,16 +75,16 @@ class ProtonLinked(global_fit.GlobalFit):
         Perform a global fit using nonlinear regression.
         """
 
-        self._float_param = [self._global_params["num_protons"].value]
-        self._float_bounds = [[self._global_params["num_protons"].bounds[0]],
-                              [self._global_params["num_protons"].bounds[1]]]
-        self._float_param_mapping = ["num_protons"]
+        self._float_param = [self._global_params["dCp"].value]
+        self._float_bounds = [[self._global_params["dCp"].bounds[0]],
+                              [self._global_params["dCp"].bounds[1]]]
+        self._float_param_mapping = ["dCp"]
         float_param_counter = 1
 
         # Go through global variables
         for k in self._global_param_mapping.keys():
             
-            if k == "num_protons":
+            if k == "dCp":
                 continue
 
             self._float_param.append(self._global_params[k].guess)
@@ -158,8 +133,8 @@ class ProtonLinked(global_fit.GlobalFit):
         error = np.absolute(np.diagonal(pcov))**0.5
 
         # Store the result
-        self._global_params["num_protons"].value = fit_parameters[0]
-        self._global_params["num_protons"].error = error[0]
+        self._global_params["dCp"].value = fit_parameters[0]
+        self._global_params["dCp"].error = error[0]
         for i in range(1,len(fit_parameters)):
             param_key = self._float_param_mapping[i]
             if len(param_key) == 2:
@@ -192,7 +167,7 @@ class ProtonLinked(global_fit.GlobalFit):
             for p in e.model.parameters:
                 if p.startswith("dH"):
                     v = e.model.param_values[p]
-                    new_dH = v + self._global_params["num_protons"].value*self._expt_ionization_enthalpy[expt_name]
+                    new_dH = v + self._global_params["dCp"].value*e.temperature
                     e.model.update_values({p:new_dH})
             mr = e.mole_ratio
             heats = e.heats
