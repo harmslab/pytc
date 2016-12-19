@@ -8,11 +8,11 @@ __date__ = "2016-10-12"
 
 import numpy as np
 import scipy.optimize as optimize
-from . import fitting, fit_param
+from . import global_fit, fit_param
 from matplotlib import pyplot as plt
 import copy
 
-class ProtonLinked(fitting.GlobalFit):
+class ProtonLinked(global_fit.GlobalFit):
     """
     """
 
@@ -192,7 +192,8 @@ class ProtonLinked(fitting.GlobalFit):
             for p in e.model.parameters:
                 if p.startswith("dH"):
                     v = e.model.param_values[p]
-                    e.model.update_values({p:v + self._global_params["num_protons"].value*self._expt_ionization_enthalpy[expt_name]})
+                    new_dH = v + self._global_params["num_protons"].value*self._expt_ionization_enthalpy[expt_name]
+                    e.model.update_values({p:new_dH})
             mr = e.mole_ratio
             heats = e.heats
             calc = e.dQ

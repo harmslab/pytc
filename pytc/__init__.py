@@ -9,8 +9,9 @@ __all__ = ["experiments","models","fitting"]
 
 from . import experiments
 from . import models
-from . import fitting
+from . import global_fit
 
 from .experiments import ITCExperiment
-from .fitting import GlobalFit
+from .global_fit import GlobalFit
 from .proton_linked import ProtonLinked
+from .temp_dependence import TempDependence
