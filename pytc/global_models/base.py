@@ -93,6 +93,12 @@ class GlobalFit:
 
         expt_name = expt.experiment_id
 
+        # If the experiment hasn't already been added to the global fitter, add it
+        try:
+            self._expt_dict[expt_name]
+        except KeyError:
+            self.add_experiment(expt)
+
         # Make sure the experimental paramter is actually in the experiment
         if expt_param not in self._expt_dict[expt_name].model.param_names:
             err = "Parameter {} not in experiment {}\n".format(expt_param,expt_name)
@@ -263,10 +269,26 @@ class GlobalFit:
                     self._global_params[param_key].error = error[i]
 
 
-    def plot(self,color_list=None,correct_molar_ratio=False,subtract_dilution=False):
+
+    def _get_calc_heats(self,expt_name):
+        """
+        Spit out the calcualted heats.  This is broken out into its own call so 
+        exotic global fitters (like ProtonLinked) can redefine it. 
+        """
+
+        return self._expt_dict[expt_name].dQ
+
+
+    def plot(self,correct_molar_ratio=False,subtract_dilution=False,
+             color_list=None,data_symbol="o",linewidth=1.5):
         """
         Plot the experimental data and fit results.
+    
+        Returns matplotlib Figure and AxesSubplot instances that can be further
+        manipulated by the user of the API.
         """
+
+        fig, ax = plt.subplots(1,1)
 
         if color_list == None:
             N = len(self._expt_list_stable_order)
@@ -279,11 +301,12 @@ class GlobalFit:
         for i, expt_name in enumerate(self._expt_list_stable_order):
 
             e = self._expt_dict[expt_name]
+
             mr = e.mole_ratio
             heats = e.heats
-            calc = e.dQ
+            calc = self._get_calc_heats(expt_name)
 
-            if e.dQ != None:
+            if len(calc) > 0:
 
                 # Try to correct molar ratio for competent fraction
                 if correct_molar_ratio:
@@ -292,14 +315,92 @@ class GlobalFit:
                     except KeyError:
                         pass
 
-                    if subtract_dilution:
-                        heats = heats - e.dilution_heats
-                        calc = calc - e.dilution_heats
+                if subtract_dilution:
+                    heats = heats - e.dilution_heats
+                    calc = calc - e.dilution_heats
 
-            plt.plot(mr,heats,"o",color=color_list[i])
+            ax.plot(mr,heats,data_symbol,color=color_list[i])
 
-            if e.dQ != None:
-                plt.plot(mr,calc,color=color_list[i],linewidth=1.5)
+            if len(e.dQ) > 0:
+                ax.plot(mr,calc,color=color_list[i],linewidth=linewidth)
+
+        return fig, ax
+
+    @property
+    def fit_as_csv(self):
+        """
+        Return a csv-style string of the fit.
+        """
+
+        out = ["type,name,value,uncertainty,fixed,guess,lower_bound,upper_bound\n"] 
+        for k in self.fit_param[0].keys():
+
+            param_type = "global"
+            dh_file = "NA"
+
+            if self._global_params[k].fixed:
+                fixed = "fixed"
+            else:
+                fixed = "float"
+
+            param_name = k
+            value = self.fit_param[0][k]
+            uncertainty = self.fit_error[0][k]
+            guess = self._global_params[k].guess
+            lower_bound = self._global_params[k].bounds[0]
+            upper_bound = self._global_params[k].bounds[1]
+
+            out.append("{:},{:},{:},{:.5e},{:.5e},{:},{:.5e},{:.5e},{:.5e}\n".format(param_type,
+                                                                                     param_name,
+                                                                                     dh_file,
+                                                                                     value,
+                                                                                     uncertainty,
+                                                                                     fixed,
+                                                                                     guess,
+                                                                                     lower_bound,
+                                                                                     upper_bound))
+
+        for i in range(len(self.fit_param[1])):
+
+            expt_name = self._expt_list_stable_order[i]
+
+            param_type = "local"
+            dh_file = self._expt_dict[expt_name].dh_file
+
+            for k in self.fit_param[1][i].keys():
+
+                try:
+                    alias = self._expt_dict[expt_name].model.parameters[k].alias
+                    if alias != None:
+                        continue
+                except AttributeError:
+                    pass
+
+                if self._expt_dict[expt_name].model.parameters[k].fixed:
+                    fixed = "fixed"
+                else:
+                    fixed = "float"
+
+                param_name = k 
+                value = self.fit_param[1][i][k]
+                uncertainty = self.fit_error[1][i][k]
+                guess = self._expt_dict[expt_name].model.parameters[k].guess
+                lower_bound = self._expt_dict[expt_name].model.parameters[k].bounds[0]
+                upper_bound = self._expt_dict[expt_name].model.parameters[k].bounds[1]
+
+                out.append("{:},{:},{:},{:.5e},{:.5e},{:},{:.5e},{:.5e},{:.5e}\n".format(param_type,
+                                                                                         param_name,
+                                                                                         dh_file,
+                                                                                         value,
+                                                                                         uncertainty,
+                                                                                         fixed,
+                                                                                         guess,
+                                                                                         lower_bound,
+                                                                                         upper_bound))
+
+
+        return "".join(out)
+ 
 
     @property
     def fit_param(self):
@@ -486,34 +587,27 @@ class GlobalFit:
 
         return global_fixed_param, final_fixed_param
 
-    def fix(self,expt=None,**kwargs):
+    def update_fixed(self,param_name,param_value,expt=None):
         """
         Fix fit parameters.  If expt is None, set a global parameter. Otherwise,
-        fix individual experiment parameters.  kwargs takes individual fit
-        parameter names and values.
+        fix individual experiment parameters.  
             param_name: name of parameter to set
             param_guess: value to set parameter to
             expt_name: name of experiment
 
+            if param_value is set to None, fixed value is removed.
+
         """
 
         if expt == None:
-            for k in kwargs.keys():
-                self._global_params[k].fixed = kwargs[k]
-        else:
-            self._expt_dict[expt.experiment_id].model.update_fixed(kwargs)
+            if param_value == None:
+                self._global_params[param_name].fixed = False
+            else:
+                self._global_params[param_name].fixed = True
+                self._global_params[param_name].value = param_value
 
-    def unfix(self,*args,expt=None):
-
-        if expt == None:
-            for a in args:
-                try:
-                    self._global_params[a].fixed = None
-                except KeyError:
-                    pass
         else:
-            for a in args:
-                self._expt_dict[expt.experiment_id].model.update_fixed({a:None})
+            self._expt_dict[expt.experiment_id].model.update_fixed({param_name:param_value})
 
 
     #--------------------------------------------------------------------------

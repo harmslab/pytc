@@ -26,8 +26,7 @@ class ITCExperiment:
                         stored in the dh_file.
         """
 
-        self._dh_file = dh_file
-        self._pretty_name = dh_file[:-3]
+        self.dh_file = dh_file
         self._shot_start = shot_start
 
         # Load in heats
@@ -51,7 +50,7 @@ class ITCExperiment:
         package.
         """
 
-        f = open(self._dh_file,'r')
+        f = open(self.dh_file,'r')
         lines = f.readlines()
         f.close()
 
@@ -87,8 +86,8 @@ class ITCExperiment:
         dictionary.
         """
 
-        if self._model.dQ == None:
-            return None
+        if len(self._model.dQ) == 0:
+            return np.array(())
 
         return self._model.dQ[self._shot_start:]
 
@@ -99,9 +98,8 @@ class ITCExperiment:
         in params dictionary.
         """
 
-        if self._model.dilution_heats == None:
-            return None
-
+        if len(self._model.dilution_heats) == 0:
+            return np.array(())
 
         return self._model.dilution_heats[self._shot_start:]
 
