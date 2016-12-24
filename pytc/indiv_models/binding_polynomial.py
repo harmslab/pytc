@@ -80,7 +80,7 @@ class BindingPolynomial(ITCModel):
         self._T_conc_free = np.zeros(len(self._S_conc),dtype=float)
         self._numerator = np.zeros(len(self._S_conc),dtype=float)
         self._denominator = np.ones(len(self._S_conc),dtype=float)
-        self._i_array = np.arange(len(self._fit_beta_list),dtype=int) + 1
+        self._i_array = np.arange(len(self._fit_beta_list),dtype=float) + 1
 
     def _dQdT(self,T_free,S_total,T_total):
         """
@@ -163,6 +163,8 @@ class BindingPolynomial(ITCModel):
 
 
         # calculate the average enthalpy change
+        self._numerator   = 0.0
+        self._denominator = 1.0
         for i in range(len(self._fit_beta_array)):
             self._numerator   += self._fit_dH_array[i]*self._fit_beta_array[i]*(self._T_conc_free**(i+1))
             self._denominator +=                       self._fit_beta_array[i]*(self._T_conc_free**(i+1))
