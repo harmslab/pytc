@@ -152,7 +152,7 @@ class BindingPolynomial(ITCModel):
             T = scipy.optimize.brentq(self._dQdT,
                                       0,self._T_conc[-1],
                                       args=(S_conc_corr[i],
-                                            self._T_conc[i]))
+                                           self._T_conc[i]))
 
             # numerical problems sometimes make T slightly bigger than the total
             # concentration, so bring down to the correct value

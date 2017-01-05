@@ -12,6 +12,7 @@ import copy, inspect, warnings
 import numpy as np
 import scipy.optimize as optimize
 from matplotlib import pyplot as plt
+from matplotlib import gridspec
 
 class GlobalFit:
     """
@@ -245,11 +246,13 @@ class GlobalFit:
         self._float_param = np.array(self._float_param,dtype=float)
 
         # Do the actual fit
-        fit = optimize.least_squares(self._residuals, x0=self._float_param,bounds=self._float_bounds)
-        fit_parameters = fit.x
+        self._fit_result = optimize.least_squares(self._residuals, 
+                                                  x0=self._float_param,
+                                                  bounds=self._float_bounds)
+        fit_parameters = self._fit_result.x
 
         # Determine the covariance matrix (Jacobian * residual variance)
-        pcov = fit.jac*(np.sum(fit.fun**2)/(len(fit.fun)-len(fit.x)))
+        pcov = self._fit_result.jac*(np.sum(self._fit_result.fun**2)/(len(self._fit_result.fun)-len(self._fit_result.x)))
 
         # Estimates of parameter uncertainty
         error = np.absolute(np.diagonal(pcov))**0.5
@@ -288,7 +291,20 @@ class GlobalFit:
         manipulated by the user of the API.
         """
 
-        fig, ax = plt.subplots(1,1)
+        fig = plt.figure(figsize=(5.5,6)) 
+
+        gs = gridspec.GridSpec(2, 1, height_ratios=[4, 1]) 
+        ax = []
+        ax.append(fig.add_subplot(gs[0]))
+        ax.append(fig.add_subplot(gs[1],sharex=ax[0]))
+
+        for i in range(2):
+            ax[i].spines['top'].set_visible(False)
+            ax[i].spines['right'].set_visible(False)
+
+            ax[i].yaxis.set_ticks_position('left')
+            ax[i].xaxis.set_ticks_position('bottom')
+
 
         if color_list == None:
             N = len(self._expt_list_stable_order)
@@ -319,10 +335,21 @@ class GlobalFit:
                     heats = heats - e.dilution_heats
                     calc = calc - e.dilution_heats
 
-            ax.plot(mr,heats,data_symbol,color=color_list[i])
+            ax[0].plot(mr,heats,data_symbol,color=color_list[i])
 
             if len(e.dQ) > 0:
-                ax.plot(mr,calc,color=color_list[i],linewidth=linewidth)
+
+                ax[0].plot(mr,calc,color=color_list[i],linewidth=linewidth)
+                ax[0].set_ylabel("heat per shot (kJ/mol)")
+
+                ax[1].plot([np.min(mr),np.max(mr)],[0,0],"--",linewidth=1.0,color="gray")
+                ax[1].plot(mr,(calc-heats),data_symbol,color=color_list[i])     
+                ax[1].set_xlabel("molar ratio (titrant/stationary)")
+                ax[1].set_ylabel("residual")
+
+                plt.setp(ax[0].get_xticklabels(), visible=False)
+            
+        plt.tight_layout()
 
         return fig, ax
 
@@ -332,7 +359,9 @@ class GlobalFit:
         Return a csv-style string of the fit.
         """
 
-        out = ["type,name,value,uncertainty,fixed,guess,lower_bound,upper_bound\n"] 
+        out = ["# Fit successful? {}\n".format(self.fit_success)]
+        out.append("# Fit rmsd: {}\n".format(self.fit_rmsd))
+        out.append("type,name,value,uncertainty,fixed,guess,lower_bound,upper_bound\n") 
         for k in self.fit_param[0].keys():
 
             param_type = "global"
@@ -441,6 +470,37 @@ class GlobalFit:
             local_out_error.append(self._expt_dict[expt_name].model.param_errors)
 
         return global_out_error, local_out_error
+
+    @property
+    def fit_rmsd(self):
+        """
+        Return fit rmsd.
+        """
+        try:
+            return self._fit_result.cost
+        except AttributeError:
+            return None
+
+    @property
+    def fit_success(self):
+        """
+        Return fit success.
+        """
+        try:
+            return self._fit_result.success
+        except AttributeError:
+            return None
+
+    @property
+    def fit_status(self):
+        """
+        Return fit status.
+        """
+        try:
+            return self._fit_result.statusx
+        except AttributeError:
+            return None
+
 
     #--------------------------------------------------------------------------
     # parameter names
