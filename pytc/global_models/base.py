@@ -361,7 +361,10 @@ class GlobalFit:
 
         out = ["# Fit successful? {}\n".format(self.fit_success)]
         out.append("# Fit rmsd: {}\n".format(self.fit_rmsd))
-        out.append("type,name,value,uncertainty,fixed,guess,lower_bound,upper_bound\n") 
+        out.append("# Fit num param: {}\n".format(self.fit_num_param))
+        out.append("# Fit num observations: {}\n".format(self.fit_num_obs))
+        out.append("# Fit num degrees freedom: {}\n".format(self.fit_degrees_freedom))
+        out.append("type,name,dh_file,value,uncertainty,fixed,guess,lower_bound,upper_bound\n") 
         for k in self.fit_param[0].keys():
 
             param_type = "global"
@@ -497,10 +500,67 @@ class GlobalFit:
         Return fit status.
         """
         try:
-            return self._fit_result.statusx
+            return self._fit_result.status
         except AttributeError:
             return None
 
+
+    @property
+    def fit_num_obs(self):
+        """
+        Return the number of observations used for the fit.
+        """
+
+        try:
+            # fun is fit residuals
+            return len(self._fit_result.fun)
+        except AttributeError:
+            return None
+
+    @property
+    def fit_num_param(self):
+        """
+        Return the number of parameters fit.
+        """
+
+        # Global parameters
+        num_param = 0
+        for k in self.fit_param[0].keys():
+
+            # Only count floating parameters
+            if not self._global_params[k].fixed:
+                num_param += 1
+
+        # Local parameters
+        for i in range(len(self.fit_param[1])):
+
+            expt_name = self._expt_list_stable_order[i]
+            for k in self.fit_param[1][i].keys():
+
+                # Skip variables linked to global variables
+                try:
+                    alias = self._expt_dict[expt_name].model.parameters[k].alias
+                    if alias != None:
+                        continue
+                except AttributeError:
+                    pass
+            
+                # Only count floating parameters
+                if not self._expt_dict[expt_name].model.parameters[k].fixed:
+                    num_param += 1
+
+        return num_param
+
+    @property
+    def fit_degrees_freedom(self):
+        """
+        Return the number of degrees of freedom from the fit. 
+        """
+
+        try:
+            return self.fit_num_obs - self.fit_num_param 
+        except AttributeError:
+            return None
 
     #--------------------------------------------------------------------------
     # parameter names
@@ -563,7 +623,11 @@ class GlobalFit:
         """
 
         if expt == None:
-            self._global_params[param_name].guess = param_guess
+            try:
+                self._global_params[param_name].guess = param_guess
+            except KeyError:
+                err = "param \"{}\" is not global.  You must specify an experiment.\n".format(param_name)
+                raise KeyError(err)
         else:
             self._expt_dict[expt.experiment_id].model.update_guesses({param_name:param_guess})
 
@@ -612,7 +676,11 @@ class GlobalFit:
             raise TypeError(err)
 
         if expt == None:
-            self._global_params[param_name].guess_range = param_range
+            try:
+                self._global_params[param_name].guess_range = param_range
+            except KeyError:
+                err = "param \"{}\" is not global.  You must specify an experiment.\n".format(param_name)
+                raise KeyError(err)
         else:
             self._expt_dict[expt.experiment_id].model.update_ranges({param_name:param_range})
 
@@ -660,11 +728,15 @@ class GlobalFit:
         """
 
         if expt == None:
-            if param_value == None:
-                self._global_params[param_name].fixed = False
-            else:
-                self._global_params[param_name].fixed = True
-                self._global_params[param_name].value = param_value
+            try:
+                if param_value == None:
+                    self._global_params[param_name].fixed = False
+                else:
+                    self._global_params[param_name].fixed = True
+                    self._global_params[param_name].value = param_value
+            except KeyError:
+                err = "param \"{}\" is not global.  You must specify an experiment.\n".format(param_name)
+                raise KeyError(err)
 
         else:
             self._expt_dict[expt.experiment_id].model.update_fixed({param_name:param_value})
@@ -715,7 +787,11 @@ class GlobalFit:
             raise TypeError(err)
 
         if expt == None:
-            self._global_params[param_name].bounds = param_bounds
+            try:
+                self._global_params[param_name].bounds = param_bounds
+            except KeyError:
+                err = "param \"{}\" is not global.  You must specify an experiment.\n".format(param_name)
+                raise KeyError(err)
         else:
             self._expt_dict[expt.experiment_id].model.update_bounds({param_name:param_bounds})
 

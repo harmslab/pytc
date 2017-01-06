@@ -80,7 +80,8 @@ class ITCModel:
         Return the heat of dilution.
         """
 
-        return self.mole_ratio*self.param_values["dilution_heat"] + self.param_values["dilution_intercept"]
+        #return self.mole_ratio*self.param_values["dilution_heat"] + self.param_values["dilution_intercept"]
+        return self._T_conc[1:]*self.param_values["dilution_heat"] + self.param_values["dilution_intercept"]
 
     def _initialize_param(self,param_names=None,param_guesses=None):
         """
