@@ -360,7 +360,7 @@ class GlobalFit:
         """
 
         out = ["# Fit successful? {}\n".format(self.fit_success)]
-        out.append("# Fit rmsd: {}\n".format(self.fit_rmsd))
+        out.append("# Fit sum of square residuals: {}\n".format(self.fit_sum_of_squares))
         out.append("# Fit num param: {}\n".format(self.fit_num_param))
         out.append("# Fit num observations: {}\n".format(self.fit_num_obs))
         out.append("# Fit num degrees freedom: {}\n".format(self.fit_degrees_freedom))
@@ -475,9 +475,9 @@ class GlobalFit:
         return global_out_error, local_out_error
 
     @property
-    def fit_rmsd(self):
+    def fit_sum_of_squares(self):
         """
-        Return fit rmsd.
+        Return fit sum_of_squares.
         """
         try:
             return self._fit_result.cost

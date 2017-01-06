@@ -8,7 +8,7 @@ def choose_model(model1,model2,alpha=0.05):
     Returns acceptance (True or False) and p-value
     """
 
-    if model1.fit_rmsd == None:
+    if model1.fit_sum_of_squares == None:
         print("Fitting model 1.")
         model1.fit()
     else:
@@ -20,7 +20,7 @@ def choose_model(model1,model2,alpha=0.05):
     print(model1.fit_as_csv)
     print("")
 
-    if model2.fit_rmsd == None:
+    if model2.fit_sum_of_squares == None:
         print("Fitting model 2.")
         model2.fit()
     else:
@@ -28,16 +28,16 @@ def choose_model(model1,model2,alpha=0.05):
 
     model2.plot()
     print("")
-    print("Model 2.fit")
+    print("Model 2 fit")
     print(model2.fit_as_csv)
     print("")
         
     # Calculate the F-statistic 
     if model1.fit_degrees_freedom == model2.fit_degrees_freedom:
-        F = model1.fit_rmsd/model2.fit_rmsd
+        F = model1.fit_sum_of_squares/model2.fit_sum_of_squares
     else:
-        num = (model1.fit_rmsd - model2.fit_rmsd)/(model1.fit_degrees_freedom - model2.fit_degrees_freedom)
-        den = model2.fit_degrees_freedom/model2.fit_rmsd
+        num = (model1.fit_sum_of_squares - model2.fit_sum_of_squares)/(model1.fit_degrees_freedom - model2.fit_degrees_freedom)
+        den = model2.fit_degrees_freedom/model2.fit_sum_of_squares
         F = num/den
    
     # Determine the p-value 

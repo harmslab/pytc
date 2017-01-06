@@ -150,8 +150,10 @@ class ProtonLinked(GlobalFit):
         self._float_param = np.array(self._float_param,dtype=float)
 
         # Do the actual fit
-        fit = optimize.least_squares(self._residuals, x0=self._float_param,bounds=self._float_bounds)
-        fit_parameters = fit.x
+        self._fit_result = optimize.least_squares(self._residuals, x0=self._float_param,bounds=self._float_bounds)
+        fit_parameters = self._fit_result.x
+
+        fit = self._fit_result
 
         # Determine the covariance matrix (Jacobian * residual variance)
         pcov = fit.jac*(np.sum(fit.fun**2)/(len(fit.fun)-len(fit.x)))

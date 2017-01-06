@@ -123,7 +123,8 @@ class TempDependence(GlobalFit):
         self._float_param = np.array(self._float_param,dtype=float)
 
         # Do the actual fit
-        fit = optimize.least_squares(self._residuals, x0=self._float_param,bounds=self._float_bounds)
+        self._fit_result = optimize.least_squares(self._residuals, x0=self._float_param,bounds=self._float_bounds)
+        fit = self._fit_result
         fit_parameters = fit.x
 
         # Determine the covariance matrix (Jacobian * residual variance)
