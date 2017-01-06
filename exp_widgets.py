@@ -13,10 +13,12 @@ class Plot(FigureCanvas):
 	create a plot widget
 	"""
 
-	def __init__(self, parent = None, width = 6, height = 6, dpi = 80):
+	def __init__(self, fitter, parent = None, width = 6, height = 6, dpi = 80):
 
-		fig = Figure(figsize = (width, height), dpi = dpi)
-		self.axes = fig.add_subplot(111)
+		fig, ax = fitter.plot()
+
+		#self._fig = Figure(figsize = (width, height), dpi = dpi)
+		#self._axes = fig.add_subplot(111)
 
 		super().__init__(fig)
 		self.setParent(parent)
@@ -26,19 +28,7 @@ class Plot(FigureCanvas):
 
 	def plot(self, fitter):
 
-		self.axes.clear()
-
-		data = fitter.plot()
-
-		for e in data:
-			mr, heats, calc = data[e]
-
-			ax = self.figure.add_subplot(111)
-
-			ax.plot(mr,heats,"o")
-			ax.plot(mr,calc,linewidth=1.5)
-
-			self.draw()
+		fig, ax = fitter.plot()
 
 class PlotBox(QWidget):
 	"""
@@ -55,13 +45,12 @@ class PlotBox(QWidget):
 	def layout(self):
 		main_layout = QVBoxLayout(self)
 
-		plot_layout = QVBoxLayout()
+		self._plot_layout = QVBoxLayout()
 		plot_frame = QFrame()
-		plot_frame.setLayout(plot_layout)
+		plot_frame.setLayout(self._plot_layout)
 
-
-		self._plot_figure = Plot()
-		plot_layout.addWidget(self._plot_figure)
+		#self._plot_figure = Plot()
+		#plot_layout.addWidget(self._plot_figure)
 
 		main_layout.addWidget(plot_frame)
 		
@@ -72,8 +61,10 @@ class PlotBox(QWidget):
 	def update_plot(self):
 
 		if self._exp_list:
-			self._fitter = self._exp_list["Fitter"]
-			self._plot_figure.plot(self._fitter)
+			fitter = self._exp_list["Fitter"]
+			plot_figure = Plot(fitter)
+			self._plot_layout.addWidget(plot_figure)
+			#self._plot_figure.plot(self._fitter)
 			
 class SlidersExpanded(QWidget):
 	"""
@@ -125,11 +116,11 @@ class Sliders(QWidget):
 
 		exp_range = self._exp.model.param_guess_ranges[self._param_name]
 
-		self._slider = QAbstractSlider(self)
+		self._slider = QSlider(self)
 		self._slider.setOrientation(Qt.Horizontal)
 		self._slider.valueChanged[int].connect(self.update_val)
-		self._slider.setMinimum(exp_range[0])
-		self._slider.setMaximum(exp_range[1])
+		#self._slider.setMinimum(exp_range[0])
+		#self._slider.setMaximum(exp_range[1])
 		layout.addWidget(self._slider, 1, 1)
 
 		self._fix_int = QLineEdit(self)
@@ -221,25 +212,16 @@ class GlobalSliders(Sliders):
 		super().__init__(exp, param_name, value, fitter)
 
 
-class Parameters(QWidget):
-	"""
-	widget for returning experiment parameters.
-	"""
-
-	def __init__(self, exp_list):
-		super().__init__()
-
-		self._exp_list = exp_list
-
 class Experiments(QWidget):
 	"""
 	experiment box widget
 	"""
 
-	def __init__(self, fitter, exp, labels, global_var, exp_list):
+	def __init__(self, fitter, exp, file_name, labels, global_var, exp_list):
 		super().__init__()
 
 		self._exp = exp
+		self._file_name = file_name
 		self._labels = labels
 		self._fitter = fitter
 		self._global_var = global_var
@@ -249,6 +231,12 @@ class Experiments(QWidget):
 
 	def layout(self):
 		main_layout = QVBoxLayout(self)
+
+		name_label = QLabel(self._file_name)
+		name_stretch = QHBoxLayout()
+		name_stretch.addStretch(1)
+		name_stretch.addWidget(name_label)
+		main_layout.addLayout(name_stretch)
 
 		parameters = self._exp.param_values
 		exp_layout = QVBoxLayout()
@@ -343,24 +331,24 @@ class AllExp(QWidget):
 
 	def add_exp(self):
 
-		fitter = self._exp_list["Fitter"]
+		self._fitter = self._exp_list["Fitter"]
 
 		for n, e in self._exp_list.items():
 			if n != "Fitter":
 				if e not in self._labels:
 					self._labels[e] = []
-					exp = Experiments(fitter, e, self._labels, self._global_var, self._exp_list)
+					exp = Experiments(self._fitter, e, n, self._labels, self._global_var, self._exp_list)
 					self._exp_box.addWidget(exp)
 				else:
 					print('already in frame')
 
-		fitter.fit()
+		self._fitter.fit()
 		self.return_param()
 
 	def return_param(self):
 		"""
 		"""
-		self._param_box.append("Parameters!")
+		self._param_box.append(self._fitter.fit_as_csv)
 
 	def print_exp(self):
 

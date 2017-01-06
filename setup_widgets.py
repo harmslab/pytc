@@ -13,10 +13,10 @@ class AddExp(QWidget):
 	def __init__(self, exp_list):
 		super().__init__()
 
-		self._models = {"Blank" : pytc.models.Blank,
-                        "Single Site" : pytc.models.SingleSite,
-                        "Single Site Competitor" : pytc.models.SingleSiteCompetitor,
-                        "Binding Polynomial" : pytc.models.BindingPolynomial}
+		self._models = {"Blank" : pytc.indiv_models.Blank,
+                        "Single Site" : pytc.indiv_models.SingleSite,
+                        "Single Site Competitor" : pytc.indiv_models.SingleSiteCompetitor,
+                        "Binding Polynomial" : pytc.indiv_models.BindingPolynomial}
 
 		self._exp_file = None
 		self._shot_start = 1
@@ -91,8 +91,9 @@ class ChooseFitter(QWidget):
 	def __init__(self, exp_list):
 		super().__init__()
 
-		self._fitter_choose = {"Global" : pytc.GlobalFit(),
-                        "Proton Linked" : pytc.ProtonLinked()}
+		self._fitter_choose = {"Global" : pytc.global_models.GlobalFit(),
+                        "Proton Linked" : pytc.global_models.ProtonLinked(),
+                        "Temperature Dependence" : pytc.global_models.TempDependence()}
 
 		self._exp_list = exp_list
 
