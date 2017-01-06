@@ -10,24 +10,28 @@ Open the `template.ipynb` jupyter notebook for an example fit.
 ```Python
 import pytc
 
-# Set up the global fit with parameter guesses
-fitter = pytc.GlobalFit({"K":1e6,"dH":-2000,"fx_competent":1.0,"dilution_heat":0.0})
+# Load in integrated heats from an ITC experiment
+e = pytc.ITCExperiment("demos/ca-edta/hepes-01.DH",pytc.indiv_models.SingleSite)
 
-# Load experimental data, defining input data and fitting model
-e1 = pytc.ITCExperiment("test-data/hA5A5conTESCaTCEP.DH",pytc.models.SingleSite)
+# Create the global fitter, add the experiment, and fit
+g = pytc.GlobalFit()
+g.add_experiment(e)
+g.fit()
 
-# Associate the model with the fit
-fitter.add_experiment(e1)
-
-# Do the fit
-fitter.fit()
-
-# Plot the fit
-fitter.plot()
-
-# Print out the final fit parameters
-print(fitter.fit_param)
+# Print the results out
+print(g.fit_as_csv)
 ```
+
+```
+e = pytc.ITCExperiment("demos/ca-edta/hepes-01.DH",pytc.indiv_models.SingleSite)
+
+g.add_experiment(e)
+
+g.update_bounds("K",(-np.inf,np.inf),e)
+g.update_guess("K",1,e)
+g.update_fixed("K",1,e)
+```
+
 
 ##Fitting
 

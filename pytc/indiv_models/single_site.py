@@ -68,7 +68,7 @@ class SingleSite(ITCModel):
 
         # ---- Relate mole fractions to heat -----
         X = self.param_values["dH"]*(self._mol_fx_st[1:] - self._mol_fx_st[:-1])
-
+   
         to_return = self._cell_volume*S_conc_corr[1:]*X + self.dilution_heats
 
         return to_return

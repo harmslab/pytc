@@ -8,11 +8,13 @@ __date__ = "2016-10-12"
 
 import numpy as np
 import scipy.optimize as optimize
-from . import fitting, fit_param
 from matplotlib import pyplot as plt
 import copy
 
-class ProtonLinked(fitting.GlobalFit):
+from .. import fit_param
+from .base import GlobalFit
+
+class ProtonLinked(GlobalFit):
     """
     """
 
@@ -148,8 +150,10 @@ class ProtonLinked(fitting.GlobalFit):
         self._float_param = np.array(self._float_param,dtype=float)
 
         # Do the actual fit
-        fit = optimize.least_squares(self._residuals, x0=self._float_param,bounds=self._float_bounds)
-        fit_parameters = fit.x
+        self._fit_result = optimize.least_squares(self._residuals, x0=self._float_param,bounds=self._float_bounds)
+        fit_parameters = self._fit_result.x
+
+        fit = self._fit_result
 
         # Determine the covariance matrix (Jacobian * residual variance)
         pcov = fit.jac*(np.sum(fit.fun**2)/(len(fit.fun)-len(fit.x)))
@@ -173,44 +177,17 @@ class ProtonLinked(fitting.GlobalFit):
                     self._global_params[param_key].value = fit_parameters[i]
                     self._global_params[param_key].error = error[i]
 
-    def plot(self,color_list=None,correct_molar_ratio=False,subtract_dilution=False):
+    def _get_calc_heats(self,expt_name):
         """
-        Plot the experimental data and fit results.
+        Spit calculated heats, accounting for proton titration bit.
         """
 
-        if color_list == None:
-            N = len(self._expt_list_stable_order)
-            color_list = [plt.cm.brg(i/N) for i in range(N)]
+        e = copy.copy(self._expt_dict[expt_name])
+        for p in e.model.parameters:
+            if p.startswith("dH"):
+                v = e.model.param_values[p]
+                new_dH = v + self._global_params["num_protons"].value*self._expt_ionization_enthalpy[expt_name]
+                e.model.update_values({p:new_dH})
 
-        if len(color_list) < len(self._expt_list_stable_order):
-            err = "Number of specified colors is less than number of experiments.\n"
-            raise ValueError(err)
+        return e.dQ
 
-        for i, expt_name in enumerate(self._expt_list_stable_order):
-
-            e = copy.copy(self._expt_dict[expt_name])
-            for p in e.model.parameters:
-                if p.startswith("dH"):
-                    v = e.model.param_values[p]
-                    e.model.update_values({p:v + self._global_params["num_protons"].value*self._expt_ionization_enthalpy[expt_name]})
-            mr = e.mole_ratio
-            heats = e.heats
-            calc = e.dQ
-
-            if e.dQ != None:
-
-                # Try to correct molar ratio for competent fraction
-                if correct_molar_ratio:
-                    try:
-                        mr = mr/e.param_values["fx_competent"]
-                    except KeyError:
-                        pass
-
-                    if subtract_dilution:
-                        heats = heats - e.dilution_heats
-                        calc = calc - e.dilution_heats
-
-            plt.plot(mr,heats,"o",color=color_list[i])
-
-            if e.dQ != None:
-                plt.plot(mr,calc,color=color_list[i],linewidth=1.5)

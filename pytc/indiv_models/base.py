@@ -27,7 +27,7 @@ class ITCModel:
 
     @property
     def dQ(self):
-        return None
+        return np.array(())
 
     # --------------------------------------------------------------------------
 
@@ -36,6 +36,13 @@ class ITCModel:
         Determine the concentrations of stationary and titrant species in the
         cell given a set of titration shots and initial concentrations of both
         the stationary and titrant species.
+
+        Does two independent calculations and adds them.  First, it calculates
+        the concentration change due to injection (injected).  It then treats
+        the dilution of the stuff initially in hte cell (diluted).  The sum of
+        these two groups is the total concentration of whatever was titrated.
+        The shot_ratio_product method is described on p. 134 of Freire et al.
+        (2009) Meth Enzymology 455:127-155
         """
 
         volume = np.zeros(len(self._shot_volumes)+1)
@@ -44,13 +51,14 @@ class ITCModel:
         volume[0] = self._cell_volume
         out_conc[0] = cell_conc
 
+        shot_ratio = (1 - self._shot_volumes/self._cell_volume)
         for i in range(len(self._shot_volumes)):
 
-            volume[i+1] = volume[i] + self._shot_volumes[i]
-            dilution = volume[i]/volume[i+1]
-            added = self._shot_volumes[i]/volume[i+1]
+            shot_ratio_prod = np.prod(shot_ratio[:(i+1)])
+            injected = syringe_conc*(1 - shot_ratio_prod)
+            diluted = cell_conc*shot_ratio_prod
 
-            out_conc[i+1] = out_conc[i]*dilution + syringe_conc*added
+            out_conc[i+1] = injected + diluted
 
         return out_conc
 
@@ -72,6 +80,7 @@ class ITCModel:
         Return the heat of dilution.
         """
 
+        #return self.mole_ratio*self.param_values["dilution_heat"] + self.param_values["dilution_intercept"]
         return self._T_conc[1:]*self.param_values["dilution_heat"] + self.param_values["dilution_intercept"]
 
     def _initialize_param(self,param_names=None,param_guesses=None):
