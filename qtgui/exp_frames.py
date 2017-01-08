@@ -26,7 +26,7 @@ class Plot(FigureCanvas):
 		FigureCanvas.setSizePolicy(self, QSizePolicy.Expanding, QSizePolicy.Expanding)
 		FigureCanvas.updateGeometry(self)
 
-	def plot(self, fitter):
+	def clear(self, fitter):
 
 		fig, ax = fitter.plot()
 
@@ -43,14 +43,13 @@ class PlotBox(QWidget):
 		self.layout()
 
 	def layout(self):
+
 		main_layout = QVBoxLayout(self)
+		main_layout.setContentsMargins(0, 0, 0, 0)
 
 		self._plot_layout = QVBoxLayout()
 		plot_frame = QFrame()
 		plot_frame.setLayout(self._plot_layout)
-
-		#self._plot_figure = Plot()
-		#plot_layout.addWidget(self._plot_figure)
 
 		main_layout.addWidget(plot_frame)
 		
@@ -61,10 +60,12 @@ class PlotBox(QWidget):
 	def update_plot(self):
 
 		if self._exp_list:
+			for i in reversed(range(self._plot_layout.count())): 
+				self._plot_layout.itemAt(i).widget().setParent(None)
+
 			fitter = self._exp_list["Fitter"]
 			plot_figure = Plot(fitter)
 			self._plot_layout.addWidget(plot_figure)
-			#self._plot_figure.plot(self._fitter)
 			
 class SlidersExpanded(QWidget):
 	"""
@@ -104,6 +105,7 @@ class Sliders(QWidget):
 	def layout(self):
 
 		layout = QGridLayout(self)
+		layout.setVerticalSpacing(40)
 
 		self._name_label = QLabel(self._param_name, self)
 		layout.addWidget(self._name_label, 0, 0, 0, 2)

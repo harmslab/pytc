@@ -8,8 +8,8 @@ from qtpy.QtGui import *
 from qtpy.QtCore import *
 from qtpy.QtWidgets import *
 
-from setup_widgets import *
-from exp_widgets import *
+from .exp_setup import *
+from .exp_frames import *
 
 class Splitter(QWidget):
 	"""
@@ -26,6 +26,8 @@ class Splitter(QWidget):
 		"""
 		"""
 		main_frame = QHBoxLayout(self)
+
+		#self.setStyleSheet(open("style.qss", "r").read())
 
 		exp_box = AllExp(self._exp_list)
 		plot_frame = PlotBox(self._exp_list)
@@ -136,9 +138,3 @@ class Main(QMainWindow):
 		data_file = open(file_name, "w")
 
 		data_file.close()
-
-if __name__ == '__main__':
-
-	app = QApplication(sys.argv)
-	pytc_run = Main()
-	sys.exit(app.exec_())
