@@ -119,7 +119,6 @@ class Main(QMainWindow):
 		"""
 		testing, check pytc experiments loading
 		"""
-
 		print(self._exp_list["Local"])
 
 	def print_fitter(self):
@@ -183,5 +182,4 @@ class Main(QMainWindow):
 		"""
 		close window
 		"""
-
 		self.close()
