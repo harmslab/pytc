@@ -1,15 +1,16 @@
 """
 pytc GUI using qtpy bindings
 """
+import os.path
 
-import pytc
-import sys
 from qtpy.QtGui import *
 from qtpy.QtCore import *
 from qtpy.QtWidgets import *
 
 from .exp_setup import *
 from .exp_frames import *
+
+from matplotlib.backends.backend_pdf import PdfPages
 
 class Splitter(QWidget):
 	"""
@@ -46,7 +47,7 @@ class Main(QMainWindow):
 	def __init__(self):
 		super().__init__()
 
-		self._exp_list = {}
+		self._exp_list = {"Local" : {}, "Global" : {}}
 
 		self.menu()
 		self.new_exp()
@@ -83,11 +84,11 @@ class Main(QMainWindow):
 
 		export_exp = QAction("Export", self)
 		export_exp.setShortcut("Ctrl+E")
-		export_exp.triggered.connect(self.export_file)
 		file_menu.addAction(export_exp)
 
 		save_exp = QAction("Save", self)
 		save_exp.setShortcut("Ctrl+S")
+		save_exp.triggered.connect(self.save_file)
 		file_menu.addAction(save_exp)
 
 		open_exp = QAction("Open", self)
@@ -97,7 +98,7 @@ class Main(QMainWindow):
 		exp = Splitter(self._exp_list)
 		self.setCentralWidget(exp)
 
-		self.setGeometry(300, 150, 900, 600)
+		self.setGeometry(300, 150, 950, 600)
 		self.setWindowTitle('pytc')
 		self.show()
 
@@ -106,12 +107,16 @@ class Main(QMainWindow):
 		testing, check pytc experiments loading
 		"""
 
-		for n, e in self._exp_list.items():
-			if n != "Fitter":
-				print(n, ": ", e)
+		print(self._exp_list["Local"])
+
+		#for n, e in self._exp_list.items():
+			#if n != "Fitter":
+				#print(n, ": ", e)
 
 	def print_fitter(self):
-
+		"""
+		testing to make sure fitter selected correctly
+		"""
 		print(self._exp_list["Fitter"])
 
 	def add_file(self):
@@ -119,7 +124,7 @@ class Main(QMainWindow):
 		add a new pytc experiment.
 		"""
 		self._new_exp = AddExp(self._exp_list)
-		self._new_exp.setGeometry(500, 400, 500, 100)
+		self._new_exp.setGeometry(530, 400, 100, 200)
 		self._new_exp.show()
 
 	def new_exp(self):
@@ -130,11 +135,38 @@ class Main(QMainWindow):
 		self._choose_fitter.setGeometry(550, 420, 300, 100)
 		self._choose_fitter.show()
 
-	def export_file(self):
+	def file_exists(self):
 		"""
-		export data and graph as .csv
+		working on this...
 		"""
-		file_name = QFileDialog.getSaveFileName(self, "Save File")
-		data_file = open(file_name, "w")
+		msg = QMessageBox()
+		msg.setIcon(QMessageBox.Warning)
 
+		msg.setText("Warning! File already exists. Would you like to overwrite existing files?")
+		msg.setStandardButtons(QMessageBox.Save | QMessageBox.Close)
+
+		if msg == QMessageBox.Save: 
+			print("save")
+		else:
+			print("close")
+
+	def save_file(self):
+		"""
+		save out fit data and plot
+		"""
+		fitter = self._exp_list["Fitter"]
+
+		file_name = QFileDialog.getSaveFileName(self, "Save File")
+		csv_name = file_name[0] + "_fit.csv"
+		plot_name = file_name[0] + "_plot.pdf"
+
+		#if os.path.exists(csv_name) or os.path.exists(plot_name):
+		#	self.file_exists(#)
+		data_file = open(csv_name, "w")
+		data_file.write(fitter.fit_as_csv)
 		data_file.close()
+
+		plot_save = PdfPages(plot_name)
+		fig, ax = fitter.plot()
+		plot_save.savefig(fig)
+		plot_save.close()

@@ -23,9 +23,9 @@ class AddExp(QWidget):
 		self._exp_list = exp_list
 		self._fitter = exp_list["Fitter"]
 
-		self.exp_layout()
+		self.layout()
 
-	def exp_layout(self):
+	def layout(self):
 		"""
 		"""
 		# exp text, model dropdown, shots select
@@ -38,25 +38,48 @@ class AddExp(QWidget):
 			model_select.addItem(k)
 
 		self._exp_model = self._models[str(model_select.currentText())]
-
 		model_select.activated[str].connect(self.model_select)
 
 		load_exp = QPushButton("Load File", self)
 		load_exp.clicked.connect(self.add_file)
 
 		self._exp_label = QLabel("...", self)
+		model_label = QLabel("Select Model: ", self)
+		shot_label = QLabel("Shot Start: ", self)
 
 		shot_start_text = QLineEdit(self)
 		shot_start_text.textChanged[str].connect(self.shot_select)
 
+		gen_widgets = {load_exp : self._exp_label, model_label : model_select, shot_label : shot_start_text}
+
+		sig = signature(self._fitter.add_experiment)
+		param = sig.parameters
+
+		self._new_param = {}
+
+		for i in param:
+			if "=" not in str(param[i]) and str(param[i]) != "experiment":
+				#connect = lambda new: new_param[param[i]] = new
+
+				label_name = str(param[i]).replace("_", " ") + ": "
+				new_widget = QLineEdit(self)
+				gen_widgets[QLabel(label_name.title(), self)] = new_widget
+				#new_widget.textChanged[str].connect(connect)
+			else:
+				pass
+
 		gen_exp = QPushButton("Generate Experiment", self)
 		gen_exp.clicked.connect(self.generate)
 
-		layout.addWidget(load_exp, 1, 1)
-		layout.addWidget(self._exp_label, 1, 2)
-		layout.addWidget(model_select, 1, 3)
-		layout.addWidget(shot_start_text, 1, 4)
-		layout.addWidget(gen_exp, 2, 4)
+		position = 0
+
+		for label, entry in gen_widgets.items():
+			layout.addWidget(label, position, 0)
+			layout.addWidget(entry, position, 1)
+
+			position += 1
+
+		layout.addWidget(gen_exp, len(gen_widgets)+1, 1)
 
 	def model_select(self, model):
 		"""
@@ -83,12 +106,15 @@ class AddExp(QWidget):
 		"""
 		"""
 		itc_exp = pytc.ITCExperiment(self._exp_file, self._exp_model, self._shot_start)
-		self._exp_list[self._exp_name] = itc_exp
+		self._exp_list["Local"][self._exp_name] = itc_exp
 		self._fitter.add_experiment(itc_exp)
 		self.close()
 
 class ChooseFitter(QWidget):
 	def __init__(self, exp_list):
+		"""
+		Choose fitter for current session
+		"""
 		super().__init__()
 
 		self._fitter_choose = {"Global" : pytc.global_models.GlobalFit(),
@@ -97,9 +123,9 @@ class ChooseFitter(QWidget):
 
 		self._exp_list = exp_list
 
-		self.fitter_layout()
+		self.layout()
 
-	def fitter_layout(self):
+	def layout(self):
 		"""
 		"""
 		# exp text, model dropdown, shots select
@@ -122,13 +148,14 @@ class ChooseFitter(QWidget):
 		layout.addWidget(gen_fitter, 1, 2)
 
 	def fitter_select(self, fitter):
-
+		"""
+		"""
 		self._fitter = self._fitter_choose[fitter]
 
 	def generate(self):
 		"""
 		"""
-		if len(self._exp_list) == 0:
+		if "Fitter" not in self._exp_list:
 			self._exp_list["Fitter"] = self._fitter
 		else:
 			self._exp_list = {}
