@@ -1,8 +1,6 @@
 """
 pytc GUI using qtpy bindings
 """
-import os.path
-
 from qtpy.QtGui import *
 from qtpy.QtCore import *
 from qtpy.QtWidgets import *
@@ -109,10 +107,6 @@ class Main(QMainWindow):
 
 		print(self._exp_list["Local"])
 
-		#for n, e in self._exp_list.items():
-			#if n != "Fitter":
-				#print(n, ": ", e)
-
 	def print_fitter(self):
 		"""
 		testing to make sure fitter selected correctly
@@ -160,8 +154,6 @@ class Main(QMainWindow):
 		csv_name = file_name[0] + "_fit.csv"
 		plot_name = file_name[0] + "_plot.pdf"
 
-		#if os.path.exists(csv_name) or os.path.exists(plot_name):
-		#	self.file_exists(#)
 		data_file = open(csv_name, "w")
 		data_file.write(fitter.fit_as_csv)
 		data_file.close()

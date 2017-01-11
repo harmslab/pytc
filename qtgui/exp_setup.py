@@ -33,6 +33,17 @@ class AddExp(QWidget):
 		layout = QGridLayout()
 		self.setLayout(layout)
 
+		self._gen_widgets = {}
+
+		sig = signature(self._fitter.add_experiment)
+		param = sig.parameters
+
+		for i in param:
+			if "=" not in str(param[i]) and str(param[i]) != "experiment":
+				self._gen_widgets[param[i]] = QLineEdit(self)
+			else:
+				pass
+
 		model_select = QComboBox(self)
 		for k, v in self._models.items():
 			model_select.addItem(k)
@@ -50,36 +61,27 @@ class AddExp(QWidget):
 		shot_start_text = QLineEdit(self)
 		shot_start_text.textChanged[str].connect(self.shot_select)
 
-		gen_widgets = {load_exp : self._exp_label, model_label : model_select, shot_label : shot_start_text}
-
-		sig = signature(self._fitter.add_experiment)
-		param = sig.parameters
-
-		self._new_param = {}
-
-		for i in param:
-			if "=" not in str(param[i]) and str(param[i]) != "experiment":
-				#connect = lambda new: new_param[param[i]] = new
-
-				label_name = str(param[i]).replace("_", " ") + ": "
-				new_widget = QLineEdit(self)
-				gen_widgets[QLabel(label_name.title(), self)] = new_widget
-				#new_widget.textChanged[str].connect(connect)
-			else:
-				pass
-
 		gen_exp = QPushButton("Generate Experiment", self)
 		gen_exp.clicked.connect(self.generate)
 
-		position = 0
+		position = 3
 
-		for label, entry in gen_widgets.items():
+		for name, entry in self._gen_widgets.items():
+			label_name = str(name).replace("_", " ") + ": "
+			label = QLabel(label_name.title(), self)
+
 			layout.addWidget(label, position, 0)
 			layout.addWidget(entry, position, 1)
 
 			position += 1
 
-		layout.addWidget(gen_exp, len(gen_widgets)+1, 1)
+		layout.addWidget(load_exp, 0, 0)
+		layout.addWidget(self._exp_label, 0, 1)
+		layout.addWidget(model_label, 1, 0)
+		layout.addWidget(model_select, 1, 1)
+		layout.addWidget(shot_label, 2, 0)
+		layout.addWidget(shot_start_text, 2, 1)
+		layout.addWidget(gen_exp, len(self._gen_widgets)+4, 1)
 
 	def model_select(self, model):
 		"""
@@ -105,9 +107,12 @@ class AddExp(QWidget):
 	def generate(self):
 		"""
 		"""
+		model_param = [int(v.text()) for (k, v) in self._gen_widgets.items()]
+
 		itc_exp = pytc.ITCExperiment(self._exp_file, self._exp_model, self._shot_start)
 		self._exp_list["Local"][self._exp_name] = itc_exp
-		self._fitter.add_experiment(itc_exp)
+		self._fitter.add_experiment(itc_exp, *model_param)
+		
 		self.close()
 
 class ChooseFitter(QWidget):

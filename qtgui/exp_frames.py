@@ -7,7 +7,8 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import seaborn
 
-from .exp_widgets import *
+#from .indiv_exp import *
+from .exp_sliders import *
 
 class Plot(FigureCanvas):
 	"""
@@ -27,9 +28,6 @@ class Plot(FigureCanvas):
 		FigureCanvas.setSizePolicy(self, QSizePolicy.Expanding, QSizePolicy.Expanding)
 		FigureCanvas.updateGeometry(self)
 
-	def clear(self, fitter):
-
-		fig, ax = fitter.plot()
 
 class PlotBox(QWidget):
 	"""
@@ -44,7 +42,8 @@ class PlotBox(QWidget):
 		self.layout()
 
 	def layout(self):
-
+		"""
+		"""
 		main_layout = QVBoxLayout(self)
 		main_layout.setContentsMargins(0, 0, 0, 0)
 
@@ -59,7 +58,8 @@ class PlotBox(QWidget):
 		main_layout.addWidget(gen_plot)
 
 	def update_plot(self):
-
+		"""
+		"""
 		if self._exp_list:
 			for i in reversed(range(self._plot_layout.count())): 
 				self._plot_layout.itemAt(i).widget().setParent(None)
@@ -77,16 +77,16 @@ class AllExp(QWidget):
 		super().__init__()
 
 		self._exp_list = exp_list
-		self._labels = {}
+		self._slider_list = {"Global" : {}, "Local" : {}}
 		self._global_var = []
 		self.layout()
 
 	def layout(self):
-
+		"""
+		"""
 		main_layout = QVBoxLayout(self)
 
 		scroll = QScrollArea(self)
-		#main_layout.addWidget(scroll)
 
 		exp_content = QWidget()
 		self._exp_box = QVBoxLayout(exp_content)
@@ -95,7 +95,6 @@ class AllExp(QWidget):
 
 		self._param_box = QTextEdit(self)
 		self._param_box.setReadOnly(True)
-		#main_layout.addWidget(self._param_box)
 
 		splitter = QSplitter(Qt.Vertical)
 		splitter.addWidget(scroll)
@@ -113,40 +112,39 @@ class AllExp(QWidget):
 		main_layout.addWidget(print_exp)
 
 	def add_exp(self):
-
+		"""
+		update fit and parameters, update sliders as well
+		"""
 		self._fitter = self._exp_list["Fitter"]
+		self._local_exp = self._exp_list["Local"]
+		self._global_exp = self._exp_list["Global"]
 
-		for n, e in self._exp_list["Local"].items():
-			if e not in self._labels:
-				self._labels[e] = []
-				exp = LocalExp(self._fitter, e, n, self._labels, self._global_var, self._exp_list)
+		for n, e in self._local_exp.items():
+			if e not in self._slider_list["Local"]:
+				self._slider_list["Local"][e] = []
+				exp = LocalExp(self._fitter, e, n, self._slider_list, self._global_var, self._global_exp, self._local_exp)
 				self._exp_box.addWidget(exp)
 			else:
-				print('already in frame')
+				#print('already in frame')
+				pass
 
-		for n, e in self._exp_list["Global"].items():
-			self._exp_box.addWidget(e)
+		for n, e in self._global_exp.items():
+			if e not in self._slider_list["Global"]:
+				self._exp_box.addWidget(e)
 
 		self._fitter.fit()
 		self.return_param()
 
 	def return_param(self):
 		"""
+		update parameter box 
 		"""
+		self._param_box.clear()
 		self._param_box.append(self._fitter.fit_as_csv)
 
 	def print_exp(self):
+		"""
+		testing function, make sure sliders getting added to dictionary
+		"""
+		print(self._slider_list)
 
-		print(self._labels)
-
-	def remove(self, exp_frame):
-
-		 pass
-
-	def hide(self, exp_frame):
-
-		exp_frame.hide()
-
-	def show(self, exp_frame):
-
-		exp_frame.show()
