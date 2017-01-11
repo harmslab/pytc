@@ -83,6 +83,8 @@ class AddExp(QWidget):
 		layout.addWidget(shot_start_text, 2, 1)
 		layout.addWidget(gen_exp, len(self._gen_widgets)+4, 1)
 
+		self.setWindowTitle('Add Experiment to Fitter')
+
 	def model_select(self, model):
 		"""
 		"""
@@ -92,7 +94,10 @@ class AddExp(QWidget):
 	def shot_select(self, shot):
 		"""
 		"""
-		self._shot_start = int(shot)
+		try:
+			self._shot_start = int(shot)
+		except:
+			pass
 		#print(self._shot_start, type(self._shot_start))
 
 	def add_file(self):
@@ -112,11 +117,11 @@ class AddExp(QWidget):
 		itc_exp = pytc.ITCExperiment(self._exp_file, self._exp_model, self._shot_start)
 		self._exp_list["Local"][self._exp_name] = itc_exp
 		self._fitter.add_experiment(itc_exp, *model_param)
-		
+
 		self.close()
 
 class ChooseFitter(QWidget):
-	def __init__(self, exp_list):
+	def __init__(self, exp_list, parent):
 		"""
 		Choose fitter for current session
 		"""
@@ -127,6 +132,7 @@ class ChooseFitter(QWidget):
                         "Temperature Dependence" : pytc.global_models.TempDependence()}
 
 		self._exp_list = exp_list
+		self._parent = parent
 
 		self.layout()
 
@@ -152,6 +158,8 @@ class ChooseFitter(QWidget):
 		layout.addWidget(fitter_select, 0, 1, 1, 2)
 		layout.addWidget(gen_fitter, 1, 2)
 
+		self.setWindowTitle('Choose Fitter')
+
 	def fitter_select(self, fitter):
 		"""
 		"""
@@ -163,7 +171,8 @@ class ChooseFitter(QWidget):
 		if "Fitter" not in self._exp_list:
 			self._exp_list["Fitter"] = self._fitter
 		else:
-			self._exp_list = {}
+			#### need to finish this
+			self._parent.clear()
 			self._exp_list["Fitter"] = self._fitter
 			print("start over")
 

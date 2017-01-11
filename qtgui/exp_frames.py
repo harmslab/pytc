@@ -68,6 +68,12 @@ class PlotBox(QWidget):
 			plot_figure = Plot(fitter)
 			self._plot_layout.addWidget(plot_figure)
 
+	def clear(self):
+		"""
+		"""
+		for i in reversed(range(self._plot_layout.count())): 
+			self._plot_layout.itemAt(i).widget().setParent(None)
+
 class AllExp(QWidget):
 	"""
 	experiment box widget
@@ -107,7 +113,7 @@ class AllExp(QWidget):
 		gen_experiments.clicked.connect(self.add_exp)
 		main_layout.addWidget(gen_experiments)
 
-		print_exp = QPushButton("Print Experiments", self)
+		print_exp = QPushButton("Print Experiments (Testing)", self)
 		print_exp.clicked.connect(self.print_exp)
 		main_layout.addWidget(print_exp)
 
@@ -115,25 +121,28 @@ class AllExp(QWidget):
 		"""
 		update fit and parameters, update sliders as well
 		"""
-		self._fitter = self._exp_list["Fitter"]
-		self._local_exp = self._exp_list["Local"]
-		self._global_exp = self._exp_list["Global"]
+		try:
+			self._fitter = self._exp_list["Fitter"]
+			self._local_exp = self._exp_list["Local"]
+			self._global_exp = self._exp_list["Global"]
 
-		for n, e in self._local_exp.items():
-			if e not in self._slider_list["Local"]:
-				self._slider_list["Local"][e] = []
-				exp = LocalExp(self._fitter, e, n, self._slider_list, self._global_var, self._global_exp, self._local_exp)
-				self._exp_box.addWidget(exp)
-			else:
-				#print('already in frame')
-				pass
+			for n, e in self._local_exp.items():
+				if e not in self._slider_list["Local"]:
+					self._slider_list["Local"][e] = []
+					exp = LocalExp(self._fitter, e, n, self._slider_list, self._global_var, self._global_exp, self._local_exp)
+					self._exp_box.addWidget(exp)
+				else:
+					#print('already in frame')
+					pass
 
-		for n, e in self._global_exp.items():
-			if e not in self._slider_list["Global"]:
-				self._exp_box.addWidget(e)
+			for n, e in self._global_exp.items():
+				if e not in self._slider_list["Global"]:
+					self._exp_box.addWidget(e)
 
-		self._fitter.fit()
-		self.return_param()
+			self._fitter.fit()
+			self.return_param()
+		except:
+			pass
 
 	def return_param(self):
 		"""
@@ -147,4 +156,13 @@ class AllExp(QWidget):
 		testing function, make sure sliders getting added to dictionary
 		"""
 		print(self._slider_list)
+
+	def clear(self):
+		"""
+		"""
+		self._slider_list = {"Global" : {}, "Local" : {}}
+		self._exp_list = {"Global" : {}, "Local" : {}}
+		self._param_box.clear()
+		for i in reversed(range(self._exp_box.count())): 
+			self._exp_box.itemAt(i).widget().setParent(None)
 

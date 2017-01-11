@@ -2,18 +2,20 @@ from qtpy.QtGui import *
 from qtpy.QtCore import *
 from qtpy.QtWidgets import *
 
-#from .indiv_exp import *
-
 class SlidersExpanded(QWidget):
 	"""
 	extra slider options pop-up
 	"""
 
-	def __init__(self, exp, fitter):
+	def __init__(self, exp, param_name, fitter, slider):
 		super().__init__()
 
 		self._exp = exp
+		self._param_name = param_name
 		self._fitter = fitter
+		self._slider = slider
+		self._min = slider.minimum()
+		self._max = slider.maximum()
 
 		self.layout()
 
@@ -21,7 +23,53 @@ class SlidersExpanded(QWidget):
 
 		main_layout = QGridLayout(self)
 
-		# update bounds, link???
+		update_min = QLineEdit(self)
+		update_max = QLineEdit(self)
+
+		min_label = QLabel("Update Min: ", self)
+		max_label = QLabel("Update Max: ", self)
+
+		main_layout.addWidget(min_label, 0, 0)
+		main_layout.addWidget(update_min, 0, 1)
+		main_layout.addWidget(max_label, 1, 0)
+		main_layout.addWidget(update_max, 1, 1)
+
+		self.setWindowTitle("Update Bounds")
+
+	def min_bounds(self, value):
+		"""
+		"""
+		try:
+			self._min = int(value)
+			self.update()
+		except:
+			pass
+
+		print("min bound updated: " + self._min)
+
+	def max_bounds(self, value):
+		"""
+		"""
+		try:
+			self._max = int(value)
+			self.update()
+		except:
+			pass
+
+		print("max bound updated: " + self._max)
+
+	def update(self):
+		"""
+		"""
+		bounds = [self._min, self._max]
+		self._fitter.update_bounds(self._param_name, bounds, self._exp)
+
+		# check if bounds are smaller than range, then update.
+		curr_range = self._exp.model.param_guess_ranges[self._param_name]
+		curr_bounds = self._exp.model.bounds[self._param_name]
+
+		if curr_range[0] < curr_bounds[0] or curr_range[1] > curr_bounds[1]:
+			self._fitter.update_range(self._param_name, bounds, self._exp)
 
 
 class Sliders(QWidget):
@@ -62,7 +110,7 @@ class Sliders(QWidget):
 		self._fix = QCheckBox("Fix?", self)
 		self._fix.toggle()
 		self._fix.setChecked(False)
-		self._fix.stateChanged.connect(self.fix)
+		self._fix.stateChanged.connect(self.fix_layout)
 		self._layout.addWidget(self._fix, 1, 0)
 
 		self._slider = QSlider(Qt.Horizontal)
@@ -74,6 +122,7 @@ class Sliders(QWidget):
 		self._fix_int = QLineEdit(self)
 		self._layout.addWidget(self._fix_int, 1, 2)
 		self._fix_int.setText(str(1))
+		self._fix_int.textChanged[str].connect(self.fix)
 		self._fix_int.hide()
 
 		self._expand = QPushButton("...", self)
@@ -82,26 +131,31 @@ class Sliders(QWidget):
 
 	def expanded(self):
 
-		self._more = SlidersExpanded(self._exp, self._fitter)
+		self._more = SlidersExpanded(self._exp, self._param_name, self._fitter, self._slider)
 		self._more.setGeometry(500, 400, 400, 100)
 		self._more.show()
 
-	def fix(self, state):
+	def fix_layout(self, state):
 
 		if state == Qt.Checked:
 			# change widget views
 			self._fix_int.show()
 			self._slider.hide()
 
-			self._fitter.fix(self._exp, **{self._param_name: int(self._fix_int.text())})
+			self._fitter.update_fixed(self._param_name, int(self._fix_int.text()), self._exp)
 			print(self._fix_int.text())
 		else:
 			#change widget views
 			self._fix_int.hide()
 			self._slider.show()
 
-			self._fitter.unfix(*[self._param_name], expt = self._exp)
+			self._fitter.update_fixed(self._param_name, None, self._exp)
 			print('unfixed')
+
+	def fix(self, value):
+
+		self._fitter.update_fixed(self._param_name, int(value), self._exp)
+		print("fixed to value " + value)
 
 	def update_val(self, value):
 
@@ -172,6 +226,9 @@ class LocalSliders(Sliders):
 		self._slider.show()
 		self._fix.show()
 
+		unlink_index = self._link.findText("Unlink", Qt.MatchFixedString)
+		self._link.setCurrentIndex(unlink_index)
+
 class GlobalSliders(Sliders):
 	"""
 	create sliders for an experiment
@@ -212,6 +269,9 @@ class Experiments(QWidget):
 		name_stretch.addStretch(1)
 		name_stretch.addWidget(name_label)
 		main_layout.addLayout(name_stretch)
+
+		header_layout = QHBoxLayout()
+		
 
 		self._exp_layout = QVBoxLayout()
 		self._exp_widget = QFrame()

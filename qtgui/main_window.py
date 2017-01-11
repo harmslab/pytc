@@ -28,16 +28,22 @@ class Splitter(QWidget):
 
 		#self.setStyleSheet(open("style.qss", "r").read())
 
-		exp_box = AllExp(self._exp_list)
-		plot_frame = PlotBox(self._exp_list)
+		self._exp_box = AllExp(self._exp_list)
+		self._plot_frame = PlotBox(self._exp_list)
 
 		splitter = QSplitter(Qt.Horizontal)
-		splitter.addWidget(plot_frame)
-		splitter.addWidget(exp_box)
+		splitter.addWidget(self._plot_frame)
+		splitter.addWidget(self._exp_box)
 		splitter.setSizes([200, 200])
 
 		main_frame.addWidget(splitter)
 		self.setLayout(main_frame)
+
+	def clear(self):
+		"""
+		"""
+		self._plot_frame.clear()
+		self._exp_box.clear()
 
 class Main(QMainWindow):
 	"""
@@ -70,31 +76,40 @@ class Main(QMainWindow):
 		return_fitter.triggered.connect(self.print_fitter)
 		testing_commands.addAction(return_fitter)
 
-		new_exp = QAction("New", self)
+		new_exp = QAction("New Session", self)
 		new_exp.setShortcut("Ctrl+N")
 		new_exp.triggered.connect(self.new_exp)
 		file_menu.addAction(new_exp)
 
+		file_menu.addSeparator()
+
 		add_exp = QAction("Add Experiment", self)
-		add_exp.setShortcut("Ctrl+A")
+		add_exp.setShortcut("Ctrl+Shift+N")
 		add_exp.triggered.connect(self.add_file)
 		file_menu.addAction(add_exp)
 
-		export_exp = QAction("Export", self)
-		export_exp.setShortcut("Ctrl+E")
-		file_menu.addAction(export_exp)
+		file_menu.addSeparator()
 
 		save_exp = QAction("Save", self)
 		save_exp.setShortcut("Ctrl+S")
 		save_exp.triggered.connect(self.save_file)
 		file_menu.addAction(save_exp)
 
-		open_exp = QAction("Open", self)
-		open_exp.setShortcut("Ctrl+O")
+		export_exp = QAction("Export (not working)", self)
+		file_menu.addAction(export_exp)
+
+		open_exp = QAction("Open (not working)", self)
 		file_menu.addAction(open_exp)
 
-		exp = Splitter(self._exp_list)
-		self.setCentralWidget(exp)
+		file_menu.addSeparator()
+
+		close_window = QAction("Close Window", self)
+		close_window.setShortcut("Ctrl+W")
+		close_window.triggered.connect(self.close_program)
+		file_menu.addAction(close_window)
+
+		self._exp = Splitter(self._exp_list)
+		self.setCentralWidget(self._exp)
 
 		self.setGeometry(300, 150, 950, 600)
 		self.setWindowTitle('pytc')
@@ -125,7 +140,8 @@ class Main(QMainWindow):
 		"""
 		choose fitter and start new fit
 		"""
-		self._choose_fitter = ChooseFitter(self._exp_list)
+
+		self._choose_fitter = ChooseFitter(self._exp_list, self._exp)
 		self._choose_fitter.setGeometry(550, 420, 300, 100)
 		self._choose_fitter.show()
 
@@ -162,3 +178,10 @@ class Main(QMainWindow):
 		fig, ax = fitter.plot()
 		plot_save.savefig(fig)
 		plot_save.close()
+
+	def close_program(self):
+		"""
+		close window
+		"""
+
+		self.close()
