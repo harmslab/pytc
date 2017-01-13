@@ -60,7 +60,7 @@ class PlotBox(QWidget):
 	def update_plot(self):
 		"""
 		"""
-		if self._exp_list:
+		if "Fitter" in self._exp_list:
 			for i in reversed(range(self._plot_layout.count())): 
 				self._plot_layout.itemAt(i).widget().setParent(None)
 

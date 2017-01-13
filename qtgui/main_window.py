@@ -19,31 +19,32 @@ class Splitter(QWidget):
 		super().__init__()
 
 		self._exp_list = exp_list
+
 		self.layout()
 
 	def layout(self):
 		"""
 		"""
-		main_frame = QHBoxLayout(self)
+		main_layout = QHBoxLayout(self)
 
 		#self.setStyleSheet(open("style.qss", "r").read())
 
-		self._exp_box = AllExp(self._exp_list)
+		self._exp_frame = AllExp(self._exp_list)
 		self._plot_frame = PlotBox(self._exp_list)
 
 		splitter = QSplitter(Qt.Horizontal)
 		splitter.addWidget(self._plot_frame)
-		splitter.addWidget(self._exp_box)
+		splitter.addWidget(self._exp_frame)
 		splitter.setSizes([200, 200])
 
-		main_frame.addWidget(splitter)
-		self.setLayout(main_frame)
+		main_layout.addWidget(splitter)
+		self.setLayout(main_layout)
 
 	def clear(self):
 		"""
 		"""
 		self._plot_frame.clear()
-		self._exp_box.clear()
+		self._exp_frame.clear()
 
 class Main(QMainWindow):
 	"""
@@ -131,9 +132,13 @@ class Main(QMainWindow):
 		"""
 		add a new pytc experiment.
 		"""
-		self._new_exp = AddExp(self._exp_list)
-		self._new_exp.setGeometry(530, 400, 100, 200)
-		self._new_exp.show()
+		if "Fitter" in self._exp_list:
+			self._new_exp = AddExp(self._exp_list)
+			self._new_exp.setGeometry(530, 400, 100, 200)
+			self._new_exp.show()
+		else:
+			self._warning = WarningBox("No fitter chosen")
+			#self._warning.setGeometry(550, 420, 300, 100)
 
 	def new_exp(self):
 		"""

@@ -106,33 +106,33 @@ class Sliders(QWidget):
 	def layout(self):
 		"""
 		"""
-		self._layout = QGridLayout(self)
-		self._layout.setVerticalSpacing(40)
+		self._main_layout = QGridLayout(self)
+		self._main_layout.setVerticalSpacing(40)
 
 		self._name_label = QLabel(self._param_name, self)
-		self._layout.addWidget(self._name_label, 0, 0, 0, 2)
+		self._main_layout.addWidget(self._name_label, 0, 0, 0, 2)
 
 		self._fix = QCheckBox("Fix?", self)
 		self._fix.toggle()
 		self._fix.setChecked(False)
 		self._fix.stateChanged.connect(self.fix_layout)
-		self._layout.addWidget(self._fix, 1, 0)
+		self._main_layout.addWidget(self._fix, 1, 0)
 
 		self._slider = QSlider(Qt.Horizontal)
 		self._slider.valueChanged[int].connect(self.update_val)
-		self._layout.addWidget(self._slider, 1, 1)
+		self._main_layout.addWidget(self._slider, 1, 1)
 
 		self.bounds()
 
 		self._fix_int = QLineEdit(self)
-		self._layout.addWidget(self._fix_int, 1, 2)
+		self._main_layout.addWidget(self._fix_int, 1, 2)
 		self._fix_int.setText(str(1))
 		self._fix_int.textChanged[str].connect(self.fix)
 		self._fix_int.hide()
 
 		self._expand = QPushButton("...", self)
 		self._expand.clicked.connect(self.expanded)
-		self._layout.addWidget(self._expand, 1, 4)
+		self._main_layout.addWidget(self._expand, 1, 4)
 
 	def expanded(self):
 		"""
@@ -182,7 +182,7 @@ class Sliders(QWidget):
 
 class LocalSliders(Sliders):
 	"""
-	create sliders for an experiment
+	create sliders for a local exp object
 	"""
 
 	def __init__(self, exp, param_name, value, fitter, global_list, slider_list, global_exp):
@@ -256,7 +256,7 @@ class LocalSliders(Sliders):
 
 class GlobalSliders(Sliders):
 	"""
-	create sliders for an experiment
+	create sliders for a global exp object
 	"""
 
 	def __init__(self, exp, param_name, fitter, global_exp):
@@ -339,7 +339,7 @@ class Experiments(QWidget):
 	def remove(self):
 		"""
 		"""
-		 pass
+		pass
 
 	def hide(self):
 		"""
@@ -352,7 +352,9 @@ class Experiments(QWidget):
 		self._exp_widget.show()
 
 class LocalExp(Experiments):
-
+	"""
+	hold local parameters/sliders
+	"""
 	def __init__(self, fitter, exp, name, slider_list, global_var, global_exp, local_exp):
 
 		self._local_exp = local_exp
@@ -380,7 +382,9 @@ class LocalExp(Experiments):
 		self.close()
 
 class GlobalExp(Experiments):
-
+	"""
+	hold global parameter/sliders
+	"""
 	def __init__(self, fitter, name, slider_list, global_var, global_exp):
 
 		super().__init__(fitter, name, slider_list, global_var, global_exp)
