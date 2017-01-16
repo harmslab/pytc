@@ -148,39 +148,27 @@ class Main(QMainWindow):
 		self._choose_fitter.setGeometry(550, 420, 300, 100)
 		self._choose_fitter.show()
 
-	def file_exists(self):
-		"""
-		working on this...
-		"""
-		msg = QMessageBox()
-		msg.setIcon(QMessageBox.Warning)
-
-		msg.setText("Warning! File already exists. Would you like to overwrite existing files?")
-		msg.setStandardButtons(QMessageBox.Save | QMessageBox.Close)
-
-		if msg == QMessageBox.Save: 
-			print("save")
-		else:
-			print("close")
-
 	def save_file(self):
 		"""
 		save out fit data and plot
 		"""
-		fitter = self._exp_list["Fitter"]
 
-		file_name = QFileDialog.getSaveFileName(self, "Save File")
-		csv_name = file_name[0] + "_fit.csv"
-		plot_name = file_name[0] + "_plot.pdf"
+		file_name, _ = QFileDialog.getSaveFileName(self, "Save Experiment Output", "", "All Files (*);;Text Files (*.txt);;CSV Files (*.csv)")
+		plot_name = file_name.split(".")[0] + "_plot.pdf"
 
-		data_file = open(csv_name, "w")
-		data_file.write(fitter.fit_as_csv)
-		data_file.close()
+		try:
+			fitter = self._exp_list["Fitter"]
 
-		plot_save = PdfPages(plot_name)
-		fig, ax = fitter.plot()
-		plot_save.savefig(fig)
-		plot_save.close()
+			data_file = open(file_name, "w")
+			data_file.write(fitter.fit_as_csv)
+			data_file.close()
+
+			plot_save = PdfPages(plot_name)
+			fig, ax = fitter.plot()
+			plot_save.savefig(fig)
+			plot_save.close()
+		except:
+			print("save failed")
 
 	def close_program(self):
 		"""

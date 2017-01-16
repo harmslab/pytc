@@ -210,7 +210,7 @@ class LocalSliders(Sliders):
 			self._link.addItem(i)
 
 		self._link.activated[str].connect(self.link_unlink)
-		self._layout.addWidget(self._link, 1, 3)
+		self._main_layout.addWidget(self._link, 1, 3)
 
 	def link_unlink(self, status):
 		"""

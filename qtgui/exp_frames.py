@@ -121,10 +121,12 @@ class AllExp(QWidget):
 		"""
 		update fit and parameters, update sliders as well
 		"""
-		try:
-			self._fitter = self._exp_list["Fitter"]
-			self._local_exp = self._exp_list["Local"]
-			self._global_exp = self._exp_list["Global"]
+
+		self._fitter = self._exp_list["Fitter"]
+		self._local_exp = self._exp_list["Local"]
+		self._global_exp = self._exp_list["Global"]
+
+		if len(self._local_exp) != 0:
 
 			for n, e in self._local_exp.items():
 				if e not in self._slider_list["Local"]:
@@ -141,8 +143,8 @@ class AllExp(QWidget):
 
 			self._fitter.fit()
 			self.return_param()
-		except:
-			pass
+		else:
+			print("failed :(")
 
 	def return_param(self):
 		"""
