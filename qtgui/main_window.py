@@ -137,8 +137,7 @@ class Main(QMainWindow):
 			self._new_exp.setGeometry(530, 400, 100, 200)
 			self._new_exp.show()
 		else:
-			self._warning = WarningBox("No fitter chosen")
-			#self._warning.setGeometry(550, 420, 300, 100)
+			error_message = QMessageBox.warning(self, "warning!", "No fitter chosen", QMessageBox.Ok)
 
 	def new_exp(self):
 		"""

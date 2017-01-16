@@ -121,7 +121,7 @@ class AddExp(QWidget):
 
 			self.close()
 		else:
-			self._warning = WarningBox("No .DH file provided")
+			error_message = QMessageBox.warning(self, "warning", "No .DH file provided", QMessageBox.Ok)
 
 class ChooseFitter(QWidget):
 	"""
@@ -180,26 +180,3 @@ class ChooseFitter(QWidget):
 			print("start over")
 
 		self.close()
-
-class WarningBox(QWidget):
-	"""
-	create error/warning message pop-up
-	"""
-	def __init__(self, message):
-		super().__init__()
-
-		self._message = message
-
-		self.layout()
-
-	def layout(self):
-		self.setWindowTitle("warning!")
-
-		error_message = QMessageBox.warning(self, "warning", self._message, QMessageBox.Ok)
-		#error_message.setIcon(QMessageBox.Warning)
-		#error_message.setText(self._message)
-
-		#error_message.set
-
-		if error_message == QMessageBox.Ok:
-			self.close()
