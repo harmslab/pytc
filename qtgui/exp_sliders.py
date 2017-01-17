@@ -106,33 +106,33 @@ class Sliders(QWidget):
 	def layout(self):
 		"""
 		"""
-		self._layout = QGridLayout(self)
-		self._layout.setVerticalSpacing(40)
+		self._main_layout = QGridLayout(self)
+		self._main_layout.setVerticalSpacing(40)
 
 		self._name_label = QLabel(self._param_name, self)
-		self._layout.addWidget(self._name_label, 0, 0, 0, 2)
+		self._main_layout.addWidget(self._name_label, 0, 0, 0, 2)
 
 		self._fix = QCheckBox("Fix?", self)
 		self._fix.toggle()
 		self._fix.setChecked(False)
 		self._fix.stateChanged.connect(self.fix_layout)
-		self._layout.addWidget(self._fix, 1, 0)
+		self._main_layout.addWidget(self._fix, 1, 0)
 
 		self._slider = QSlider(Qt.Horizontal)
 		self._slider.valueChanged[int].connect(self.update_val)
-		self._layout.addWidget(self._slider, 1, 1)
+		self._main_layout.addWidget(self._slider, 1, 1)
 
 		self.bounds()
 
 		self._fix_int = QLineEdit(self)
-		self._layout.addWidget(self._fix_int, 1, 2)
+		self._main_layout.addWidget(self._fix_int, 1, 2)
 		self._fix_int.setText(str(1))
 		self._fix_int.textChanged[str].connect(self.fix)
 		self._fix_int.hide()
 
 		self._expand = QPushButton("...", self)
 		self._expand.clicked.connect(self.expanded)
-		self._layout.addWidget(self._expand, 1, 4)
+		self._main_layout.addWidget(self._expand, 1, 4)
 
 	def expanded(self):
 		"""
@@ -165,10 +165,10 @@ class Sliders(QWidget):
 		"""
 		update fixed value if changed
 		"""
-		try:
+		if value:
 			self._fitter.update_fixed(self._param_name, int(value), self._exp)
-		except:
-			pass
+		else:
+			print("unabled to fix")
 
 		print("fixed to value " + value)
 
@@ -182,7 +182,7 @@ class Sliders(QWidget):
 
 class LocalSliders(Sliders):
 	"""
-	create sliders for an experiment
+	create sliders for a local exp object
 	"""
 
 	def __init__(self, exp, param_name, value, fitter, global_list, slider_list, global_exp):
@@ -210,15 +210,19 @@ class LocalSliders(Sliders):
 			self._link.addItem(i)
 
 		self._link.activated[str].connect(self.link_unlink)
-		self._layout.addWidget(self._link, 1, 3)
+		self._main_layout.addWidget(self._link, 1, 3)
 
 	def link_unlink(self, status):
 		"""
 		add global variable, update if parameter is linked or not to a global paremeter
 		"""
 		if status == "Unlink":
-			self._fitter.unlink_from_global(self._exp, self._param_name)
-			self._global_exp[status].unlinked(self)
+			try:
+				self._fitter.unlink_from_global(self._exp, self._param_name)
+				self._global_exp[status].unlinked(self)
+			except:
+				pass
+
 			print("unlinked")
 		elif status == "Add Global Var":
 			text, ok = QInputDialog.getText(self, "Add Global Variable", "Var Name: ")
@@ -256,7 +260,7 @@ class LocalSliders(Sliders):
 
 class GlobalSliders(Sliders):
 	"""
-	create sliders for an experiment
+	create sliders for a global exp object
 	"""
 
 	def __init__(self, exp, param_name, fitter, global_exp):
@@ -299,8 +303,8 @@ class Experiments(QWidget):
 		name_stretch.addWidget(name_label)
 		main_layout.addLayout(name_stretch)
 
-		header_layout = QHBoxLayout()
-
+		self._header_layout = QHBoxLayout()
+		main_layout.addLayout(self._header_layout)
 
 		self._exp_layout = QVBoxLayout()
 		self._exp_widget = QFrame()
@@ -339,7 +343,7 @@ class Experiments(QWidget):
 	def remove(self):
 		"""
 		"""
-		 pass
+		pass
 
 	def hide(self):
 		"""
@@ -352,7 +356,9 @@ class Experiments(QWidget):
 		self._exp_widget.show()
 
 class LocalExp(Experiments):
-
+	"""
+	hold local parameters/sliders
+	"""
 	def __init__(self, fitter, exp, name, slider_list, global_var, global_exp, local_exp):
 
 		self._local_exp = local_exp
@@ -371,6 +377,15 @@ class LocalExp(Experiments):
 			self._slider_list["Local"][self._exp].append(s)
 			self._exp_layout.addWidget(s)
 
+
+		fix_label = QLabel("Fix Guess")
+		guess_label = QLabel("Parameter Guess")
+		link_label = QLabel("Link/Unlink to Global Param")
+
+		self._header_layout.addWidget(fix_label)
+		self._header_layout.addWidget(guess_label)
+		self._header_layout.addWidget(link_label)
+
 	def remove(self):
 		"""
 		"""
@@ -380,7 +395,9 @@ class LocalExp(Experiments):
 		self.close()
 
 class GlobalExp(Experiments):
-
+	"""
+	hold global parameter/sliders
+	"""
 	def __init__(self, fitter, name, slider_list, global_var, global_exp):
 
 		super().__init__(fitter, name, slider_list, global_var, global_exp)
@@ -394,6 +411,12 @@ class GlobalExp(Experiments):
 		s = GlobalSliders(None, self._name, self._fitter, self._global_exp)
 		self._slider_list["Global"][self._name] = s
 		self._exp_layout.addWidget(s)
+
+		fix_label = QLabel("Fix Guess")
+		guess_label = QLabel("Parameter Guess")
+
+		self._header_layout.addWidget(fix_label)
+		self._header_layout.addWidget(guess_label)
 
 	def linked(self, loc_slider):
 		"""

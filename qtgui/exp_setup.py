@@ -30,8 +30,8 @@ class AddExp(QWidget):
 		"""
 		# exp text, model dropdown, shots select
 
-		layout = QGridLayout()
-		self.setLayout(layout)
+		main_layout = QGridLayout()
+		self.setLayout(main_layout)
 
 		self._gen_widgets = {}
 
@@ -70,18 +70,18 @@ class AddExp(QWidget):
 			label_name = str(name).replace("_", " ") + ": "
 			label = QLabel(label_name.title(), self)
 
-			layout.addWidget(label, position, 0)
-			layout.addWidget(entry, position, 1)
+			main_layout.addWidget(label, position, 0)
+			main_layout.addWidget(entry, position, 1)
 
 			position += 1
 
-		layout.addWidget(load_exp, 0, 0)
-		layout.addWidget(self._exp_label, 0, 1)
-		layout.addWidget(model_label, 1, 0)
-		layout.addWidget(model_select, 1, 1)
-		layout.addWidget(shot_label, 2, 0)
-		layout.addWidget(shot_start_text, 2, 1)
-		layout.addWidget(gen_exp, len(self._gen_widgets)+4, 1)
+		main_layout.addWidget(load_exp, 0, 0)
+		main_layout.addWidget(self._exp_label, 0, 1)
+		main_layout.addWidget(model_label, 1, 0)
+		main_layout.addWidget(model_select, 1, 1)
+		main_layout.addWidget(shot_label, 2, 0)
+		main_layout.addWidget(shot_start_text, 2, 1)
+		main_layout.addWidget(gen_exp, len(self._gen_widgets)+4, 1)
 
 		self.setWindowTitle('Add Experiment to Fitter')
 
@@ -112,19 +112,22 @@ class AddExp(QWidget):
 	def generate(self):
 		"""
 		"""
-		model_param = [int(v.text()) for (k, v) in self._gen_widgets.items()]
+		if self._exp_file != None:
+			model_param = [int(v.text()) for (k, v) in self._gen_widgets.items()]
 
-		itc_exp = pytc.ITCExperiment(self._exp_file, self._exp_model, self._shot_start)
-		self._exp_list["Local"][self._exp_name] = itc_exp
-		self._fitter.add_experiment(itc_exp, *model_param)
+			itc_exp = pytc.ITCExperiment(self._exp_file, self._exp_model, self._shot_start)
+			self._exp_list["Local"][self._exp_name] = itc_exp
+			self._fitter.add_experiment(itc_exp, *model_param)
 
-		self.close()
+			self.close()
+		else:
+			error_message = QMessageBox.warning(self, "warning", "No .DH file provided", QMessageBox.Ok)
 
 class ChooseFitter(QWidget):
+	"""
+	Choose fitter for current session
+	"""
 	def __init__(self, exp_list, parent):
-		"""
-		Choose fitter for current session
-		"""
 		super().__init__()
 
 		self._fitter_choose = {"Global" : pytc.global_models.GlobalFit(),
@@ -141,8 +144,8 @@ class ChooseFitter(QWidget):
 		"""
 		# exp text, model dropdown, shots select
 
-		layout = QGridLayout()
-		self.setLayout(layout)
+		main_layout = QGridLayout()
+		self.setLayout(main_layout)
 
 		fitter_select = QComboBox(self)
 		for k, v in self._fitter_choose.items():
@@ -155,8 +158,8 @@ class ChooseFitter(QWidget):
 		gen_fitter = QPushButton("Select Fitter", self)
 		gen_fitter.clicked.connect(self.generate)
 
-		layout.addWidget(fitter_select, 0, 1, 1, 2)
-		layout.addWidget(gen_fitter, 1, 2)
+		main_layout.addWidget(fitter_select, 0, 1, 1, 2)
+		main_layout.addWidget(gen_fitter, 1, 2)
 
 		self.setWindowTitle('Choose Fitter')
 

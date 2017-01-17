@@ -7,6 +7,8 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import seaborn
 
+from pytc.global_models import GlobalFit
+
 #from .indiv_exp import *
 from .exp_sliders import *
 
@@ -51,6 +53,10 @@ class PlotBox(QWidget):
 		plot_frame = QFrame()
 		plot_frame.setLayout(self._plot_layout)
 
+		# just to get same plot layout upon application start-up
+		plot_figure = Plot(GlobalFit())
+		self._plot_layout.addWidget(plot_figure)
+
 		main_layout.addWidget(plot_frame)
 		
 		gen_plot = QPushButton("Generate Plot", self)
@@ -60,7 +66,7 @@ class PlotBox(QWidget):
 	def update_plot(self):
 		"""
 		"""
-		if self._exp_list:
+		if "Fitter" in self._exp_list:
 			for i in reversed(range(self._plot_layout.count())): 
 				self._plot_layout.itemAt(i).widget().setParent(None)
 
@@ -121,10 +127,12 @@ class AllExp(QWidget):
 		"""
 		update fit and parameters, update sliders as well
 		"""
-		try:
+		self._local_exp = self._exp_list["Local"]
+		self._global_exp = self._exp_list["Global"]
+
+		if len(self._local_exp) != 0:
+
 			self._fitter = self._exp_list["Fitter"]
-			self._local_exp = self._exp_list["Local"]
-			self._global_exp = self._exp_list["Global"]
 
 			for n, e in self._local_exp.items():
 				if e not in self._slider_list["Local"]:
@@ -141,8 +149,8 @@ class AllExp(QWidget):
 
 			self._fitter.fit()
 			self.return_param()
-		except:
-			pass
+		else:
+			print("failed :(")
 
 	def return_param(self):
 		"""

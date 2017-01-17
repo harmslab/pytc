@@ -19,31 +19,32 @@ class Splitter(QWidget):
 		super().__init__()
 
 		self._exp_list = exp_list
+
 		self.layout()
 
 	def layout(self):
 		"""
 		"""
-		main_frame = QHBoxLayout(self)
+		main_layout = QHBoxLayout(self)
 
 		#self.setStyleSheet(open("style.qss", "r").read())
 
-		self._exp_box = AllExp(self._exp_list)
+		self._exp_frame = AllExp(self._exp_list)
 		self._plot_frame = PlotBox(self._exp_list)
 
 		splitter = QSplitter(Qt.Horizontal)
 		splitter.addWidget(self._plot_frame)
-		splitter.addWidget(self._exp_box)
+		splitter.addWidget(self._exp_frame)
 		splitter.setSizes([200, 200])
 
-		main_frame.addWidget(splitter)
-		self.setLayout(main_frame)
+		main_layout.addWidget(splitter)
+		self.setLayout(main_layout)
 
 	def clear(self):
 		"""
 		"""
 		self._plot_frame.clear()
-		self._exp_box.clear()
+		self._exp_frame.clear()
 
 class Main(QMainWindow):
 	"""
@@ -131,9 +132,12 @@ class Main(QMainWindow):
 		"""
 		add a new pytc experiment.
 		"""
-		self._new_exp = AddExp(self._exp_list)
-		self._new_exp.setGeometry(530, 400, 100, 200)
-		self._new_exp.show()
+		if "Fitter" in self._exp_list:
+			self._new_exp = AddExp(self._exp_list)
+			self._new_exp.setGeometry(530, 400, 100, 200)
+			self._new_exp.show()
+		else:
+			error_message = QMessageBox.warning(self, "warning!", "No fitter chosen", QMessageBox.Ok)
 
 	def new_exp(self):
 		"""
@@ -144,39 +148,27 @@ class Main(QMainWindow):
 		self._choose_fitter.setGeometry(550, 420, 300, 100)
 		self._choose_fitter.show()
 
-	def file_exists(self):
-		"""
-		working on this...
-		"""
-		msg = QMessageBox()
-		msg.setIcon(QMessageBox.Warning)
-
-		msg.setText("Warning! File already exists. Would you like to overwrite existing files?")
-		msg.setStandardButtons(QMessageBox.Save | QMessageBox.Close)
-
-		if msg == QMessageBox.Save: 
-			print("save")
-		else:
-			print("close")
-
 	def save_file(self):
 		"""
 		save out fit data and plot
 		"""
-		fitter = self._exp_list["Fitter"]
 
-		file_name = QFileDialog.getSaveFileName(self, "Save File")
-		csv_name = file_name[0] + "_fit.csv"
-		plot_name = file_name[0] + "_plot.pdf"
+		file_name, _ = QFileDialog.getSaveFileName(self, "Save Experiment Output", "", "All Files (*);;Text Files (*.txt);;CSV Files (*.csv)")
+		plot_name = file_name.split(".")[0] + "_plot.pdf"
 
-		data_file = open(csv_name, "w")
-		data_file.write(fitter.fit_as_csv)
-		data_file.close()
+		try:
+			fitter = self._exp_list["Fitter"]
 
-		plot_save = PdfPages(plot_name)
-		fig, ax = fitter.plot()
-		plot_save.savefig(fig)
-		plot_save.close()
+			data_file = open(file_name, "w")
+			data_file.write(fitter.fit_as_csv)
+			data_file.close()
+
+			plot_save = PdfPages(plot_name)
+			fig, ax = fitter.plot()
+			plot_save.savefig(fig)
+			plot_save.close()
+		except:
+			print("save failed")
 
 	def close_program(self):
 		"""
