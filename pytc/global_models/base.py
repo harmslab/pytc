@@ -453,7 +453,7 @@ class GlobalFit:
             param_type = "global"
             dh_file = "NA"
 
-            if self._global_params[k].fixed:
+            if self.global_param[k].fixed:
                 fixed = "fixed"
             else:
                 fixed = "float"
@@ -461,9 +461,9 @@ class GlobalFit:
             param_name = k
             value = self.fit_param[0][k]
             uncertainty = self.fit_error[0][k]
-            guess = self._global_params[k].guess
-            lower_bound = self._global_params[k].bounds[0]
-            upper_bound = self._global_params[k].bounds[1]
+            guess = self.global_param[k].guess
+            lower_bound = self.global_param[k].bounds[0]
+            upper_bound = self.global_param[k].bounds[1]
 
             out.append("{:},{:},{:},{:.5e},{:.5e},{:},{:.5e},{:.5e},{:.5e}\n".format(param_type,
                                                                                      param_name,
@@ -518,25 +518,39 @@ class GlobalFit:
  
 
     @property
+    def global_param(self):
+        """
+        Return all of the unique global parameters as FitParameter instances.
+        """
+
+        connectors_seen = []
+
+        # Global parameters
+        global_param = {}
+        for g in self._global_param_keys:
+            if type(g) == str:
+                global_param[g] = self._global_params[g]
+            else:
+                if g.__self__ not in connectors_seen:
+                    connectors_seen.append(g.__self__)
+                    for p in g.__self__.params.keys():
+                        global_param[p] = g.__self__.params[p]
+
+        return global_param
+                
+
+    @property
     def fit_param(self):
         """
         Return the fit results as a dictionary that keys parameter name to fit
         value.  This is a tuple with global parameters first, then a list of
         dictionaries for each local fit.
         """
-        connectors_seen = []
 
         # Global parameters
         global_out_param = {}
-        for g in self._global_param_keys:
-            if type(g) == str:
-                global_out_param[g] = self._global_params[g].value
-            else:
-                if g.__self__ not in connectors_seen:
-                    connectors_seen.append(g.__self__)
-                    for p in g.__self__.params.keys():
-                        global_out_param[p] = g.__self__.params[p]
-                
+        for g in self.global_param.keys():
+            global_out_param[g] = self.global_param[g].value
 
         # Local parameters
         local_out_param = []
@@ -553,19 +567,10 @@ class GlobalFit:
         dictionaries for each local fit.
         """
 
-        connectors_seen = []
-
         # Global parameters
         global_out_error = {}
-        for g in self._global_param_keys:
-            
-            if type(g) == str:
-                global_out_error[g] = self._global_params[g].error
-            else:
-                if g.__self__ not in connectors_seen:
-                    connectors_seen.append(g.__self__)
-                    for p in g.__self__.params.keys():
-                        global_out_param[p] = g.__self__.params[p]
+        for g in self.global_param.keys():
+            global_out_error[g] = self.global_param[g].error
 
         # Local parameters
         local_out_error = []
@@ -628,7 +633,7 @@ class GlobalFit:
         for k in self.fit_param[0].keys():
 
             # Only count floating parameters
-            if not self._global_params[k].fixed:
+            if not self.global_param[k].fixed:
                 num_param += 1
 
         # Local parameters
@@ -687,6 +692,8 @@ class GlobalFit:
         of parameter names for each experiment.
         """
 
+        global_param_names = list(self.global_param.keys())
+
         final_param_names = []
         for expt_name in self._expt_list_stable_order:
             e = self._expt_dict[expt_name]
@@ -699,7 +706,7 @@ class GlobalFit:
 
             final_param_names.append(param_names)
 
-        return self._global_param_keys, final_param_names
+        return global_param_names, final_param_names
 
     #--------------------------------------------------------------------------
     # parameter aliases
@@ -717,7 +724,6 @@ class GlobalFit:
             e = self._expt_dict[expt_name]
             expt_to_global.append(copy.deepcopy(e.model.param_aliases))
 
-
         return self._global_param_mapping, expt_to_global
 
 
@@ -732,6 +738,10 @@ class GlobalFit:
         of parameter guesses for each experiment.
         """
 
+        global_param_guesses = {}
+        for p in self.global_param.keys():
+            global_param_guesses[p] = self.global_param[p].guess
+
         final_param_guesses = []
         for expt_name in self._expt_list_stable_order:
             e = self._expt_dict[expt_name]
@@ -741,10 +751,6 @@ class GlobalFit:
                 param_guesses.pop(k)
 
             final_param_guesses.append(param_guesses)
-
-        global_param_guesses = {}
-        for p in self._global_param_keys:
-            global_param_guesses[p] = self._global_params[p].guess
 
         return global_param_guesses, final_param_guesses
 
@@ -760,7 +766,7 @@ class GlobalFit:
 
         if expt == None:
             try:
-                self._global_params[param_name].guess = param_guess
+                self.global_param[param_name].guess = param_guess
             except KeyError:
                 err = "param \"{}\" is not global.  You must specify an experiment.\n".format(param_name)
                 raise KeyError(err)
@@ -778,8 +784,8 @@ class GlobalFit:
         """
 
         global_param_ranges = {}
-        for p in self._global_param_keys:
-            global_param_ranges[p] = self._global_params[p].guess_range
+        for p in self.global_param.keys():
+            global_param_ranges[p] = self.global_param[p].guess_range
 
         final_param_ranges = []
         for expt_name in self._expt_list_stable_order:
@@ -813,7 +819,7 @@ class GlobalFit:
 
         if expt == None:
             try:
-                self._global_params[param_name].guess_range = param_range
+                self.global_param[param_name].guess_range = param_range
             except KeyError:
                 err = "param \"{}\" is not global.  You must specify an experiment.\n".format(param_name)
                 raise KeyError(err)
@@ -831,7 +837,7 @@ class GlobalFit:
         """
 
         global_fixed_param = {}
-        for p in self._global_param_keys:
+        for p in self.global_param.keys():
             global_fixed_param[p] = self._global_params[p].fixed
 
         final_fixed_param = []
@@ -866,10 +872,10 @@ class GlobalFit:
         if expt == None:
             try:
                 if param_value == None:
-                    self._global_params[param_name].fixed = False
+                    self.global_param[param_name].fixed = False
                 else:
-                    self._global_params[param_name].fixed = True
-                    self._global_params[param_name].value = param_value
+                    self.global_param[param_name].fixed = True
+                    self.global_param[param_name].value = param_value
             except KeyError:
                 err = "param \"{}\" is not global.  You must specify an experiment.\n".format(param_name)
                 raise KeyError(err)
@@ -889,8 +895,8 @@ class GlobalFit:
         """
 
         global_param_bounds = {}
-        for p in self._global_param_keys:
-            global_param_bounds[p] = copy.deepcopy(self._global_params[p].bounds)
+        for p in self.global_param.keys():
+            global_param_bounds[p] = copy.deepcopy(self.global_param[p].bounds)
 
         final_param_bounds = []
         for expt_name in self._expt_list_stable_order:
@@ -924,7 +930,7 @@ class GlobalFit:
 
         if expt == None:
             try:
-                self._global_params[param_name].bounds = param_bounds
+                self.global_param[param_name].bounds = param_bounds
             except KeyError:
                 err = "param \"{}\" is not global.  You must specify an experiment.\n".format(param_name)
                 raise KeyError(err)
