@@ -29,24 +29,16 @@ class ProtonLinked(GlobalFit):
         self._global_param_names.append("num_protons")
         self._global_params["num_protons"] = fit_param.FitParameter("num_protons",guess=0.0)
 
-    def add_experiment(self,experiment,ionization_enthalpy,param_guesses=None,
-                       fixed_param=None,param_aliases=None,weight=1.0):
+    def add_experiment(self,experiment,ionization_enthalpy,weight=1.0):
         """
         experiment: an initialized ITCExperiment instance
         ionization_enthalpy: ionization enthalpy for this buffer
-        param_guesses: a dictionary of parameter guesses (need not be complete)
-        fixed_param: a dictionary of parameters to be fixed, with value being
-                     fixed_value.
-        param_aliases: dictionary keying local experiment parameters to global
-                       parameters.
         weight: how much to weight this experiment in the regression relative to other
                 experiments.  Values <1.0 weight this experiment less than others;
                 values >1.0 weight this more than others.
         """
 
-        super(ProtonLinked, self).add_experiment(experiment,
-                                                 param_guesses,fixed_param,
-                                                 param_aliases,weight)
+        super(ProtonLinked, self).add_experiment(experiment,weight)
         self._expt_ionization_enthalpy[experiment.experiment_id] = ionization_enthalpy
 
     def remove_experiment(self,experiment):

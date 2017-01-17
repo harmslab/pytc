@@ -34,15 +34,9 @@ class GlobalFit:
         self._expt_weights = {}
         self._expt_list_stable_order = []
 
-    def add_experiment(self,experiment,param_guesses=None,
-                       fixed_param=None,param_aliases=None,weight=1.0):
+    def add_experiment(self,experiment,weight=1.0):
         """
         experiment: an initialized ITCExperiment instance
-        param_guesses: a dictionary of parameter guesses (need not be complete)
-        fixed_param: a dictionary of parameters to be fixed, with value being
-                     fixed_value.
-        param_aliases: dictionary keying local experiment parameters to global
-                       parameters.
         weight: how much to weight this experiment in the regression relative to other
                 experiments.  Values <1.0 weight this experiment less than others;
                 values >1.0 weight this more than others.
