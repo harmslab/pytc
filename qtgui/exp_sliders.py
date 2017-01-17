@@ -165,10 +165,10 @@ class Sliders(QWidget):
 		"""
 		update fixed value if changed
 		"""
-		try:
+		if value:
 			self._fitter.update_fixed(self._param_name, int(value), self._exp)
-		except:
-			pass
+		else:
+			print("unabled to fix")
 
 		print("fixed to value " + value)
 
@@ -217,8 +217,12 @@ class LocalSliders(Sliders):
 		add global variable, update if parameter is linked or not to a global paremeter
 		"""
 		if status == "Unlink":
-			self._fitter.unlink_from_global(self._exp, self._param_name)
-			self._global_exp[status].unlinked(self)
+			try:
+				self._fitter.unlink_from_global(self._exp, self._param_name)
+				self._global_exp[status].unlinked(self)
+			except:
+				pass
+
 			print("unlinked")
 		elif status == "Add Global Var":
 			text, ok = QInputDialog.getText(self, "Add Global Variable", "Var Name: ")
@@ -299,8 +303,8 @@ class Experiments(QWidget):
 		name_stretch.addWidget(name_label)
 		main_layout.addLayout(name_stretch)
 
-		header_layout = QHBoxLayout()
-
+		self._header_layout = QHBoxLayout()
+		main_layout.addLayout(self._header_layout)
 
 		self._exp_layout = QVBoxLayout()
 		self._exp_widget = QFrame()
@@ -373,6 +377,15 @@ class LocalExp(Experiments):
 			self._slider_list["Local"][self._exp].append(s)
 			self._exp_layout.addWidget(s)
 
+
+		fix_label = QLabel("Fix Guess")
+		guess_label = QLabel("Parameter Guess")
+		link_label = QLabel("Link/Unlink to Global Param")
+
+		self._header_layout.addWidget(fix_label)
+		self._header_layout.addWidget(guess_label)
+		self._header_layout.addWidget(link_label)
+
 	def remove(self):
 		"""
 		"""
@@ -398,6 +411,12 @@ class GlobalExp(Experiments):
 		s = GlobalSliders(None, self._name, self._fitter, self._global_exp)
 		self._slider_list["Global"][self._name] = s
 		self._exp_layout.addWidget(s)
+
+		fix_label = QLabel("Fix Guess")
+		guess_label = QLabel("Parameter Guess")
+
+		self._header_layout.addWidget(fix_label)
+		self._header_layout.addWidget(guess_label)
 
 	def linked(self, loc_slider):
 		"""

@@ -7,6 +7,8 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import seaborn
 
+from pytc.global_models import GlobalFit
+
 #from .indiv_exp import *
 from .exp_sliders import *
 
@@ -50,6 +52,10 @@ class PlotBox(QWidget):
 		self._plot_layout = QVBoxLayout()
 		plot_frame = QFrame()
 		plot_frame.setLayout(self._plot_layout)
+
+		# just to get same plot layout upon application start-up
+		plot_figure = Plot(GlobalFit())
+		self._plot_layout.addWidget(plot_figure)
 
 		main_layout.addWidget(plot_frame)
 		
@@ -121,12 +127,12 @@ class AllExp(QWidget):
 		"""
 		update fit and parameters, update sliders as well
 		"""
-
-		self._fitter = self._exp_list["Fitter"]
 		self._local_exp = self._exp_list["Local"]
 		self._global_exp = self._exp_list["Global"]
 
 		if len(self._local_exp) != 0:
+
+			self._fitter = self._exp_list["Fitter"]
 
 			for n, e in self._local_exp.items():
 				if e not in self._slider_list["Local"]:
