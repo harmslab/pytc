@@ -49,16 +49,6 @@ class GlobalFit:
         self._expt_list_stable_order.append(name)
         self._expt_weights[name] = weight
 
-        if param_guesses != None:
-            self._expt_dict[name].model.update_guesses(param_guesses)
-
-        if fixed_param != None:
-            self._expt_dict[name].model.update_fixed(fixed_param)
-
-        if param_aliases != None:
-            for p in param_aliases.keys():
-                self.link_to_global(experiment,p,param_aliases[p])
-
     def remove_experiment(self,experiment):
         """
         Remove an experiment from the analysis.
