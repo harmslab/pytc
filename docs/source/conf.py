@@ -153,6 +153,6 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'pytc', 'pytc Documentation',
-     author, 'pytc', 'One line description of project.',
-     'Miscellaneous'),
+     author, 'pytc', 'python api for fitting ITC data.',
+     ''),
 ]

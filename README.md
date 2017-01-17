@@ -38,13 +38,14 @@ These models describe a single ITC experiment.  They are passed to
 individual experiment.
 
 These models should:
-* ... be subclasses of `pytc.indiv_models.base.ITCModel`
-* ... define a new `__init__` function that uses the contents of the syringe and
+* Be subclasses of `pytc.indiv_models.base.ITCModel`
+* Define a new `__init__` function that uses the contents of the syringe and
   titrant and calculates how the total concentrations of various species change
   over the titration.
-* ... expose a `dQ` property that gives the heat change per shot.
-* ... define a `initialize_param` method with all fittable parameters as
-  arguments with default values that are sane guesses for those parameters.
+* Expose a `dQ` property that gives the heat change per shot.
+* Define a `initialize_param` method with all fittable parameters as
+  arguments.  Each paramter should have a default value that is a reasonable
+  guess for that parameters.
 
 See `pytc/indiv_models/single_site.py` for a simple example.
 
@@ -56,15 +57,12 @@ the currently-implemented models.
 These models describe relationships between multiple ITC experiments.  They
 should be subclasses of `pytc.global_models.base.GlobalModel`. The exact 
 implementation of these models depends on the relationships being probed.  
-Currently, the software implements a model where the same binding reaction
-is measured in buffers with different ionization enthalpy, and another where
-the same reaction is is measured as function of temperature.  At a minimum
-this will probably require:
-* ... redefining `__init__` to add any global parameters unique to the global
+At a minimum this will probably require:
+* Define `__init__` to add any global parameters unique to the global
   fit (e.g. heat-capacity for a temperature-dependent titration).
-* ... `_residuals`, which calculates the (mis)match between the model and all
+* Define `_residuals`, which calculates the (mis)match between the model and all
   loaded data.
-* ... `fit`, which manages the global variables
-* ... and `_get_calc_heats`.  
+* Define `fit`, which manages the global variables
+* Define `_get_calc_heats`.  
 
 See `pytc/global_models/temp_dependence.py` for a (relatively) simple example.
