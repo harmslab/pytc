@@ -20,7 +20,8 @@ class SlidersExpanded(QWidget):
 		self.layout()
 
 	def layout(self):
-
+		"""
+		"""
 		main_layout = QGridLayout(self)
 
 		update_min = QLineEdit(self)
@@ -38,6 +39,7 @@ class SlidersExpanded(QWidget):
 
 	def min_bounds(self, value):
 		"""
+		update the minimum bounds
 		"""
 		try:
 			self._min = int(value)
@@ -49,6 +51,7 @@ class SlidersExpanded(QWidget):
 
 	def max_bounds(self, value):
 		"""
+		update maximum bounds
 		"""
 		try:
 			self._max = int(value)
@@ -60,6 +63,7 @@ class SlidersExpanded(QWidget):
 
 	def update(self):
 		"""
+		update min/max bounds and check if range needs to be updated as well
 		"""
 		bounds = [self._min, self._max]
 		self._fitter.update_bounds(self._param_name, bounds, self._exp)
@@ -89,7 +93,8 @@ class Sliders(QWidget):
 
 	@property
 	def param_name(self):
-
+		"""
+		"""
 		return self._param_name
 
 	def bounds(self):
@@ -101,42 +106,46 @@ class Sliders(QWidget):
 	def layout(self):
 		"""
 		"""
-		self._layout = QGridLayout(self)
-		self._layout.setVerticalSpacing(40)
+		self._main_layout = QGridLayout(self)
+		self._main_layout.setVerticalSpacing(40)
 
 		self._name_label = QLabel(self._param_name, self)
-		self._layout.addWidget(self._name_label, 0, 0, 0, 2)
+		self._main_layout.addWidget(self._name_label, 0, 0, 0, 2)
 
 		self._fix = QCheckBox("Fix?", self)
 		self._fix.toggle()
 		self._fix.setChecked(False)
 		self._fix.stateChanged.connect(self.fix_layout)
-		self._layout.addWidget(self._fix, 1, 0)
+		self._main_layout.addWidget(self._fix, 1, 0)
 
 		self._slider = QSlider(Qt.Horizontal)
 		self._slider.valueChanged[int].connect(self.update_val)
-		self._layout.addWidget(self._slider, 1, 1)
+		self._main_layout.addWidget(self._slider, 1, 1)
 
 		self.bounds()
 
 		self._fix_int = QLineEdit(self)
-		self._layout.addWidget(self._fix_int, 1, 2)
+		self._main_layout.addWidget(self._fix_int, 1, 2)
 		self._fix_int.setText(str(1))
 		self._fix_int.textChanged[str].connect(self.fix)
 		self._fix_int.hide()
 
 		self._expand = QPushButton("...", self)
 		self._expand.clicked.connect(self.expanded)
-		self._layout.addWidget(self._expand, 1, 4)
+		self._main_layout.addWidget(self._expand, 1, 4)
 
 	def expanded(self):
-
+		"""
+		expanded slider options, right now bounds
+		"""
 		self._more = SlidersExpanded(self._exp, self._param_name, self._fitter, self._slider)
 		self._more.setGeometry(500, 400, 400, 100)
 		self._more.show()
 
 	def fix_layout(self, state):
-
+		"""
+		initial parameter fix and updating whether slider/fixed int is hidden or shown
+		"""
 		if state == Qt.Checked:
 			# change widget views
 			self._fix_int.show()
@@ -153,19 +162,27 @@ class Sliders(QWidget):
 			print('unfixed')
 
 	def fix(self, value):
+		"""
+		update fixed value if changed
+		"""
+		if value:
+			self._fitter.update_fixed(self._param_name, int(value), self._exp)
+		else:
+			print("unabled to fix")
 
-		self._fitter.update_fixed(self._param_name, int(value), self._exp)
 		print("fixed to value " + value)
 
 	def update_val(self, value):
-
+		"""
+		update value for paremter based on slider value
+		"""
 		self._fitter.update_guess(self._param_name, value, self._exp)
 		print(value)
 
 
 class LocalSliders(Sliders):
 	"""
-	create sliders for an experiment
+	create sliders for a local exp object
 	"""
 
 	def __init__(self, exp, param_name, value, fitter, global_list, slider_list, global_exp):
@@ -177,7 +194,9 @@ class LocalSliders(Sliders):
 		super().__init__(exp, param_name, fitter, global_exp)
 
 	def bounds(self):
-
+		"""
+		update the min max for the slider
+		"""
 		exp_range = self._exp.model.param_guess_ranges[self._param_name]
 
 		self._slider.setMinimum(exp_range[0])
@@ -191,13 +210,19 @@ class LocalSliders(Sliders):
 			self._link.addItem(i)
 
 		self._link.activated[str].connect(self.link_unlink)
-		self._layout.addWidget(self._link, 1, 3)
+		self._main_layout.addWidget(self._link, 1, 3)
 
 	def link_unlink(self, status):
-
+		"""
+		add global variable, update if parameter is linked or not to a global paremeter
+		"""
 		if status == "Unlink":
-			self._fitter.unlink_from_global(self._exp, self._param_name)
-			self._global_exp[status].unlinked(self)
+			try:
+				self._fitter.unlink_from_global(self._exp, self._param_name)
+				self._global_exp[status].unlinked(self)
+			except:
+				pass
+
 			print("unlinked")
 		elif status == "Add Global Var":
 			text, ok = QInputDialog.getText(self, "Add Global Variable", "Var Name: ")
@@ -218,11 +243,15 @@ class LocalSliders(Sliders):
 			print("linked to " + status)
 
 	def update_global(self, value):
-
+		"""
+		update the list of global parameters in combobox
+		"""
 		self._link.addItem(value)
 
 	def reset(self):
-
+		"""
+		if global exp object deleted, return local slider object to unlinked state
+		"""
 		self._slider.show()
 		self._fix.show()
 
@@ -231,14 +260,16 @@ class LocalSliders(Sliders):
 
 class GlobalSliders(Sliders):
 	"""
-	create sliders for an experiment
+	create sliders for a global exp object
 	"""
 
 	def __init__(self, exp, param_name, fitter, global_exp):
 		super().__init__(exp, param_name, fitter, global_exp)
 
 	def bounds(self):
-
+		"""
+		update min/max for slider
+		"""
 		exp_range = self._fitter.param_ranges[0][self._param_name]
 
 		self._slider.setMinimum(exp_range[0])
@@ -262,6 +293,8 @@ class Experiments(QWidget):
 		self.layout()
 
 	def layout(self):
+		"""
+		"""
 		main_layout = QVBoxLayout(self)
 
 		name_label = QLabel(self._name)
@@ -270,8 +303,8 @@ class Experiments(QWidget):
 		name_stretch.addWidget(name_label)
 		main_layout.addLayout(name_stretch)
 
-		header_layout = QHBoxLayout()
-		
+		self._header_layout = QHBoxLayout()
+		main_layout.addLayout(self._header_layout)
 
 		self._exp_layout = QVBoxLayout()
 		self._exp_widget = QFrame()
@@ -302,23 +335,30 @@ class Experiments(QWidget):
 		main_layout.addLayout(stretch)
 
 	def exp_widgets(self):
-
+		"""
+		for changing local/global specific items
+		"""
 		pass
 
 	def remove(self):
-
-		 pass
+		"""
+		"""
+		pass
 
 	def hide(self):
-
+		"""
+		"""
 		self._exp_widget.hide()
 
 	def show(self):
-
+		"""
+		"""
 		self._exp_widget.show()
 
 class LocalExp(Experiments):
-
+	"""
+	hold local parameters/sliders
+	"""
 	def __init__(self, fitter, exp, name, slider_list, global_var, global_exp, local_exp):
 
 		self._local_exp = local_exp
@@ -327,7 +367,9 @@ class LocalExp(Experiments):
 		super().__init__(fitter, name, slider_list, global_var, global_exp)
 
 	def exp_widgets(self):
-
+		"""
+		create sliders for experiment
+		"""
 		parameters = self._exp.param_values
 
 		for p, v in parameters.items():
@@ -335,15 +377,27 @@ class LocalExp(Experiments):
 			self._slider_list["Local"][self._exp].append(s)
 			self._exp_layout.addWidget(s)
 
-	def remove(self):
 
+		fix_label = QLabel("Fix Guess")
+		guess_label = QLabel("Parameter Guess")
+		link_label = QLabel("Link/Unlink to Global Param")
+
+		self._header_layout.addWidget(fix_label)
+		self._header_layout.addWidget(guess_label)
+		self._header_layout.addWidget(link_label)
+
+	def remove(self):
+		"""
+		"""
 		self._local_exp.pop(self._exp, None)
 		self._slider_list["Local"].pop(self._exp, None)
 		self._fitter.remove_experiment(self._exp)
 		self.close()
 
 class GlobalExp(Experiments):
-
+	"""
+	hold global parameter/sliders
+	"""
 	def __init__(self, fitter, name, slider_list, global_var, global_exp):
 
 		super().__init__(fitter, name, slider_list, global_var, global_exp)
@@ -351,21 +405,34 @@ class GlobalExp(Experiments):
 		self._linked_list = []
 
 	def exp_widgets(self):
-
+		"""
+		create slider
+		"""
 		s = GlobalSliders(None, self._name, self._fitter, self._global_exp)
 		self._slider_list["Global"][self._name] = s
 		self._exp_layout.addWidget(s)
 
-	def linked(self, loc_slider):
+		fix_label = QLabel("Fix Guess")
+		guess_label = QLabel("Parameter Guess")
 
+		self._header_layout.addWidget(fix_label)
+		self._header_layout.addWidget(guess_label)
+
+	def linked(self, loc_slider):
+		"""
+		update list of sliders linked to global param
+		"""
 		self._linked_list.append(loc_slider)
 
 	def unlinked(self, loc_slider):
-
+		"""
+		remove item from linked list if local param unlinked from global param
+		"""
 		self._linked_list.remove(loc_slider)
 
 	def remove(self):
-
+		"""
+		"""
 		self._global_exp.pop(self._name, None)
 		self._fitter.remove_global(self._name)
 		self._slider_list["Global"].pop(self._name, None)
