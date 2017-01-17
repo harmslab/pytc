@@ -14,6 +14,8 @@ import scipy.optimize as optimize
 from matplotlib import pyplot as plt
 from matplotlib import gridspec
 
+from . import GlobalConnector
+
 class GlobalFit:
     """
     Class for regressing models against an arbitrary number of ITC experiments.
@@ -101,15 +103,19 @@ class GlobalFit:
             self._global_param_keys.append(global_param_name)
             self._global_param_mapping[global_param_name] = [(expt_name,expt_param)]
 
-            # If this is a GlobalConnector method, store the GlobalConnector
-            # instance as the paramter
-            if issubclass(global_param_name.__self__.__class__,global_models.GlobalConnector):
-                self._global_params[global_param_name] = global_param_name.__self__
-
             # If this is a "dumb" global parameter, store a FitParameter
             # instance with the data in it.
-            else:
+            if type(global_param_name) == str:
                 self._global_params[global_param_name] = copy.copy(e.model.parameters[expt_param])
+
+            # If this is a GlobalConnector method, store the GlobalConnector
+            # instance as the paramter
+            elif issubclass(global_param_name.__self__.__class__,GlobalConnector):
+                self._global_params[global_param_name] = global_param_name.__self__
+
+            else:
+                err = "global variable class not recongized.\n"
+                raise ValueError(err)
 
         else:
             # Only add link, but do not make a new global parameter
@@ -175,19 +181,46 @@ class GlobalFit:
         all_residuals = []
 
         for i in range(len(param)):
-            param_key = self._float_param_mapping[i]
 
-            # Local variable, specific to one experiment
-            if type(param_key) == tuple and len(param_key) == 2:
-                experiment = param_key[0]
-                parameter_name = param_key[1]
+            # local variable
+            if self._float_param_type[i] == 0:
+                experiment = self._float_param_mapping[i][0]
+                parameter_name = self._float_param_mapping[i][1]
                 self._expt_dict[experiment].model.update_values({parameter_name:param[i]})
 
-            # Global variable, mapping to many experiments
-            else:
+            # Vanilla global variable
+            elif self._float_param_type[i] == 1:
+                param_key = self._float_param_mapping[i][0]
                 for experiment, parameter_name in self._global_param_mapping[param_key]:
                     self._expt_dict[experiment].model.update_values({parameter_name:param[i]})
 
+            # Global connector global variable
+            elif self._float_param_type[i] == 2:
+                connector = self._float_param_mapping[i][0].__self__
+                param_name = self._float_param_mapping[i][1]
+                connector.update_values({param_name:param[i]})
+
+            else:
+                err = "Paramter type {} not recongized.\n".format(self._float_param_type[i])
+                raise ValueError(err) 
+
+        # Look for connector functions
+        for connector_function in self._global_param_keys:
+
+            if type(connector_function) == str:
+                continue
+
+            # If this is a method of GlobalConnector...
+            if issubclass(connector_function.__self__.__class__,
+                          GlobalConnector):
+
+                # Update experiments with the value spit out by the connector function
+                for expt, param in self._global_param_mapping[connector_function]:
+                    e = self._expt_dict[expt]
+                    value = connector_function(e)
+                    self._expt_dict[expt].model.update_values({param:value})
+                 
+        # Calculate residuals
         for k in self._expt_dict.keys():
             all_residuals.extend(self._expt_weights[k]*(self._expt_dict[k].heats - self._expt_dict[k].dQ))
 
@@ -202,30 +235,39 @@ class GlobalFit:
         self._float_param = []
         self._float_bounds = [[],[]]
         self._float_param_mapping = []
+        self._float_param_type = []
+
         self._float_global_connectors_seen = []
 
         float_param_counter = 0
 
         # Go through global variables
         for k in self._global_param_mapping.keys():
-       
+      
+            # Otherwise, there is just one parameter to enumerate over.
+            if type(k) == str:
+                enumerate_over = {k:self._global_params[k]} 
+                param_type = 1
+ 
             # If this is a global connector, enumerate over all parameters in
             # that connector 
-            if issubclass(k.__class__,global_models.GlobalConnector):
+            elif issubclass(k.__self__.__class__,GlobalConnector):
 
                 # Only load each global connector in once
-                if in self._float_global_connectors_seen:
+                if k in self._float_global_connectors_seen:
                     continue
 
                 enumerate_over = self._global_params[k].params
                 self._float_global_connectors_seen.append(k)
+                param_type = 2
 
-            # Otherwise, there is just one parameter to enumerate over.
             else:
-                enumerate_over = {k:self._global_params[k]} 
+                err = "global variable class not recongized.\n"
+                raise ValueError(err)
             
             # Now update parameter values, bounds, and mapping 
             for e in enumerate_over.keys(): 
+                print(e)
     
                 # skip fixed paramters
                 if enumerate_over[e].fixed:
@@ -235,6 +277,8 @@ class GlobalFit:
                 self._float_bounds[0].append(enumerate_over[e].bounds[0])
                 self._float_bounds[1].append(enumerate_over[e].bounds[1])
                 self._float_param_mapping.append((k,e))
+                self._float_param_type.append(param_type)
+
                 float_param_counter += 1
 
         # Go through every experiment
@@ -261,6 +305,7 @@ class GlobalFit:
                 self._float_bounds[0].append(e.model.bounds[p][0])
                 self._float_bounds[1].append(e.model.bounds[p][1])
                 self._float_param_mapping.append((k,p))
+                self._float_param_type.append(0)
 
                 float_param_counter += 1
 
@@ -280,17 +325,41 @@ class GlobalFit:
 
         # Store the result
         for i in range(len(fit_parameters)):
-            param_key = self._float_param_mapping[i]
-            if len(param_key) == 2:
-                k = param_key[0]
-                p = param_key[1]
-                self._expt_dict[k].model.update_values({p:fit_parameters[i]})
-                self._expt_dict[k].model.update_errors({p:error[i]})
-            else:
+
+            # local variable
+            if self._float_param_type[i] == 0:
+
+                experiment = self._float_param_mapping[i][0]
+                parameter_name = self._float_param_mapping[i][1]
+
+                self._expt_dict[experiment].model.update_values({parameter_name:fit_parameters[i]})
+                self._expt_dict[experiment].model.update_errors({parameter_name:error[i]})
+
+            # Vanilla global variable
+            elif self._float_param_type[i] == 1:
+
+                param_key = self._float_param_mapping[i][0]
                 for k, p in self._global_param_mapping[param_key]:
                     self._expt_dict[k].model.update_values({p:fit_parameters[i]})
                     self._global_params[param_key].value = fit_parameters[i]
                     self._global_params[param_key].error = error[i]
+
+            # Global connector global variable
+            elif self._float_param_type[i] == 2:
+                connector = self._float_param_mapping[i][0].__self__
+                param_name = self._float_param_mapping[i][1]
+
+                # HACK: if you use the params[param_name].value setter function,
+                # it will break the connector.  This is because I expose the 
+                # thermodynamic-y stuff of interest via .__dict__ rather than 
+                # directly via params.  So, this has to use the .update_values
+                # method. 
+                connector.update_values({param_name:fit_parameters[i]})
+                connector.params[param_name].error = error[i]
+
+            else:
+                err = "Paramter type {} not recongized.\n".format(self._float_param_type[i])
+                raise ValueError(err) 
 
 
     def plot(self,correct_molar_ratio=False,subtract_dilution=False,
@@ -455,11 +524,19 @@ class GlobalFit:
         value.  This is a tuple with global parameters first, then a list of
         dictionaries for each local fit.
         """
+        connectors_seen = []
 
         # Global parameters
         global_out_param = {}
         for g in self._global_param_keys:
-            global_out_param[g] = self._global_params[g].value
+            if type(g) == str:
+                global_out_param[g] = self._global_params[g].value
+            else:
+                if g.__self__ not in connectors_seen:
+                    connectors_seen.append(g.__self__)
+                    for p in g.__self__.params.keys():
+                        global_out_param[p] = g.__self__.params[p]
+                
 
         # Local parameters
         local_out_param = []
@@ -476,10 +553,19 @@ class GlobalFit:
         dictionaries for each local fit.
         """
 
+        connectors_seen = []
+
         # Global parameters
         global_out_error = {}
         for g in self._global_param_keys:
-            global_out_error[g] = self._global_params[g].error
+            
+            if type(g) == str:
+                global_out_error[g] = self._global_params[g].error
+            else:
+                if g.__self__ not in connectors_seen:
+                    connectors_seen.append(g.__self__)
+                    for p in g.__self__.params.keys():
+                        global_out_param[p] = g.__self__.params[p]
 
         # Local parameters
         local_out_error = []

@@ -6,7 +6,5 @@ __author__ = "Michael J. Harms"
 __date__ = "2016-12-19"
 __all__ = [] 
 
-from .base import GlobalFit
-from .temp_dependence import TempDependence
-from .proton_linked import ProtonLinked
 from .connector import GlobalConnector, NumProtons
+from .base import GlobalFit
