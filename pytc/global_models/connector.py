@@ -2,6 +2,10 @@
 from . import fit_param
 
 class GlobalConnector:
+    """
+    Describe simple, individual fitting parameters as an arbitrary collection 
+    of other, underlying parameters.
+    """
 
     def __init__(self,name):
         """

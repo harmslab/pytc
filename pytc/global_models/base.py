@@ -25,7 +25,7 @@ class GlobalFit:
         """
 
         # Objects for holding global parameters
-        self._global_param_names = []
+        self._global_param_keys = []
         self._global_params = {}
         self._global_param_mapping = {}
 
@@ -95,10 +95,13 @@ class GlobalFit:
 
         # Update the alias from the global side
         e = self._expt_dict[expt_name]
-        if global_param_name not in self._global_param_names:
+        if global_param_name not in self._global_param_keys:
 
             # Make new global parameter and create link
-            self._global_param_names.append(global_param_name)
+            self._global_param_keys.append(global_param_name)
+
+
+
             self._global_params[global_param_name] = copy.copy(e.model.parameters[expt_param])
             self._global_param_mapping[global_param_name] = [(expt_name,expt_param)]
 
@@ -136,7 +139,7 @@ class GlobalFit:
         Remove a global parameter, unlinking all local parameters.
         """
 
-        if global_param_name not in self._global_param_names:
+        if global_param_name not in self._global_param_keys:
             err = "Global parameter {} not defined.\n".format(global_param_name)
             raise ValueError(err)
 
@@ -153,7 +156,7 @@ class GlobalFit:
                         break
 
         # Remove global data
-        self._global_param_names.remove(global_param_name)
+        self._global_param_keys.remove(global_param_name)
         self._global_param_mapping.pop(global_param_name)
         self._global_params.pop(global_param_name)
 
@@ -256,16 +259,6 @@ class GlobalFit:
                     self._global_params[param_key].error = error[i]
 
 
-
-    def _get_calc_heats(self,expt_name):
-        """
-        Spit out the calcualted heats.  This is broken out into its own call so 
-        exotic global fitters (like ProtonLinked) can redefine it. 
-        """
-
-        return self._expt_dict[expt_name].dQ
-
-
     def plot(self,correct_molar_ratio=False,subtract_dilution=False,
              color_list=None,data_symbol="o",linewidth=1.5):
         """
@@ -304,7 +297,7 @@ class GlobalFit:
 
             mr = e.mole_ratio
             heats = e.heats
-            calc = self._get_calc_heats(expt_name)
+            calc = self._expt_dict[expt_name].dQ
 
             if len(calc) > 0:
 
@@ -336,6 +329,9 @@ class GlobalFit:
         plt.tight_layout()
 
         return fig, ax
+
+    # -------------------------------------------------------------------------
+    # Properties describing fit results
 
     @property
     def fit_as_csv(self):
@@ -428,7 +424,7 @@ class GlobalFit:
 
         # Global parameters
         global_out_param = {}
-        for g in self._global_param_names:
+        for g in self._global_param_keys:
             global_out_param[g] = self._global_params[g].value
 
         # Local parameters
@@ -448,7 +444,7 @@ class GlobalFit:
 
         # Global parameters
         global_out_error = {}
-        for g in self._global_param_names:
+        for g in self._global_param_keys:
             global_out_error[g] = self._global_params[g].error
 
         # Local parameters
@@ -546,6 +542,21 @@ class GlobalFit:
         except AttributeError:
             return None
 
+    # -------------------------------------------------------------------------
+    # Properties describing currently loaded parameters and experiments
+
+    @property
+    def experiments(self):
+        """
+        Return a list of associated experiments.
+        """
+
+        out = []
+        for expt_name in self._expt_list_stable_order:
+            out.append(self._expt_dict[expt_name])
+
+        return out
+
     #--------------------------------------------------------------------------
     # parameter names
 
@@ -568,7 +579,28 @@ class GlobalFit:
 
             final_param_names.append(param_names)
 
-        return self._global_param_names, final_param_names
+        return self._global_param_keys, final_param_names
+
+    #--------------------------------------------------------------------------
+    # parameter aliases
+
+    @property
+    def param_aliases(self):
+        """
+        Return the parameter aliases.  This is a tuple.  The first entry is a
+        dictionary of gloal parameters mapping to experiment number; the second
+        is a map between experiment number and global parameter names.
+        """
+
+        expt_to_global = []
+        for expt_name in self._expt_list_stable_order:
+            e = self._expt_dict[expt_name]
+            expt_to_global.append(copy.deepcopy(e.model.param_aliases))
+
+
+        return self._global_param_mapping, expt_to_global
+
+
 
     #--------------------------------------------------------------------------
     # parameter guesses
@@ -591,7 +623,7 @@ class GlobalFit:
             final_param_guesses.append(param_guesses)
 
         global_param_guesses = {}
-        for p in self._global_param_names:
+        for p in self._global_param_keys:
             global_param_guesses[p] = self._global_params[p].guess
 
         return global_param_guesses, final_param_guesses
@@ -626,7 +658,7 @@ class GlobalFit:
         """
 
         global_param_ranges = {}
-        for p in self._global_param_names:
+        for p in self._global_param_keys:
             global_param_ranges[p] = self._global_params[p].guess_range
 
         final_param_ranges = []
@@ -679,7 +711,7 @@ class GlobalFit:
         """
 
         global_fixed_param = {}
-        for p in self._global_param_names:
+        for p in self._global_param_keys:
             global_fixed_param[p] = self._global_params[p].fixed
 
         final_fixed_param = []
@@ -737,7 +769,7 @@ class GlobalFit:
         """
 
         global_param_bounds = {}
-        for p in self._global_param_names:
+        for p in self._global_param_keys:
             global_param_bounds[p] = copy.deepcopy(self._global_params[p].bounds)
 
         final_param_bounds = []
@@ -779,33 +811,3 @@ class GlobalFit:
         else:
             self._expt_dict[expt.experiment_id].model.update_bounds({param_name:param_bounds})
 
-    #--------------------------------------------------------------------------
-    # parameter aliases
-
-    @property
-    def param_aliases(self):
-        """
-        Return the parameter aliases.  This is a tuple.  The first entry is a
-        dictionary of gloal parameters mapping to experiment number; the second
-        is a map between experiment number and global parameter names.
-        """
-
-        expt_to_global = []
-        for expt_name in self._expt_list_stable_order:
-            e = self._expt_dict[expt_name]
-            expt_to_global.append(copy.deepcopy(e.model.param_aliases))
-
-
-        return self._global_param_mapping, expt_to_global
-
-    @property
-    def experiments(self):
-        """
-        Return a list of associated experiments.
-        """
-
-        out = []
-        for expt_name in self._expt_list_stable_order:
-            out.append(self._expt_dict[expt_name])
-
-        return out
