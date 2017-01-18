@@ -1,4 +1,6 @@
 
+import inspect
+import numpy as np
 from .. import fit_param
 
 class GlobalConnector:
@@ -22,7 +24,17 @@ class GlobalConnector:
         use a prefix when referring to the parameter.  There is also an 
         "ext_name" name with the name of the class prefixed to the parameter.
         """
-  
+
+
+        methods = [m[0] for m in inspect.getmembers(self, predicate=inspect.ismethod)]
+        for p in self._param_names:
+            if p in methods:
+                err = "param_names cannot have the same names as observable\n"
+                err = err + " methods in GlobalConnector subclasses.\n"
+                err = err + "Offending parameter: {}\n".format(p)
+
+                raise ValueError(err)
+ 
         self._int_to_ext_name = {}
         self._ext_to_int_name = {}
 
@@ -36,11 +48,10 @@ class GlobalConnector:
                                           for p in self._param_names])
             self._ext_to_int_name = dict([("{}_{}".format(self.name,p),p)
                                           for p in self._param_names])
+
         self._param_dict = {}
         for int_name in self._param_names:
-           
             ext_name = self._int_to_ext_name[int_name] 
-
             self._param_dict[ext_name] = fit_param.FitParameter(ext_name)
             self.__dict__[int_name] = self._param_dict[ext_name].value
 
@@ -97,10 +108,11 @@ class VantHoff(GlobalConnector):
         Initialize the VantHoff class, defining the fitting parameters.
         """
     
+        self.name = name
         self.reference_temp = reference_temp
         self.R = R
 
-        self._param_names = ["dH","K_ref"]
+        self._param_names = ["dH_vanthoff","K_ref"]
 
         self._initialize()
 
@@ -110,10 +122,10 @@ class VantHoff(GlobalConnector):
         a fixed enthalpy and shifting K. 
         """
 
-        T = experiment.temperature
+        T = experiment.temperature + 273.15
         T_ref = self.reference_temp
 
-        a = -(self.dH/self.R)*(1/T - 1/T_ref)
+        a = -(self.dH_vanthoff/self.R)*(1/T - 1/T_ref)
 
         return self.K_ref*np.exp(a)
        
@@ -122,7 +134,7 @@ class VantHoff(GlobalConnector):
         Return the van't Hoff enthalpy.
         """
 
-        return self.dH 
+        return self.dH_vanthoff 
 
 class VantHoffExtended(GlobalConnector):
     """
@@ -136,6 +148,7 @@ class VantHoffExtended(GlobalConnector):
         Initialize the VantHoffExtended class, defining the fitting parameters.
         """
 
+        self.name = name
         self.reference_temp = reference_temp
         self.R = R
 
@@ -151,7 +164,7 @@ class VantHoffExtended(GlobalConnector):
         temperature, and the heat capacity change on binding.
         """
 
-        T = experiment.temperature
+        T = experiment.temperature + 273.15
         T_ref = self.reference_temp
 
         a = -(self.dH_ref/self.R)*(1/T - 1/T_ref)
@@ -166,5 +179,6 @@ class VantHoffExtended(GlobalConnector):
         capacity change on binding.
         """
 
-        return self.dH_ref
+        T = experiment.temperature + 273.15
+        return self.dH_ref + self.dCp*(T - self.reference_temp)
 

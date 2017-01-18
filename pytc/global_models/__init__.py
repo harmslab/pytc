@@ -6,5 +6,5 @@ __author__ = "Michael J. Harms"
 __date__ = "2016-12-19"
 __all__ = [] 
 
-from .connector import GlobalConnector, NumProtons
+from .connector import GlobalConnector, NumProtons, VantHoff, VantHoffExtended
 from .base import GlobalFit
