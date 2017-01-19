@@ -1,6 +1,8 @@
 """
 pytc GUI using qtpy bindings
 """
+from pytc.global_fit import GlobalFit
+
 from qtpy.QtGui import *
 from qtpy.QtCore import *
 from qtpy.QtWidgets import *
@@ -52,10 +54,9 @@ class Main(QMainWindow):
 	def __init__(self):
 		super().__init__()
 
-		self._exp_list = {"Local" : {}, "Global" : {}}
+		self._exp_list = {"Fitter" : GlobalFit(), "Local" : {}, "Global" : {}}
 
 		self.menu()
-		self.new_exp()
 
 	def menu(self):
 		"""
@@ -143,10 +144,13 @@ class Main(QMainWindow):
 		"""
 		choose fitter and start new fit
 		"""
+		warning_message = QMessageBox.warning(self, "warning!", "Are you sure you want to start a new session?", QMessageBox.Yes | QMessageBox.No)
 
-		self._choose_fitter = ChooseFitter(self._exp_list, self._exp)
-		self._choose_fitter.setGeometry(550, 420, 300, 100)
-		self._choose_fitter.show()
+		if warning_message == QMessageBox.Yes:
+			self._exp_list = {"Fitter" : GlobalFit(), "Local" : {}, "Global" : {}}
+			self._exp.clear()
+		else:
+			print("don't clear!")
 
 	def save_file(self):
 		"""

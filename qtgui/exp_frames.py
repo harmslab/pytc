@@ -7,9 +7,6 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import seaborn
 
-from pytc.global_models import GlobalFit
-
-#from .indiv_exp import *
 from .exp_sliders import *
 
 class Plot(FigureCanvas):
@@ -54,8 +51,8 @@ class PlotBox(QWidget):
 		plot_frame.setLayout(self._plot_layout)
 
 		# just to get same plot layout upon application start-up
-		plot_figure = Plot(GlobalFit())
-		self._plot_layout.addWidget(plot_figure)
+		#plot_figure = Plot(GlobalFit())
+		#self._plot_layout.addWidget(plot_figure)
 
 		main_layout.addWidget(plot_frame)
 		
@@ -169,7 +166,6 @@ class AllExp(QWidget):
 		"""
 		"""
 		self._slider_list = {"Global" : {}, "Local" : {}}
-		self._exp_list = {"Global" : {}, "Local" : {}}
 		self._param_box.clear()
 		for i in reversed(range(self._exp_box.count())): 
 			self._exp_box.itemAt(i).widget().setParent(None)

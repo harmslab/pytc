@@ -176,6 +176,7 @@ class ChooseFitter(QWidget):
 		else:
 			#### need to finish this
 			self._parent.clear()
+			self._exp_list = {"Global" : {}, "Local" : {}}
 			self._exp_list["Fitter"] = self._fitter
 			print("start over")
 
