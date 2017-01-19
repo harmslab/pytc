@@ -14,6 +14,8 @@ import scipy.optimize as optimize
 from matplotlib import pyplot as plt
 from matplotlib import gridspec
 
+from . global_connectors import GlobalConnector
+
 class GlobalFit:
     """
     Class for regressing models against an arbitrary number of ITC experiments.
@@ -25,7 +27,7 @@ class GlobalFit:
         """
 
         # Objects for holding global parameters
-        self._global_param_names = []
+        self._global_param_keys = []
         self._global_params = {}
         self._global_param_mapping = {}
 
@@ -34,15 +36,9 @@ class GlobalFit:
         self._expt_weights = {}
         self._expt_list_stable_order = []
 
-    def add_experiment(self,experiment,param_guesses=None,
-                       fixed_param=None,param_aliases=None,weight=1.0):
+    def add_experiment(self,experiment,weight=1.0):
         """
         experiment: an initialized ITCExperiment instance
-        param_guesses: a dictionary of parameter guesses (need not be complete)
-        fixed_param: a dictionary of parameters to be fixed, with value being
-                     fixed_value.
-        param_aliases: dictionary keying local experiment parameters to global
-                       parameters.
         weight: how much to weight this experiment in the regression relative to other
                 experiments.  Values <1.0 weight this experiment less than others;
                 values >1.0 weight this more than others.
@@ -54,16 +50,6 @@ class GlobalFit:
         self._expt_dict[name] = experiment
         self._expt_list_stable_order.append(name)
         self._expt_weights[name] = weight
-
-        if param_guesses != None:
-            self._expt_dict[name].model.update_guesses(param_guesses)
-
-        if fixed_param != None:
-            self._expt_dict[name].model.update_fixed(fixed_param)
-
-        if param_aliases != None:
-            for p in param_aliases.keys():
-                self.link_to_global(experiment,p,param_aliases[p])
 
     def remove_experiment(self,experiment):
         """
@@ -111,12 +97,25 @@ class GlobalFit:
 
         # Update the alias from the global side
         e = self._expt_dict[expt_name]
-        if global_param_name not in self._global_param_names:
+        if global_param_name not in self._global_param_keys:
 
             # Make new global parameter and create link
-            self._global_param_names.append(global_param_name)
-            self._global_params[global_param_name] = copy.copy(e.model.parameters[expt_param])
+            self._global_param_keys.append(global_param_name)
             self._global_param_mapping[global_param_name] = [(expt_name,expt_param)]
+
+            # If this is a "dumb" global parameter, store a FitParameter
+            # instance with the data in it.
+            if type(global_param_name) == str:
+                self._global_params[global_param_name] = copy.copy(e.model.parameters[expt_param])
+
+            # If this is a GlobalConnector method, store the GlobalConnector
+            # instance as the paramter
+            elif issubclass(global_param_name.__self__.__class__,GlobalConnector):
+                self._global_params[global_param_name] = global_param_name.__self__
+
+            else:
+                err = "global variable class not recongized.\n"
+                raise ValueError(err)
 
         else:
             # Only add link, but do not make a new global parameter
@@ -152,7 +151,7 @@ class GlobalFit:
         Remove a global parameter, unlinking all local parameters.
         """
 
-        if global_param_name not in self._global_param_names:
+        if global_param_name not in self._global_param_keys:
             err = "Global parameter {} not defined.\n".format(global_param_name)
             raise ValueError(err)
 
@@ -169,7 +168,7 @@ class GlobalFit:
                         break
 
         # Remove global data
-        self._global_param_names.remove(global_param_name)
+        self._global_param_keys.remove(global_param_name)
         self._global_param_mapping.pop(global_param_name)
         self._global_params.pop(global_param_name)
 
@@ -182,16 +181,46 @@ class GlobalFit:
         all_residuals = []
 
         for i in range(len(param)):
-            param_key = self._float_param_mapping[i]
-            if type(param_key) == tuple and len(param_key) == 2:
-                k = param_key[0]
-                p = param_key[1]
-                self._expt_dict[k].model.update_values({p:param[i]})
+
+            # local variable
+            if self._float_param_type[i] == 0:
+                experiment = self._float_param_mapping[i][0]
+                parameter_name = self._float_param_mapping[i][1]
+                self._expt_dict[experiment].model.update_values({parameter_name:param[i]})
+
+            # Vanilla global variable
+            elif self._float_param_type[i] == 1:
+                param_key = self._float_param_mapping[i][0]
+                for experiment, parameter_name in self._global_param_mapping[param_key]:
+                    self._expt_dict[experiment].model.update_values({parameter_name:param[i]})
+
+            # Global connector global variable
+            elif self._float_param_type[i] == 2:
+                connector = self._float_param_mapping[i][0].__self__
+                param_name = self._float_param_mapping[i][1]
+                connector.update_values({param_name:param[i]})
+
             else:
-                for k, p in self._global_param_mapping[param_key]:
-                    self._expt_dict[k].model.update_values({p:param[i]})
+                err = "Paramter type {} not recongized.\n".format(self._float_param_type[i])
+                raise ValueError(err) 
 
+        # Look for connector functions
+        for connector_function in self._global_param_keys:
 
+            if type(connector_function) == str:
+                continue
+
+            # If this is a method of GlobalConnector...
+            if issubclass(connector_function.__self__.__class__,
+                          GlobalConnector):
+
+                # Update experiments with the value spit out by the connector function
+                for expt, param in self._global_param_mapping[connector_function]:
+                    e = self._expt_dict[expt]
+                    value = connector_function(e)
+                    self._expt_dict[expt].model.update_values({param:value})
+                 
+        # Calculate residuals
         for k in self._expt_dict.keys():
             all_residuals.extend(self._expt_weights[k]*(self._expt_dict[k].heats - self._expt_dict[k].dQ))
 
@@ -206,15 +235,50 @@ class GlobalFit:
         self._float_param = []
         self._float_bounds = [[],[]]
         self._float_param_mapping = []
+        self._float_param_type = []
+
+        self._float_global_connectors_seen = []
+
         float_param_counter = 0
 
         # Go through global variables
         for k in self._global_param_mapping.keys():
-            self._float_param.append(self._global_params[k].guess)
-            self._float_bounds[0].append(self._global_params[k].bounds[0])
-            self._float_bounds[1].append(self._global_params[k].bounds[1])
-            self._float_param_mapping.append(k)
-            float_param_counter += 1
+      
+            # Otherwise, there is just one parameter to enumerate over.
+            if type(k) == str:
+                enumerate_over = {k:self._global_params[k]} 
+                param_type = 1
+ 
+            # If this is a global connector, enumerate over all parameters in
+            # that connector 
+            elif issubclass(k.__self__.__class__,GlobalConnector):
+
+                # Only load each global connector in once
+                if k in self._float_global_connectors_seen:
+                    continue
+
+                enumerate_over = self._global_params[k].params
+                self._float_global_connectors_seen.append(k)
+                param_type = 2
+
+            else:
+                err = "global variable class not recongized.\n"
+                raise ValueError(err)
+            
+            # Now update parameter values, bounds, and mapping 
+            for e in enumerate_over.keys(): 
+
+                # skip fixed paramters
+                if enumerate_over[e].fixed:
+                    continue
+
+                self._float_param.append(enumerate_over[e].guess)
+                self._float_bounds[0].append(enumerate_over[e].bounds[0])
+                self._float_bounds[1].append(enumerate_over[e].bounds[1])
+                self._float_param_mapping.append((k,e))
+                self._float_param_type.append(param_type)
+
+                float_param_counter += 1
 
         # Go through every experiment
         for k in self._expt_dict.keys():
@@ -240,6 +304,7 @@ class GlobalFit:
                 self._float_bounds[0].append(e.model.bounds[p][0])
                 self._float_bounds[1].append(e.model.bounds[p][1])
                 self._float_param_mapping.append((k,p))
+                self._float_param_type.append(0)
 
                 float_param_counter += 1
 
@@ -259,27 +324,41 @@ class GlobalFit:
 
         # Store the result
         for i in range(len(fit_parameters)):
-            param_key = self._float_param_mapping[i]
-            if len(param_key) == 2:
-                k = param_key[0]
-                p = param_key[1]
-                self._expt_dict[k].model.update_values({p:fit_parameters[i]})
-                self._expt_dict[k].model.update_errors({p:error[i]})
-            else:
+
+            # local variable
+            if self._float_param_type[i] == 0:
+
+                experiment = self._float_param_mapping[i][0]
+                parameter_name = self._float_param_mapping[i][1]
+
+                self._expt_dict[experiment].model.update_values({parameter_name:fit_parameters[i]})
+                self._expt_dict[experiment].model.update_errors({parameter_name:error[i]})
+
+            # Vanilla global variable
+            elif self._float_param_type[i] == 1:
+
+                param_key = self._float_param_mapping[i][0]
                 for k, p in self._global_param_mapping[param_key]:
                     self._expt_dict[k].model.update_values({p:fit_parameters[i]})
                     self._global_params[param_key].value = fit_parameters[i]
                     self._global_params[param_key].error = error[i]
 
+            # Global connector global variable
+            elif self._float_param_type[i] == 2:
+                connector = self._float_param_mapping[i][0].__self__
+                param_name = self._float_param_mapping[i][1]
 
+                # HACK: if you use the params[param_name].value setter function,
+                # it will break the connector.  This is because I expose the 
+                # thermodynamic-y stuff of interest via .__dict__ rather than 
+                # directly via params.  So, this has to use the .update_values
+                # method. 
+                connector.update_values({param_name:fit_parameters[i]})
+                connector.params[param_name].error = error[i]
 
-    def _get_calc_heats(self,expt_name):
-        """
-        Spit out the calcualted heats.  This is broken out into its own call so 
-        exotic global fitters (like ProtonLinked) can redefine it. 
-        """
-
-        return self._expt_dict[expt_name].dQ
+            else:
+                err = "Paramter type {} not recongized.\n".format(self._float_param_type[i])
+                raise ValueError(err) 
 
 
     def plot(self,correct_molar_ratio=False,subtract_dilution=False,
@@ -320,7 +399,7 @@ class GlobalFit:
 
             mr = e.mole_ratio
             heats = e.heats
-            calc = self._get_calc_heats(expt_name)
+            calc = self._expt_dict[expt_name].dQ
 
             if len(calc) > 0:
 
@@ -353,6 +432,9 @@ class GlobalFit:
 
         return fig, ax
 
+    # -------------------------------------------------------------------------
+    # Properties describing fit results
+
     @property
     def fit_as_csv(self):
         """
@@ -370,7 +452,7 @@ class GlobalFit:
             param_type = "global"
             dh_file = "NA"
 
-            if self._global_params[k].fixed:
+            if self.global_param[k].fixed:
                 fixed = "fixed"
             else:
                 fixed = "float"
@@ -378,9 +460,9 @@ class GlobalFit:
             param_name = k
             value = self.fit_param[0][k]
             uncertainty = self.fit_error[0][k]
-            guess = self._global_params[k].guess
-            lower_bound = self._global_params[k].bounds[0]
-            upper_bound = self._global_params[k].bounds[1]
+            guess = self.global_param[k].guess
+            lower_bound = self.global_param[k].bounds[0]
+            upper_bound = self.global_param[k].bounds[1]
 
             out.append("{:},{:},{:},{:.5e},{:.5e},{:},{:.5e},{:.5e},{:.5e}\n".format(param_type,
                                                                                      param_name,
@@ -435,6 +517,28 @@ class GlobalFit:
  
 
     @property
+    def global_param(self):
+        """
+        Return all of the unique global parameters as FitParameter instances.
+        """
+
+        connectors_seen = []
+
+        # Global parameters
+        global_param = {}
+        for g in self._global_param_keys:
+            if type(g) == str:
+                global_param[g] = self._global_params[g]
+            else:
+                if g.__self__ not in connectors_seen:
+                    connectors_seen.append(g.__self__)
+                    for p in g.__self__.params.keys():
+                        global_param[p] = g.__self__.params[p]
+
+        return global_param
+                
+
+    @property
     def fit_param(self):
         """
         Return the fit results as a dictionary that keys parameter name to fit
@@ -444,8 +548,8 @@ class GlobalFit:
 
         # Global parameters
         global_out_param = {}
-        for g in self._global_param_names:
-            global_out_param[g] = self._global_params[g].value
+        for g in self.global_param.keys():
+            global_out_param[g] = self.global_param[g].value
 
         # Local parameters
         local_out_param = []
@@ -464,8 +568,8 @@ class GlobalFit:
 
         # Global parameters
         global_out_error = {}
-        for g in self._global_param_names:
-            global_out_error[g] = self._global_params[g].error
+        for g in self.global_param.keys():
+            global_out_error[g] = self.global_param[g].error
 
         # Local parameters
         local_out_error = []
@@ -528,7 +632,7 @@ class GlobalFit:
         for k in self.fit_param[0].keys():
 
             # Only count floating parameters
-            if not self._global_params[k].fixed:
+            if not self.global_param[k].fixed:
                 num_param += 1
 
         # Local parameters
@@ -562,6 +666,21 @@ class GlobalFit:
         except AttributeError:
             return None
 
+    # -------------------------------------------------------------------------
+    # Properties describing currently loaded parameters and experiments
+
+    @property
+    def experiments(self):
+        """
+        Return a list of associated experiments.
+        """
+
+        out = []
+        for expt_name in self._expt_list_stable_order:
+            out.append(self._expt_dict[expt_name])
+
+        return out
+
     #--------------------------------------------------------------------------
     # parameter names
 
@@ -571,6 +690,8 @@ class GlobalFit:
         Return parameter names. This is a tuple of global names and then a list
         of parameter names for each experiment.
         """
+
+        global_param_names = list(self.global_param.keys())
 
         final_param_names = []
         for expt_name in self._expt_list_stable_order:
@@ -584,7 +705,27 @@ class GlobalFit:
 
             final_param_names.append(param_names)
 
-        return self._global_param_names, final_param_names
+        return global_param_names, final_param_names
+
+    #--------------------------------------------------------------------------
+    # parameter aliases
+
+    @property
+    def param_aliases(self):
+        """
+        Return the parameter aliases.  This is a tuple.  The first entry is a
+        dictionary of gloal parameters mapping to experiment number; the second
+        is a map between experiment number and global parameter names.
+        """
+
+        expt_to_global = []
+        for expt_name in self._expt_list_stable_order:
+            e = self._expt_dict[expt_name]
+            expt_to_global.append(copy.deepcopy(e.model.param_aliases))
+
+        return self._global_param_mapping, expt_to_global
+
+
 
     #--------------------------------------------------------------------------
     # parameter guesses
@@ -596,6 +737,10 @@ class GlobalFit:
         of parameter guesses for each experiment.
         """
 
+        global_param_guesses = {}
+        for p in self.global_param.keys():
+            global_param_guesses[p] = self.global_param[p].guess
+
         final_param_guesses = []
         for expt_name in self._expt_list_stable_order:
             e = self._expt_dict[expt_name]
@@ -605,10 +750,6 @@ class GlobalFit:
                 param_guesses.pop(k)
 
             final_param_guesses.append(param_guesses)
-
-        global_param_guesses = {}
-        for p in self._global_param_names:
-            global_param_guesses[p] = self._global_params[p].guess
 
         return global_param_guesses, final_param_guesses
 
@@ -624,7 +765,7 @@ class GlobalFit:
 
         if expt == None:
             try:
-                self._global_params[param_name].guess = param_guess
+                self.global_param[param_name].guess = param_guess
             except KeyError:
                 err = "param \"{}\" is not global.  You must specify an experiment.\n".format(param_name)
                 raise KeyError(err)
@@ -642,8 +783,8 @@ class GlobalFit:
         """
 
         global_param_ranges = {}
-        for p in self._global_param_names:
-            global_param_ranges[p] = self._global_params[p].guess_range
+        for p in self.global_param.keys():
+            global_param_ranges[p] = self.global_param[p].guess_range
 
         final_param_ranges = []
         for expt_name in self._expt_list_stable_order:
@@ -677,7 +818,7 @@ class GlobalFit:
 
         if expt == None:
             try:
-                self._global_params[param_name].guess_range = param_range
+                self.global_param[param_name].guess_range = param_range
             except KeyError:
                 err = "param \"{}\" is not global.  You must specify an experiment.\n".format(param_name)
                 raise KeyError(err)
@@ -695,7 +836,7 @@ class GlobalFit:
         """
 
         global_fixed_param = {}
-        for p in self._global_param_names:
+        for p in self.global_param.keys():
             global_fixed_param[p] = self._global_params[p].fixed
 
         final_fixed_param = []
@@ -730,10 +871,10 @@ class GlobalFit:
         if expt == None:
             try:
                 if param_value == None:
-                    self._global_params[param_name].fixed = False
+                    self.global_param[param_name].fixed = False
                 else:
-                    self._global_params[param_name].fixed = True
-                    self._global_params[param_name].value = param_value
+                    self.global_param[param_name].fixed = True
+                    self.global_param[param_name].value = param_value
             except KeyError:
                 err = "param \"{}\" is not global.  You must specify an experiment.\n".format(param_name)
                 raise KeyError(err)
@@ -753,8 +894,8 @@ class GlobalFit:
         """
 
         global_param_bounds = {}
-        for p in self._global_param_names:
-            global_param_bounds[p] = copy.deepcopy(self._global_params[p].bounds)
+        for p in self.global_param.keys():
+            global_param_bounds[p] = copy.deepcopy(self.global_param[p].bounds)
 
         final_param_bounds = []
         for expt_name in self._expt_list_stable_order:
@@ -788,40 +929,10 @@ class GlobalFit:
 
         if expt == None:
             try:
-                self._global_params[param_name].bounds = param_bounds
+                self.global_param[param_name].bounds = param_bounds
             except KeyError:
                 err = "param \"{}\" is not global.  You must specify an experiment.\n".format(param_name)
                 raise KeyError(err)
         else:
             self._expt_dict[expt.experiment_id].model.update_bounds({param_name:param_bounds})
 
-    #--------------------------------------------------------------------------
-    # parameter aliases
-
-    @property
-    def param_aliases(self):
-        """
-        Return the parameter aliases.  This is a tuple.  The first entry is a
-        dictionary of gloal parameters mapping to experiment number; the second
-        is a map between experiment number and global parameter names.
-        """
-
-        expt_to_global = []
-        for expt_name in self._expt_list_stable_order:
-            e = self._expt_dict[expt_name]
-            expt_to_global.append(copy.deepcopy(e.model.param_aliases))
-
-
-        return self._global_param_mapping, expt_to_global
-
-    @property
-    def experiments(self):
-        """
-        Return a list of associated experiments.
-        """
-
-        out = []
-        for expt_name in self._expt_list_stable_order:
-            out.append(self._expt_dict[expt_name])
-
-        return out
