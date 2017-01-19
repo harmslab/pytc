@@ -16,7 +16,8 @@ class SingleSite(ITCModel):
     Binding at a single site.
     """
 
-    param_definition = {"K":1e6,"dH":-4000.0,"fx_competent":1.0}
+    def param_definition(K=1e6,dH=-4000.0,fx_competent=1.0):
+        pass
 
     @property
     def dQ(self):

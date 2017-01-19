@@ -16,8 +16,6 @@ class ITCModel:
     Base class from which all ITC models should be sub-classed.
     """
 
-    param_definition = {}
-
     def __init__(self,
                  S_cell=100e-6,S_syringe=0.0,
                  T_cell=0.0,   T_syringe=1000e-6,
@@ -48,6 +46,9 @@ class ITCModel:
         self._T_conc = self._titrate_species(self._T_cell,self._T_syringe)
 
         self._initialize_param()
+
+    def param_definition(self):
+        pass
 
     @property
     def dQ(self):
@@ -106,17 +107,48 @@ class ITCModel:
 
         return self._T_conc[1:]*self.param_values["dilution_heat"] + self.param_values["dilution_intercept"]
 
-    def _initialize_param(self):
+    def _initialize_param(self,param_names=None,param_guesses=None):
         """
         Initialize the parameters.  
         """
 
-        self._params = {"dilution_heat":0.0,"dilution_interecept":0.0}
-        for p in self.param_definition.keys():
-            self._params[p] = fit_param.FitParameter(p,guess=self.param_definition[p])
+        self._params = {}
+
+        if param_names == None:
+            param_names = []
+        if param_guesses == None:
+            param_guesses = []
+
+        # Grab parameter names and guesses from the self.param_definition function
+        a = inspect.getargspec(self.param_definition)
+
+        if type(a.args) != None:
+
+            args = list(a.args)
+            try:
+                args.remove("self")
+            except ValueError:
+                pass
+
+        if len(args) != 0:
+                
+            if len(args) != len(a.defaults):
+                err = "all parameters in self.param_definition must have a default value.\n"
+                raise ValueError(err)
+
+            param_names.extend(args)
+            param_guesses.extend(list(a.defaults))
+
+        # Add dilution parameters
+        param_names.extend(["dilution_heat","dilution_intercept"])
+        param_guesses.extend([0.0,0.0])
+
+        for i, p in enumerate(param_names):
+            self._params[p] = fit_param.FitParameter(p,guess=param_guesses[i])
 
         self._param_names = param_names[:]
         self._param_names.sort()
+
 
     # -------------------------------------------------------------------------
     # parameter names

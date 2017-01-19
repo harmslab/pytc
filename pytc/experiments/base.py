@@ -38,8 +38,6 @@ class ITCExperiment:
                             cell_volume=self.cell_volume,
                             shot_volumes=self._shots,**model_kwargs)
 
-        self.model.initialize_param()
-
         self._experiment_id = "".join([random.choice(string.ascii_letters)
                                        for i in range(20)])
 
@@ -71,13 +69,6 @@ class ITCExperiment:
         self._shots = np.array(shots)
         self._heats = np.array(heats)
 
-    def initialize_param(self,**kwargs):
-        """
-        Wrap parameter initialization for each model. **kwargs are passed to
-        allow definition of parameter values.
-        """
-
-        self.model.initialize_param(**kwargs)
 
     @property
     def dQ(self):

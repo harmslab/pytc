@@ -17,7 +17,13 @@ class BindingPolynomial(ITCModel):
     Base class for a binding polynomial fit.
     """
 
-    param_definition = {"fx_competent":1.0}
+    def param_definition(fx_competent=1.0): 
+        """
+        Define fraction competent.  The binding polynomial parameters are built
+        on the fly using the ._initialize_parameters below.
+        """
+        
+        pass
     
     def __init__(self,
                  num_sites=1,
@@ -52,11 +58,8 @@ class BindingPolynomial(ITCModel):
         param_names.extend(["dH{}".format(i) for i in range(1,self._num_sites + 1)])
         param_guesses.extend([-4000.0 for i in range(self._num_sites)])
 
-        for i, p in enumerate(param_names):
-            self.param_definition[p] = param_guesses[i]
-
         # Initialize parameters
-        super()._initialize_param()
+        super()._initialize_param(param_names,param_guesses)
 
         # Populate fitting parameter arrays
         self._fit_beta_array = np.zeros(self._num_sites,dtype=float)

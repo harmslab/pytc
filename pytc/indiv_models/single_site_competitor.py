@@ -19,8 +19,10 @@ class SingleSiteCompetitor(ITCModel):
     http://www.sciencedirect.com/science/article/pii/S0003269799944020
     """
  
-    param_definition = {"K":1e6,"Kcompetitor":1e6,"dH":-4000,
-                        "dHcompetitor":-4000,"fx_competent"=1.0}
+    def param_definition(K=1e6,Kcompetitor=1e6,
+                         dH=-4000,dHcompetitor=-4000,
+                         fx_competent=1.0):
+        pass
 
     def __init__(self,
                  S_cell=100e-6,S_syringe=0.0,
@@ -41,13 +43,15 @@ class SingleSiteCompetitor(ITCModel):
         shot_start: first shot to use in fit
         """
 
+        # Run standard __init__ function to create titrations, initialize params
+        # etc.
+        super().__init__(S_cell,S_syringe,T_cell,T_syringe,cell_volume,shot_volumes)
+
         # Titrate the competitor
         self._C_cell = C_cell
         self._C_syringe = C_syringe
         self._C_conc = self._titrate_species(self._C_cell,self._C_syringe)
 
-        # Now run standard __init__ function
-        super().__init__(S_cell,S_syringe,T_cell,T_syringe,cell_volume,shot_volumes)
 
     @property
     def dQ(self):
@@ -78,3 +82,5 @@ class SingleSiteCompetitor(ITCModel):
         Y = self.param_values["dHcompetitor"]*(self._mol_fx_sc[1:] - self._mol_fx_sc[:-1])
 
         to_return = self._cell_volume*S_conc_corr[1:]*(X + Y) + self.dilution_heats
+
+        return to_return
