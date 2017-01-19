@@ -17,6 +17,14 @@ class BindingPolynomial(ITCModel):
     Base class for a binding polynomial fit.
     """
 
+    def param_definition(fx_competent=1.0): 
+        """
+        Define fraction competent.  The binding polynomial parameters are built
+        on the fly using the ._initialize_parameters below.
+        """
+        
+        pass
+    
     def __init__(self,
                  num_sites=1,
                  S_cell=100e-6,S_syringe=0.0,
@@ -36,22 +44,9 @@ class BindingPolynomial(ITCModel):
         """
 
         self._num_sites = num_sites
+        super().__init__(S_cell,S_syringe,T_cell,T_syringe,cell_volume,shot_volumes)
 
-        self._S_cell = S_cell
-        self._S_syringe = S_syringe
-
-        self._T_cell = T_cell
-        self._T_syringe = T_syringe
-
-        self._cell_volume = cell_volume
-        self._shot_volumes = np.array(shot_volumes)
-
-        # Determine the concentration of all of the species across the titration
-        self._S_conc = self._titrate_species(self._S_cell,self._S_syringe)
-        self._T_conc = self._titrate_species(self._T_cell,self._T_syringe)
-
-
-    def initialize_param(self,fx_competent=1.0,dilution_heat=0.0,dilution_intercept=0.0,**kwargs):
+    def _initialize_param(self):
         """
         Populate the names of the arguments for this number of sites and guesses
         for each parameter in the model.
@@ -63,13 +58,8 @@ class BindingPolynomial(ITCModel):
         param_names.extend(["dH{}".format(i) for i in range(1,self._num_sites + 1)])
         param_guesses.extend([-4000.0 for i in range(self._num_sites)])
 
-        # Grab parameters defined in the function definition above
-        param_names.extend(inspect.getargspec(self.initialize_param).args)
-        param_names.remove("self")
-        param_guesses.extend(inspect.getargspec(self.initialize_param).defaults)
-
         # Initialize parameters
-        self._initialize_param(param_names,param_guesses)
+        super()._initialize_param(param_names,param_guesses)
 
         # Populate fitting parameter arrays
         self._fit_beta_array = np.zeros(self._num_sites,dtype=float)

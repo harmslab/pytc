@@ -16,13 +16,38 @@ class ITCModel:
     Base class from which all ITC models should be sub-classed.
     """
 
-    # --------------------------------------------------------------------------
-    # These three methods need to be defined for each subclass.
+    def __init__(self,
+                 S_cell=100e-6,S_syringe=0.0,
+                 T_cell=0.0,   T_syringe=1000e-6,
+                 cell_volume=300.0,
+                 shot_volumes=[2.5 for i in range(30)]):
 
-    def __init__(self):
-        pass
+        """
+        S_cell: stationary concentration in cell in M
+        S_syringe: stationary concentration in syringe in M
+        T_cell: titrant concentration cell in M
+        T_syringe: titrant concentration syringe in M
+        cell_volume: cell volume, in uL
+        shot_volumes: list of shot volumes, in uL.
+        shot_start: first shot to use in fit
+        """
 
-    def initialize_param(self):
+        self._S_cell = S_cell
+        self._S_syringe = S_syringe
+
+        self._T_cell = T_cell
+        self._T_syringe = T_syringe
+
+        self._cell_volume = cell_volume
+        self._shot_volumes = np.array(shot_volumes)
+
+        # Determine the concentration of all of the species across the titration
+        self._S_conc = self._titrate_species(self._S_cell,self._S_syringe)
+        self._T_conc = self._titrate_species(self._T_cell,self._T_syringe)
+
+        self._initialize_param()
+
+    def param_definition(self):
         pass
 
     @property
@@ -80,33 +105,50 @@ class ITCModel:
         Return the heat of dilution.
         """
 
-        #return self.mole_ratio*self.param_values["dilution_heat"] + self.param_values["dilution_intercept"]
         return self._T_conc[1:]*self.param_values["dilution_heat"] + self.param_values["dilution_intercept"]
 
     def _initialize_param(self,param_names=None,param_guesses=None):
         """
-        Initialize the parameters.  If param_names is None, the parameter
-        names and guesses are determined by inspection of self.initialize_param.
+        Initialize the parameters.  
         """
 
         self._params = {}
-        if param_names == None:
 
-            # If parameter names are not specified, grab them from
-            # self.initialize_param defaults
-            a = inspect.getargspec(self.initialize_param)
-            param_names = a.args
-            param_names.remove("self")
-            param_guesses = a.defaults
+        if param_names == None:
+            param_names = []
+        if param_guesses == None:
+            param_guesses = []
+
+        # Grab parameter names and guesses from the self.param_definition function
+        a = inspect.getargspec(self.param_definition)
+
+        if type(a.args) != None:
+
+            args = list(a.args)
+            try:
+                args.remove("self")
+            except ValueError:
+                pass
+
+        if len(args) != 0:
+                
+            if len(args) != len(a.defaults):
+                err = "all parameters in self.param_definition must have a default value.\n"
+                raise ValueError(err)
+
+            param_names.extend(args)
+            param_guesses.extend(list(a.defaults))
+
+        # Add dilution parameters
+        param_names.extend(["dilution_heat","dilution_intercept"])
+        param_guesses.extend([0.0,0.0])
 
         for i, p in enumerate(param_names):
-            if param_guesses != None:
-                self._params[p] = fit_param.FitParameter(p,guess=param_guesses[i])
-            else:
-                self._params[p] = fit_param.FitParameter(p)
+            self._params[p] = fit_param.FitParameter(p,guess=param_guesses[i])
 
         self._param_names = param_names[:]
         self._param_names.sort()
+
 
     # -------------------------------------------------------------------------
     # parameter names
