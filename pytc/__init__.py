@@ -15,5 +15,5 @@ from . import util
 # Load these defaults (which will be used for vast majority of experiments) 
 # into the global namespace for convenience
 from .experiments import ITCExperiment
-from .global_models import GlobalFit
+from .global_fit import GlobalFit
 
