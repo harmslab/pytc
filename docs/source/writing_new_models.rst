@@ -1,6 +1,6 @@
-=============================================
-Model API specifications
-=============================================
+======================
+Writing New ITC Models
+======================
 
 Individual models
 =================
@@ -9,21 +9,70 @@ These models describe a single ITC experiment.  They are passed to
 :code:`pytc.ITCExperiment` along with an appropriate ITC heats file to analyze that
 individual experiment.
 
-These models should:
+To define a new fitting model, you create a new subcass of 
+:code:`pytc.indiv_models.ITCModel`.  Here is an implementation of a single-site
+binding model. 
 
-* Be subclasses of :code:`pytc.indiv_models.ITCModel`
-* Expose a :code:`dQ` property that gives the heat change per shot.
-* Define a :code:`initialize_param` method with all fittable parameters as
-  arguments.  Each paramter should have a default value that is a reasonable
-  guess for that parameters.
-* Define a new :code:`__init__` function that uses the contents of the syringe and
-  titrant to calculate how the total concentrations of various species change
-  over the titration.  
+.. sourcecode:: python
 
-See `pytc\/indiv_models\/single_site.py <https://github.com/harmslab/pytc/blob/master/pytc/indiv_models/single_site.py>`_ for a simple example.
+    import pytc    
 
-See the :code:`model-documention.ipynb` jupyter notebook for full descriptions of
-the currently-implemented models.
+    class SingleSite(pytc.indiv_models.ITCModel):
+
+        def param_definition(K=1e6,dH=-4000.0,fx_competent=1.0):
+            pass
+
+        @property
+        def dQ(self):
+            """
+            Calculate the heats that would be observed across shots for a given set
+            of enthalpies and binding constants for each reaction.
+            """
+
+            # ----- Determine mole fractions -----
+            S_conc_corr = self._S_conc*self.param_values["fx_competent"]
+            b = S_conc_corr + self._T_conc + 1/self.param_values["K"]
+            ST = (b - np.sqrt((b)**2 - 4*S_conc_corr*self._T_conc))/2
+
+            mol_fraction = ST/S_conc_corr
+
+            # ---- Relate mole fractions to heat -----
+            X = self.param_values["dH"]*(mol_fraction[1:] - mol_fraction[:-1])
+   
+            return self._cell_volume*S_conc_corr[1:]*X + self.dilution_heats
+
+The new class does two things. 
+ + It defines a method called :code:`param_defintion` that defines the
+   fittable parameters and reasonable guesses for those parameters as arguments
+   to the method.
+ + It defines a property called :code:`dQ` which spits out the heat change for 
+   for each shot. It access the parameters defined in :code:`param_definition`
+   using :code:`self.param_values[PARAMETER_NAME]`.  The actual model
+   implemented is `Single Site <indiv_models.html#single_site>`_. 
+
+The requirements for one of these models are straightforward:
+ + Be subclasses of :code:`pytc.indiv_models.ITCModel`
+ + Define a :code:`param_definition` method with all fittable parameters as
+   arguments.  Each paramter should have a default value that is a reasonable
+   guess for that parameters. 
+ + Expose a :code:`dQ` property that gives the heat change per shot.
+
+Other useful xx:
+ + To pass other information to the model that is not present in a .DH file,
+   define a new :code:`__init__` function that has new arguments.  These can
+   then be dealt with, followed by calling :code:`super().__init__(...)`
+   where :code:`...` are the normal arguments to :code:`ITCModel.__init__`.
+   See `pytc\/indiv_models\/single_site_competitor.py <https://github.com/harmslab/pytc/blob/master/pytc/indiv_models/single_site_competitor.py>`_ as an example.
+ + To keep track of the concentration of something else in the cell besides a single
+   titrant and stationary species, define a new :code:`__init__` function that 
+   titrates this species.  See the :code:`__init__` function defined for 
+   `pytc\/indiv_models\/single_site_competitor.py <https://github.com/harmslab/pytc/blob/master/pytc/indiv_models/single_site_competitor.py>`_ as an example.
+ + To construct a model with a variable number of parameters--say, a binding
+   polynomial with :math:`N` sites--redefine :code:`_initialize_params`.  See
+   the :code:`_initialize_params` method defined for
+   `pytc\/indiv_models\/binding_polynomial.py <https://github.com/harmslab/pytc/blob/master/pytc/indiv_models/binding_polynomial.py>`_ as an example.  
+
+See the `here <indiv_models.html>`_ for descriptions of the currently-implemented models.
 
 Global models
 =============
@@ -228,6 +277,7 @@ There are three key things in this code:
    but does not call it (e.g. it is :code:`num_protons.dH` **NOT** 
    :code:`num_protons.dH()`)
 
+See the `here <global_mdels.html>`_ for descriptions of the currently-implemented models.
 
 .. toctree::
    :maxdepth: 2
