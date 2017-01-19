@@ -267,8 +267,7 @@ class GlobalFit:
             
             # Now update parameter values, bounds, and mapping 
             for e in enumerate_over.keys(): 
-                print(e)
-    
+
                 # skip fixed paramters
                 if enumerate_over[e].fixed:
                     continue

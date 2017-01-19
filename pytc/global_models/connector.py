@@ -9,23 +9,20 @@ class GlobalConnector:
     of other, underlying parameters.
     """
 
-    def __init__(self,name):
-        """
-        """
-    
-        self.name = name
-        self._param_names = [""]
-        self._initialize()
+    param_guesses = {"":0.0}
 
-    def _initialize(self):
+    def __init__(self,name):
         """
         Uses an "int_name" name without the name prefixed to the parameter.
         This is used by __dict__ so the person writing a new connector does not
         use a prefix when referring to the parameter.  There is also an 
         "ext_name" name with the name of the class prefixed to the parameter.
         """
+    
+        self.name = name
 
-
+        self._param_names = list(self.param_guesses.keys())
+        
         methods = [m[0] for m in inspect.getmembers(self, predicate=inspect.ismethod)]
         for p in self._param_names:
             if p in methods:
@@ -52,7 +49,8 @@ class GlobalConnector:
         self._param_dict = {}
         for int_name in self._param_names:
             ext_name = self._int_to_ext_name[int_name] 
-            self._param_dict[ext_name] = fit_param.FitParameter(ext_name)
+            self._param_dict[ext_name] = fit_param.FitParameter(ext_name,
+                                                                guess=self.param_guesses[int_name])
             self.__dict__[int_name] = self._param_dict[ext_name].value
 
     @property
@@ -75,18 +73,12 @@ class GlobalConnector:
             self._param_dict[ext_name].value = param_dict[ext_name]
             self.__dict__[int_name] = self._param_dict[ext_name].value
 
-class NumProtons(GlobalConnector):
-    
-    def __init__(self,name):
-        """
-        Initialize the NumProtons class, defining the fitting parameters.
-        """
-        
-        self.name = name
-        self._param_names = ["num_H","dH_intrinsic"] 
 
-        self._initialize()
-           
+
+class NumProtons(GlobalConnector):
+   
+    param_guesses = {"num_H":0.0, "dH_intrinsic":0.0}
+
     def dH(self,experiment):
         """
         Return the change in enthalpy upon binding of buffers with different
@@ -103,18 +95,18 @@ class VantHoff(GlobalConnector):
     van't Hoff enthalpy.  Assumes constant enthalpy over the temperature range.
     """
     
+    param_guesses = {"dH_vanthoff":0.0,"K_ref":10000}
+
     def __init__(self,name,reference_temp=298.15,R=1.9872036):
         """
         Initialize the VantHoff class, defining the fitting parameters.
         """
     
-        self.name = name
         self.reference_temp = reference_temp
         self.R = R
 
-        self._param_names = ["dH_vanthoff","K_ref"]
+        super().__init__(name)
 
-        self._initialize()
 
     def K(self,experiment):
         """
@@ -143,20 +135,18 @@ class VantHoffExtended(GlobalConnector):
     constant at at the defined reference temperature.
     """
 
+    param_guesses = {"K_ref":1.0,"dH_ref":0.0,"dCp":0.0}
+
     def __init__(self,name,reference_temp=298.15,R=1.9872036):
         """
         Initialize the VantHoffExtended class, defining the fitting parameters.
         """
 
-        self.name = name
         self.reference_temp = reference_temp
         self.R = R
 
-        self._param_names = ["dCp","dH_ref","K_ref"]
+        super().__init__(name)
 
-        self._initialize()
-
-          
     def K(self,experiment):
         """
         Return the temperature-dependent binding constant, determined using the
