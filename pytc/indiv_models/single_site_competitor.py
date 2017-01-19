@@ -73,13 +73,13 @@ class SingleSiteCompetitor(ITCModel):
         gamma = -1/(c_a*c_b)
         theta = np.arccos((-2*alpha**3 + 9*alpha*beta - 27*gamma)/(2*np.sqrt((alpha**2 - 3*beta)**3)))
 
-        self._mol_fx_s = (2*np.sqrt(alpha**2 - 3*beta) * np.cos(theta/3) - alpha)/3
-        self._mol_fx_st = r_a*self._mol_fx_s/(1/c_a + self._mol_fx_s)
-        self._mol_fx_sc = r_b*self._mol_fx_s/(1/c_b + self._mol_fx_s)
+        mol_fx_s = (2*np.sqrt(alpha**2 - 3*beta) * np.cos(theta/3) - alpha)/3
+        mol_fx_st = r_a*mol_fx_s/(1/c_a + mol_fx_s)
+        mol_fx_sc = r_b*mol_fx_s/(1/c_b + mol_fx_s)
 
         # ---- Relate mole fractions to heat -----
-        X = self.param_values["dH"]*(self._mol_fx_st[1:] - self._mol_fx_st[:-1])
-        Y = self.param_values["dHcompetitor"]*(self._mol_fx_sc[1:] - self._mol_fx_sc[:-1])
+        X = self.param_values["dH"]*(mol_fx_st[1:] - mol_fx_st[:-1])
+        Y = self.param_values["dHcompetitor"]*(mol_fx_sc[1:] - mol_fx_sc[:-1])
 
         to_return = self._cell_volume*S_conc_corr[1:]*(X + Y) + self.dilution_heats
 

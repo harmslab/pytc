@@ -16,6 +16,7 @@ class VantHoff(GlobalConnector):
     """
     
     param_guesses = {"dH_vanthoff":0.0,"K_ref":10000}
+    required_data = ["temperature"]
 
     def __init__(self,name,reference_temp=298.15,R=1.9872036):
         """

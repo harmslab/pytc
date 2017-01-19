@@ -51,7 +51,6 @@ The change in heat for each shot :math:`i` (:math:`\Delta Q_{i}`) is:
 
 where :math:`[T]_{i}` is the concentration of titrant at shot :math:`i`, :math:`q_{slope}` is the slope of the heat of dilution (:code:`dilution_heat`) and :math:`q_{intercept}` is the intercept of the heat of dilution (:code:`dilution_intercept`).  
 
-
 Single-Site Binding
 -------------------
 This is a basic, single-site binding model.

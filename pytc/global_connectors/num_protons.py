@@ -15,6 +15,7 @@ class NumProtons(GlobalConnector):
     """
    
     param_guesses = {"num_H":0.0, "dH_intrinsic":0.0}
+    required_data = ["ionization_enthalpy"]
 
     def dH(self,experiment):
         """

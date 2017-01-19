@@ -18,7 +18,8 @@ class VantHoffExtended(GlobalConnector):
     """
 
     param_guesses = {"K_ref":1.0,"dH_ref":0.0,"dCp":0.0}
-
+    required_data = ["temperature"]
+    
     def __init__(self,name,reference_temp=298.15,R=1.9872036):
         """
         Initialize the VantHoffExtended class, defining the fitting parameters.

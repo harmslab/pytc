@@ -31,10 +31,10 @@ class SingleSite(ITCModel):
         b = S_conc_corr + self._T_conc + 1/self.param_values["K"]
         ST = (b - np.sqrt((b)**2 - 4*S_conc_corr*self._T_conc))/2
 
-        self._mol_fx_st = ST/S_conc_corr
+        mol_fx_st = ST/S_conc_corr
 
         # ---- Relate mole fractions to heat -----
-        X = self.param_values["dH"]*(self._mol_fx_st[1:] - self._mol_fx_st[:-1])
+        X = self.param_values["dH"]*(mol_fx_st[1:] - mol_fx_st[:-1])
    
         to_return = self._cell_volume*S_conc_corr[1:]*X + self.dilution_heats
 
