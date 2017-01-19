@@ -14,8 +14,7 @@ import scipy.optimize as optimize
 from matplotlib import pyplot as plt
 from matplotlib import gridspec
 
-from . import global_connector
-from global_connector import GlobalConnector
+from . global_connectors import GlobalConnector
 
 class GlobalFit:
     """
