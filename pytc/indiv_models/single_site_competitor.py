@@ -18,6 +18,11 @@ class SingleSiteCompetitor(ITCModel):
     doi:10.1006/abio.1999.4402
     http://www.sciencedirect.com/science/article/pii/S0003269799944020
     """
+ 
+    def param_definition(K=1e6,Kcompetitor=1e6,
+                         dH=-4000,dHcompetitor=-4000,
+                         fx_competent=1.0):
+        pass
 
     def __init__(self,
                  S_cell=100e-6,S_syringe=0.0,
@@ -38,29 +43,15 @@ class SingleSiteCompetitor(ITCModel):
         shot_start: first shot to use in fit
         """
 
-        self._S_cell = S_cell
-        self._S_syringe = S_syringe
+        # Run standard __init__ function to create titrations, initialize params
+        # etc.
+        super().__init__(S_cell,S_syringe,T_cell,T_syringe,cell_volume,shot_volumes)
 
-        self._T_cell = T_cell
-        self._T_syringe = T_syringe
-
+        # Titrate the competitor
         self._C_cell = C_cell
         self._C_syringe = C_syringe
-
-        self._cell_volume = cell_volume
-        self._shot_volumes = np.array(shot_volumes)
-
-        # Determine the concentration of all of the species across the titration
-        self._S_conc = self._titrate_species(self._S_cell,self._S_syringe)
-        self._T_conc = self._titrate_species(self._T_cell,self._T_syringe)
         self._C_conc = self._titrate_species(self._C_cell,self._C_syringe)
 
-    def initialize_param(self,K=1e6,Kcompetitor=1e6,dH=-4000,dHcompetitor=-4000,fx_competent=1.0,dilution_heat=0.0,dilution_intercept=0.0):
-        """
-        Initialize the fitting parameters.
-        """
-
-        self._initialize_param()
 
     @property
     def dQ(self):
@@ -82,13 +73,13 @@ class SingleSiteCompetitor(ITCModel):
         gamma = -1/(c_a*c_b)
         theta = np.arccos((-2*alpha**3 + 9*alpha*beta - 27*gamma)/(2*np.sqrt((alpha**2 - 3*beta)**3)))
 
-        self._mol_fx_s = (2*np.sqrt(alpha**2 - 3*beta) * np.cos(theta/3) - alpha)/3
-        self._mol_fx_st = r_a*self._mol_fx_s/(1/c_a + self._mol_fx_s)
-        self._mol_fx_sc = r_b*self._mol_fx_s/(1/c_b + self._mol_fx_s)
+        mol_fx_s = (2*np.sqrt(alpha**2 - 3*beta) * np.cos(theta/3) - alpha)/3
+        mol_fx_st = r_a*mol_fx_s/(1/c_a + mol_fx_s)
+        mol_fx_sc = r_b*mol_fx_s/(1/c_b + mol_fx_s)
 
         # ---- Relate mole fractions to heat -----
-        X = self.param_values["dH"]*(self._mol_fx_st[1:] - self._mol_fx_st[:-1])
-        Y = self.param_values["dHcompetitor"]*(self._mol_fx_sc[1:] - self._mol_fx_sc[:-1])
+        X = self.param_values["dH"]*(mol_fx_st[1:] - mol_fx_st[:-1])
+        Y = self.param_values["dHcompetitor"]*(mol_fx_sc[1:] - mol_fx_sc[:-1])
 
         to_return = self._cell_volume*S_conc_corr[1:]*(X + Y) + self.dilution_heats
 
