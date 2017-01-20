@@ -6,6 +6,8 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import seaborn
+import pandas as pd
+from io import StringIO
 
 from .exp_sliders import *
 
@@ -77,6 +79,10 @@ class PlotBox(QWidget):
 		for i in reversed(range(self._plot_layout.count())): 
 			self._plot_layout.itemAt(i).widget().setParent(None)
 
+class ParamTable():
+
+	pass
+
 class AllExp(QWidget):
 	"""
 	experiment box widget
@@ -88,6 +94,7 @@ class AllExp(QWidget):
 		self._exp_list = exp_list
 		self._slider_list = {"Global" : {}, "Local" : {}}
 		self._global_var = []
+		self._glob_connect_req = {}
 		self.layout()
 
 	def layout(self):
@@ -132,13 +139,14 @@ class AllExp(QWidget):
 			self._fitter = self._exp_list["Fitter"]
 
 			for n, e in self._local_exp.items():
-				if e not in self._slider_list["Local"]:
-					self._slider_list["Local"][e] = []
-					exp = LocalExp(self._fitter, e, n, self._slider_list, self._global_var, self._global_exp, self._local_exp)
-					self._exp_box.addWidget(exp)
-				else:
-					#print('already in frame')
-					pass
+
+				if e in self._slider_list["Local"]:
+					continue
+
+				self._slider_list["Local"][e] = []
+				self._glob_connect_req[e] = []
+				exp = LocalExp(self._fitter, e, n, self._slider_list, self._global_var, self._global_exp, self._local_exp, self._glob_connect_req)
+				self._exp_box.addWidget(exp)
 
 			for n, e in self._global_exp.items():
 				if e not in self._slider_list["Global"]:
@@ -154,6 +162,8 @@ class AllExp(QWidget):
 		update parameter box 
 		"""
 		self._param_box.clear()
+		#string = StringIO(self._fitter.fit_as_csv)
+		#param_df = pd.read_csv(string)
 		self._param_box.append(self._fitter.fit_as_csv)
 
 	def print_exp(self):
