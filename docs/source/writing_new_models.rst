@@ -167,34 +167,40 @@ that encodes the relationship.
     class NumProtons(global_models.GlobalConnector):
    
         param_guesses = {"dH_intrinsic":0.1,"num_H",0.1}
+        required_data = ["ionization_enthalpy"]
  
         def dH(self,experiment):
 
             return self.dH_intrinsic + self.num_H*experiment.ionization_enthalpy
 
-The new class does two things. 
+The new class does three things. 
  + It defines an attribute called :code:`param_guesses` that defines the fittable
    parameters and reasonable guesses for those parameters.
+ + It defines an attribute called :code:`required_data` that defines attributes
+   of :code:`experiment` that must be set for the connector to work.  
  + It defines a method called :code:`dH` which spits out the enthalpy for a given
    :code:`experiment`.  Notice that :code:`dH` uses both parameters defined in 
    :code:`param_guesses`: :code:`self.dH_intrinsic` and :code:`self.num_H`.  It 
    gets the ionization enthalpy for a given experiment from the :code:`experiment`
    object it takes as an argument.
 
-The general requirements for these `GlobalConnector` requirements are
-straightforward:
+The general requirements for these `GlobalConnector` requirements are:
 
  + It must be a subclass of :code:`GlobalConnector`.
  + It must define :code:`param_guesses` in the class namespace (i.e. at the 
    top of the class definition.)  This should have reasonable guesses for the
    parameters.
+ + It must define :code:`required_data` in the class namespace (i.e. at the
+   top of the class definition.)  These are strings that name the attributes of
+   :code:`experiment` that are required to do the calculation.
  + It must define output methods (like :code:`dH`) that: 
      + take only :code:`self` and :code:`experiment` as arguments.
      + use the parameters specified in :code:`param_guesses` as attributes of
        :code:`self` (e.g. :code:`self.dH_intrinsic` above).
      + access any required information about the experiment from the 
        :code:`experiment` object.
- + There is no limit to the number of parameters or output methods.  
+ + There is no limit to the number of parameters, required data, or output
+   methods.  
 
 
 Link fit parameters to the object
@@ -205,6 +211,12 @@ model parameters in a way directly analagous to the simple global fit
 parameters from above.  As before, we'll show an example and then describe it.  
 
 .. sourcecode:: python
+
+    # --------------------------------------------------------------------
+    # define buffer ionization enthalpies.
+    # goldberg et al (2002) Journal of Physical and Chemical Reference Data 31 231,  doi: 10.1063/1.1416902
+    TRIS_IONIZATION_DH = 47.45/4.184*1000
+    IMID_IONIZATION_DH = 36.64/4.184*1000 
    
     # --------------------------------------------------------------------
     # Create a global fitting instance
