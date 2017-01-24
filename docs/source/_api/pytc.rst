@@ -1,5 +1,5 @@
-API Documentation
-=================
+pytc package
+============
 
 Subpackages
 -----------
@@ -7,7 +7,7 @@ Subpackages
 .. toctree::
 
     pytc.experiments
-    pytc.global_models
+    pytc.global_connectors
     pytc.indiv_models
     pytc.util
 
@@ -18,6 +18,14 @@ pytc.fit_param module
 ---------------------
 
 .. automodule:: pytc.fit_param
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pytc.global_fit module
+----------------------
+
+.. automodule:: pytc.global_fit
     :members:
     :undoc-members:
     :show-inheritance:
