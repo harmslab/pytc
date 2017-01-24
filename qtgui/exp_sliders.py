@@ -2,6 +2,9 @@ from qtpy.QtGui import *
 from qtpy.QtCore import *
 from qtpy.QtWidgets import *
 
+import pytc
+import inspect
+
 class SlidersExpanded(QWidget):
 	"""
 	extra slider options pop-up
@@ -122,10 +125,13 @@ class Sliders(QWidget):
 		self._slider.valueChanged[int].connect(self.update_val)
 		self._main_layout.addWidget(self._slider, 1, 1)
 
+		self._param_guess_label = QLabel("", self)
+		self._main_layout.addWidget(self._param_guess_label, 1, 2)
+
 		self.bounds()
 
 		self._fix_int = QLineEdit(self)
-		self._main_layout.addWidget(self._fix_int, 1, 2)
+		self._main_layout.addWidget(self._fix_int, 1, 3)
 		self._fix_int.setText(str(1))
 		self._fix_int.textChanged[str].connect(self.fix)
 		self._fix_int.hide()
@@ -177,7 +183,8 @@ class Sliders(QWidget):
 		update value for paremter based on slider value
 		"""
 		self._fitter.update_guess(self._param_name, value, self._exp)
-		print(value)
+		self._param_guess_label.setText(str(value))
+		#print(value)
 
 
 class LocalSliders(Sliders):
@@ -185,11 +192,13 @@ class LocalSliders(Sliders):
 	create sliders for a local exp object
 	"""
 
-	def __init__(self, exp, param_name, value, fitter, global_list, slider_list, global_exp):
+	def __init__(self, exp, param_name, value, fitter, global_list, slider_list, global_exp, connectors_seen):
 
 		self._global_list = global_list
 		self._slider_list = slider_list
 		self._value = value
+		self._connectors_seen = connectors_seen
+		self._glob_connect_req = {}
 
 		super().__init__(exp, param_name, fitter, global_exp)
 
@@ -197,6 +206,10 @@ class LocalSliders(Sliders):
 		"""
 		update the min max for the slider
 		"""
+		subclasses = pytc.global_connectors.GlobalConnector.__subclasses__()
+
+		self._global_connectors = {i.__name__: i(i.__name__) for i in subclasses}
+
 		exp_range = self._exp.model.param_guess_ranges[self._param_name]
 
 		self._slider.setMinimum(exp_range[0])
@@ -208,6 +221,9 @@ class LocalSliders(Sliders):
 
 		for i in self._global_list:
 			self._link.addItem(i)
+
+		for n, c in self._global_connectors.items():
+			self.global_connect(n, c)
 
 		self._link.activated[str].connect(self.link_unlink)
 		self._main_layout.addWidget(self._link, 1, 3)
@@ -221,7 +237,7 @@ class LocalSliders(Sliders):
 				self._fitter.unlink_from_global(self._exp, self._param_name)
 				self._global_exp[status].unlinked(self)
 			except:
-				pass
+				print("failed")
 
 			print("unlinked")
 		elif status == "Add Global Var":
@@ -231,16 +247,49 @@ class LocalSliders(Sliders):
 				for e in self._slider_list["Local"].values():
 					for i in e:
 						i.update_global(text)
-		else:
+		elif status not in self._glob_connect_req:
+			# connect to a simple global variable
 			self._fitter.link_to_global(self._exp, self._param_name, status)
 			self._slider.hide()
 			self._fix.hide()
 
 			if status not in self._global_exp:
-				self._global_exp[status] = GlobalExp(self._fitter, status, self._slider_list, self._global_list, self._global_exp)
+				self._global_exp[status] = GlobalExp(self._fitter, None, status, self._slider_list, self._global_list, self._global_exp)
 
 			self._global_exp[status].linked(self)
 			print("linked to " + status)
+		else:
+			# connect to global connector
+			self._slider.hide()
+			self._fix.hide()
+
+			connector_name = self._link.currentText().split(".")[0]
+			curr_connector = self._global_connectors[connector_name]
+			self._connectors_seen[self._exp] = curr_connector
+			self._fitter.link_to_global(self._exp, self._param_name, self._glob_connect_req[status])
+
+			self._slider_list["Global"][curr_connector] = []
+			self._global_exp[status] = GlobalExp(self._fitter, curr_connector, status, self._slider_list, self._global_list, self._global_exp, self._connectors_seen)
+			print("connected to " + status)
+			print(curr_connector.params)
+
+	def global_connect(self, name, connector):
+		"""
+		"""
+		#self._glob_connect_req[name] = {}
+
+		parent = inspect.getmembers(pytc.global_connectors.GlobalConnector, inspect.isfunction)
+		parent_list = [i[0] for i in parent]
+		child = inspect.getmembers(connector, inspect.ismethod)
+		child_list = [i[0] for i in child]
+
+		diff = set(child_list).difference(parent_list)
+		child_func = [i for i in child if i[0] in diff]
+
+		for i in child_func:
+			func_name = name + '.' + i[0]
+			self._glob_connect_req[func_name] = i[1]
+			self._link.addItem(func_name)
 
 	def update_global(self, value):
 		"""
@@ -281,14 +330,16 @@ class Experiments(QWidget):
 	experiment box widget
 	"""
 
-	def __init__(self, fitter, name, slider_list, global_var, global_exp):
+	def __init__(self, fitter, exp, name, slider_list, global_var, global_exp, connectors_seen):
 		super().__init__()
 
 		self._fitter = fitter
+		self._exp = exp
 		self._name = name
 		self._slider_list = slider_list
 		self._global_var = global_var
 		self._global_exp = global_exp
+		self._connectors_seen = connectors_seen
 
 		self.layout()
 
@@ -303,17 +354,6 @@ class Experiments(QWidget):
 		name_stretch.addWidget(name_label)
 		main_layout.addLayout(name_stretch)
 
-		self._header_layout = QHBoxLayout()
-		main_layout.addLayout(self._header_layout)
-
-		self._exp_layout = QVBoxLayout()
-		self._exp_widget = QFrame()
-		self._exp_widget.setLayout(self._exp_layout)
-
-		main_layout.addWidget(self._exp_widget)
-
-		self.exp_widgets()
-
 		divider = QFrame()
 		divider.setFrameShape(QFrame.HLine)
 		main_layout.addWidget(divider)
@@ -321,18 +361,24 @@ class Experiments(QWidget):
 		remove = QPushButton("Remove", self)
 		remove.clicked.connect(self.remove)
 
-		hide = QPushButton("Hide", self)
-		hide.clicked.connect(self.hide)
-
-		show = QPushButton("Show", self)
-		show.clicked.connect(self.show)
+		hide_show = QPushButton("Hide/Show", self)
+		hide_show.setCheckable(True)
+		hide_show.clicked[bool].connect(self.hide_show)
 
 		stretch = QHBoxLayout()
 		stretch.addStretch(1)
-		stretch.addWidget(hide)
-		stretch.addWidget(show)
+		stretch.addWidget(hide_show)
 		stretch.addWidget(remove)
 		main_layout.addLayout(stretch)
+
+		self._exp_layout = QVBoxLayout()
+		self._exp_widget = QFrame()
+		self._exp_widget.setLayout(self._exp_layout)
+		self._exp_widget.hide()
+
+		main_layout.addWidget(self._exp_widget)
+
+		self.exp_widgets()
 
 	def exp_widgets(self):
 		"""
@@ -345,26 +391,24 @@ class Experiments(QWidget):
 		"""
 		pass
 
-	def hide(self):
+	def hide_show(self, pressed):
 		"""
 		"""
-		self._exp_widget.hide()
 
-	def show(self):
-		"""
-		"""
-		self._exp_widget.show()
+		if pressed: 
+			self._exp_widget.show()
+		else:
+			self._exp_widget.hide()
 
 class LocalExp(Experiments):
 	"""
 	hold local parameters/sliders
 	"""
-	def __init__(self, fitter, exp, name, slider_list, global_var, global_exp, local_exp):
+	def __init__(self, fitter, exp, name, slider_list, global_var, global_exp, local_exp, connectors_seen):
 
 		self._local_exp = local_exp
-		self._exp = exp
 
-		super().__init__(fitter, name, slider_list, global_var, global_exp)
+		super().__init__(fitter, exp, name, slider_list, global_var, global_exp, connectors_seen)
 
 	def exp_widgets(self):
 		"""
@@ -373,18 +417,9 @@ class LocalExp(Experiments):
 		parameters = self._exp.param_values
 
 		for p, v in parameters.items():
-			s = LocalSliders(self._exp, p, v, self._fitter, self._global_var, self._slider_list, self._global_exp)
+			s = LocalSliders(self._exp, p, v, self._fitter, self._global_var, self._slider_list, self._global_exp, self._connectors_seen)
 			self._slider_list["Local"][self._exp].append(s)
 			self._exp_layout.addWidget(s)
-
-
-		fix_label = QLabel("Fix Guess")
-		guess_label = QLabel("Parameter Guess")
-		link_label = QLabel("Link/Unlink to Global Param")
-
-		self._header_layout.addWidget(fix_label)
-		self._header_layout.addWidget(guess_label)
-		self._header_layout.addWidget(link_label)
 
 	def remove(self):
 		"""
@@ -398,9 +433,9 @@ class GlobalExp(Experiments):
 	"""
 	hold global parameter/sliders
 	"""
-	def __init__(self, fitter, name, slider_list, global_var, global_exp):
+	def __init__(self, fitter, exp, name, slider_list, global_var, global_exp, connectors_seen):
 
-		super().__init__(fitter, name, slider_list, global_var, global_exp)
+		super().__init__(fitter, exp, name, slider_list, global_var, global_exp, connectors_seen)
 
 		self._linked_list = []
 
@@ -408,15 +443,19 @@ class GlobalExp(Experiments):
 		"""
 		create slider
 		"""
-		s = GlobalSliders(None, self._name, self._fitter, self._global_exp)
-		self._slider_list["Global"][self._name] = s
-		self._exp_layout.addWidget(s)
 
-		fix_label = QLabel("Fix Guess")
-		guess_label = QLabel("Parameter Guess")
+		# see if global variable is a connector or simple var
+		if isinstance(self._exp, pytc.global_connectors.GlobalConnector):
+			param = self._exp.params
 
-		self._header_layout.addWidget(fix_label)
-		self._header_layout.addWidget(guess_label)
+			for p, v in param.items():
+				s = GlobalSliders(None, p, self._fitter, self._global_exp)
+				self._slider_list["Global"][self._exp].append(s)
+				self._exp_layout.addWidget(s)
+		else:
+			s = GlobalSliders(None, self._name, self._fitter, self._global_exp)
+			self._slider_list["Global"][self._name] = s
+			self._exp_layout.addWidget(s)
 
 	def linked(self, loc_slider):
 		"""
