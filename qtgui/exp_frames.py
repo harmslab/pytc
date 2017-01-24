@@ -94,7 +94,7 @@ class AllExp(QWidget):
 		self._exp_list = exp_list
 		self._slider_list = {"Global" : {}, "Local" : {}}
 		self._global_var = []
-		self._glob_connect_req = {}
+		self._connectors_seen = {}
 		self.layout()
 
 	def layout(self):
@@ -144,8 +144,8 @@ class AllExp(QWidget):
 					continue
 
 				self._slider_list["Local"][e] = []
-				self._glob_connect_req[e] = []
-				exp = LocalExp(self._fitter, e, n, self._slider_list, self._global_var, self._global_exp, self._local_exp, self._glob_connect_req)
+				self._connectors_seen[e] = []
+				exp = LocalExp(self._fitter, e, n, self._slider_list, self._global_var, self._global_exp, self._local_exp, self._connectors_seen)
 				self._exp_box.addWidget(exp)
 
 			for n, e in self._global_exp.items():
@@ -162,9 +162,11 @@ class AllExp(QWidget):
 		update parameter box 
 		"""
 		self._param_box.clear()
-		#string = StringIO(self._fitter.fit_as_csv)
+		string = StringIO(self._fitter.fit_as_csv)
 		#param_df = pd.read_csv(string)
 		self._param_box.append(self._fitter.fit_as_csv)
+
+		#print(param_df)
 
 	def print_exp(self):
 		"""

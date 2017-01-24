@@ -192,12 +192,13 @@ class LocalSliders(Sliders):
 	create sliders for a local exp object
 	"""
 
-	def __init__(self, exp, param_name, value, fitter, global_list, slider_list, global_exp, glob_connect_req):
+	def __init__(self, exp, param_name, value, fitter, global_list, slider_list, global_exp, connectors_seen):
 
 		self._global_list = global_list
 		self._slider_list = slider_list
 		self._value = value
-		self._glob_connect_req = glob_connect_req
+		self._connectors_seen = connectors_seen
+		self._glob_connect_req = {}
 
 		super().__init__(exp, param_name, fitter, global_exp)
 
@@ -206,10 +207,8 @@ class LocalSliders(Sliders):
 		update the min max for the slider
 		"""
 		subclasses = pytc.global_connectors.GlobalConnector.__subclasses__()
-		
-		self._global_connectors = {i.__name__: i for i in subclasses}
 
-		self._connectors_seen = []
+		self._global_connectors = {i.__name__: i(i.__name__) for i in subclasses}
 
 		exp_range = self._exp.model.param_guess_ranges[self._param_name]
 
@@ -226,8 +225,6 @@ class LocalSliders(Sliders):
 		for n, c in self._global_connectors.items():
 			self.global_connect(n, c)
 
-		print(self._glob_connect_req)
-
 		self._link.activated[str].connect(self.link_unlink)
 		self._main_layout.addWidget(self._link, 1, 3)
 
@@ -240,7 +237,7 @@ class LocalSliders(Sliders):
 				self._fitter.unlink_from_global(self._exp, self._param_name)
 				self._global_exp[status].unlinked(self)
 			except:
-				pass
+				print("failed")
 
 			print("unlinked")
 		elif status == "Add Global Var":
@@ -251,19 +248,30 @@ class LocalSliders(Sliders):
 					for i in e:
 						i.update_global(text)
 		elif status not in self._glob_connect_req:
+			# connect to a simple global variable
 			self._fitter.link_to_global(self._exp, self._param_name, status)
 			self._slider.hide()
 			self._fix.hide()
 
 			if status not in self._global_exp:
-				self._global_exp[status] = GlobalExp(self._fitter, status, self._slider_list, self._global_list, self._global_exp)
+				self._global_exp[status] = GlobalExp(self._fitter, None, status, self._slider_list, self._global_list, self._global_exp)
 
 			self._global_exp[status].linked(self)
 			print("linked to " + status)
 		else:
-
 			# connect to global connector
+			self._slider.hide()
+			self._fix.hide()
+
+			connector_name = self._link.currentText().split(".")[0]
+			curr_connector = self._global_connectors[connector_name]
+			self._connectors_seen[self._exp] = curr_connector
+			self._fitter.link_to_global(self._exp, self._param_name, self._glob_connect_req[status])
+
+			self._slider_list["Global"][curr_connector] = []
+			self._global_exp[status] = GlobalExp(self._fitter, curr_connector, status, self._slider_list, self._global_list, self._global_exp, self._connectors_seen)
 			print("connected to " + status)
+			print(curr_connector.params)
 
 	def global_connect(self, name, connector):
 		"""
@@ -271,14 +279,17 @@ class LocalSliders(Sliders):
 		#self._glob_connect_req[name] = {}
 
 		parent = inspect.getmembers(pytc.global_connectors.GlobalConnector, inspect.isfunction)
-		child = inspect.getmembers(connector, inspect.isfunction)
+		parent_list = [i[0] for i in parent]
+		child = inspect.getmembers(connector, inspect.ismethod)
+		child_list = [i[0] for i in child]
 
-		for i, j in zip(child, parent):
-			if i != j and i[0] != '__init__':
-				func_name = name + '.' + i[0]
-				self._glob_connect_req[func_name] = i[1]
-				#self._connectors_seen.append(func_name)
-				self._link.addItem(func_name)
+		diff = set(child_list).difference(parent_list)
+		child_func = [i for i in child if i[0] in diff]
+
+		for i in child_func:
+			func_name = name + '.' + i[0]
+			self._glob_connect_req[func_name] = i[1]
+			self._link.addItem(func_name)
 
 	def update_global(self, value):
 		"""
@@ -319,14 +330,16 @@ class Experiments(QWidget):
 	experiment box widget
 	"""
 
-	def __init__(self, fitter, name, slider_list, global_var, global_exp):
+	def __init__(self, fitter, exp, name, slider_list, global_var, global_exp, connectors_seen):
 		super().__init__()
 
 		self._fitter = fitter
+		self._exp = exp
 		self._name = name
 		self._slider_list = slider_list
 		self._global_var = global_var
 		self._global_exp = global_exp
+		self._connectors_seen = connectors_seen
 
 		self.layout()
 
@@ -391,13 +404,11 @@ class LocalExp(Experiments):
 	"""
 	hold local parameters/sliders
 	"""
-	def __init__(self, fitter, exp, name, slider_list, global_var, global_exp, local_exp, glob_connect_req):
+	def __init__(self, fitter, exp, name, slider_list, global_var, global_exp, local_exp, connectors_seen):
 
 		self._local_exp = local_exp
-		self._exp = exp
-		self._glob_connect_req = glob_connect_req
 
-		super().__init__(fitter, name, slider_list, global_var, global_exp)
+		super().__init__(fitter, exp, name, slider_list, global_var, global_exp, connectors_seen)
 
 	def exp_widgets(self):
 		"""
@@ -406,13 +417,9 @@ class LocalExp(Experiments):
 		parameters = self._exp.param_values
 
 		for p, v in parameters.items():
-			s = LocalSliders(self._exp, p, v, self._fitter, self._global_var, self._slider_list, self._global_exp, self._glob_connect_req)
+			s = LocalSliders(self._exp, p, v, self._fitter, self._global_var, self._slider_list, self._global_exp, self._connectors_seen)
 			self._slider_list["Local"][self._exp].append(s)
 			self._exp_layout.addWidget(s)
-
-		if self._glob_connect_req[self._exp]:
-
-			pass
 
 	def remove(self):
 		"""
@@ -426,9 +433,9 @@ class GlobalExp(Experiments):
 	"""
 	hold global parameter/sliders
 	"""
-	def __init__(self, fitter, name, slider_list, global_var, global_exp):
+	def __init__(self, fitter, exp, name, slider_list, global_var, global_exp, connectors_seen):
 
-		super().__init__(fitter, name, slider_list, global_var, global_exp)
+		super().__init__(fitter, exp, name, slider_list, global_var, global_exp, connectors_seen)
 
 		self._linked_list = []
 
@@ -436,9 +443,19 @@ class GlobalExp(Experiments):
 		"""
 		create slider
 		"""
-		s = GlobalSliders(None, self._name, self._fitter, self._global_exp)
-		self._slider_list["Global"][self._name] = s
-		self._exp_layout.addWidget(s)
+
+		# see if global variable is a connector or simple var
+		if isinstance(self._exp, pytc.global_connectors.GlobalConnector):
+			param = self._exp.params
+
+			for p, v in param.items():
+				s = GlobalSliders(None, p, self._fitter, self._global_exp)
+				self._slider_list["Global"][self._exp].append(s)
+				self._exp_layout.addWidget(s)
+		else:
+			s = GlobalSliders(None, self._name, self._fitter, self._global_exp)
+			self._slider_list["Global"][self._name] = s
+			self._exp_layout.addWidget(s)
 
 	def linked(self, loc_slider):
 		"""
