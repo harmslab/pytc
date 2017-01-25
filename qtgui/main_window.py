@@ -1,6 +1,8 @@
 """
 pytc GUI using qtpy bindings
 """
+from pytc.global_fit import GlobalFit
+
 from qtpy.QtGui import *
 from qtpy.QtCore import *
 from qtpy.QtWidgets import *
@@ -46,16 +48,20 @@ class Splitter(QWidget):
 		self._plot_frame.clear()
 		self._exp_frame.clear()
 
+	def fit_shortcut(self):
+		"""
+		"""
+		self._exp_frame.add_exp()
+
 class Main(QMainWindow):
 	"""
 	"""
 	def __init__(self):
 		super().__init__()
 
-		self._exp_list = {"Local" : {}, "Global" : {}}
+		self._exp_list = {"Fitter" : GlobalFit(), "Local" : {}, "Global" : {}}
 
 		self.menu()
-		self.new_exp()
 
 	def menu(self):
 		"""
@@ -66,6 +72,12 @@ class Main(QMainWindow):
 
 		file_menu = menu.addMenu("Experiments")
 		testing_commands = menu.addMenu("Testing")
+		fitting_commands = menu.addMenu("Fitting")
+
+		fit_exp = QAction("Fit Experiments", self)
+		fit_exp.setShortcut("Ctrl+F")
+		fit_exp.triggered.connect(self.fit_exp)
+		fitting_commands.addAction(fit_exp)
 
 		return_exp = QAction("Print Experiments", self)
 		return_exp.setShortcut("Ctrl+P")
@@ -128,6 +140,12 @@ class Main(QMainWindow):
 		"""
 		print(self._exp_list["Fitter"])
 
+	def fit_exp(self):
+		"""
+		fitting shortcut
+		"""
+		self._exp.fit_shortcut()
+
 	def add_file(self):
 		"""
 		add a new pytc experiment.
@@ -143,10 +161,13 @@ class Main(QMainWindow):
 		"""
 		choose fitter and start new fit
 		"""
+		warning_message = QMessageBox.warning(self, "warning!", "Are you sure you want to start a new session?", QMessageBox.Yes | QMessageBox.No)
 
-		self._choose_fitter = ChooseFitter(self._exp_list, self._exp)
-		self._choose_fitter.setGeometry(550, 420, 300, 100)
-		self._choose_fitter.show()
+		if warning_message == QMessageBox.Yes:
+			self._exp_list = {"Fitter" : GlobalFit(), "Local" : {}, "Global" : {}}
+			self._exp.clear()
+		else:
+			print("don't clear!")
 
 	def save_file(self):
 		"""
