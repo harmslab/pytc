@@ -95,6 +95,7 @@ class AllExp(QWidget):
 		self._slider_list = {"Global" : {}, "Local" : {}}
 		self._global_var = []
 		self._connectors_seen = {}
+		self._local_appended = []
 		self.layout()
 
 	def layout(self):
@@ -145,12 +146,17 @@ class AllExp(QWidget):
 
 				self._slider_list["Local"][e] = []
 				self._connectors_seen[e] = []
-				exp = LocalExp(self._fitter, e, n, self._slider_list, self._global_var, self._global_exp, self._local_exp, self._connectors_seen)
+				exp = LocalExp(self._fitter, e, n, self._slider_list, self._global_var, self._global_exp, self._local_exp, self._connectors_seen, self._local_appended)
 				self._exp_box.addWidget(exp)
 
 			for n, e in self._global_exp.items():
 				if e not in self._slider_list["Global"]:
 					self._exp_box.addWidget(e)
+
+			for ex in self._local_appended:
+				ex.set_attr()
+
+			#print(self._local_appended)
 
 			self._fitter.fit()
 			self.return_param()

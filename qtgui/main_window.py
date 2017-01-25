@@ -48,6 +48,11 @@ class Splitter(QWidget):
 		self._plot_frame.clear()
 		self._exp_frame.clear()
 
+	def fit_shortcut(self):
+		"""
+		"""
+		self._exp_frame.add_exp()
+
 class Main(QMainWindow):
 	"""
 	"""
@@ -67,6 +72,12 @@ class Main(QMainWindow):
 
 		file_menu = menu.addMenu("Experiments")
 		testing_commands = menu.addMenu("Testing")
+		fitting_commands = menu.addMenu("Fitting")
+
+		fit_exp = QAction("Fit Experiments", self)
+		fit_exp.setShortcut("Ctrl+F")
+		fit_exp.triggered.connect(self.fit_exp)
+		fitting_commands.addAction(fit_exp)
 
 		return_exp = QAction("Print Experiments", self)
 		return_exp.setShortcut("Ctrl+P")
@@ -128,6 +139,12 @@ class Main(QMainWindow):
 		testing to make sure fitter selected correctly
 		"""
 		print(self._exp_list["Fitter"])
+
+	def fit_exp(self):
+		"""
+		fitting shortcut
+		"""
+		self._exp.fit_shortcut()
 
 	def add_file(self):
 		"""

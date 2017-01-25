@@ -192,13 +192,14 @@ class LocalSliders(Sliders):
 	create sliders for a local exp object
 	"""
 
-	def __init__(self, exp, param_name, value, fitter, global_list, slider_list, global_exp, connectors_seen):
+	def __init__(self, exp, param_name, value, fitter, global_list, slider_list, global_exp, connectors_seen, local_appended):
 
 		self._global_list = global_list
 		self._slider_list = slider_list
 		self._value = value
 		self._connectors_seen = connectors_seen
 		self._glob_connect_req = {}
+		self._local_appended = local_appended
 
 		super().__init__(exp, param_name, fitter, global_exp)
 
@@ -232,6 +233,7 @@ class LocalSliders(Sliders):
 		"""
 		add global variable, update if parameter is linked or not to a global paremeter
 		"""
+
 		if status == "Unlink":
 			try:
 				self._fitter.unlink_from_global(self._exp, self._param_name)
@@ -265,13 +267,21 @@ class LocalSliders(Sliders):
 
 			connector_name = self._link.currentText().split(".")[0]
 			curr_connector = self._global_connectors[connector_name]
-			self._connectors_seen[self._exp] = curr_connector
+			self._connectors_seen[self._exp].append(curr_connector)
 			self._fitter.link_to_global(self._exp, self._param_name, self._glob_connect_req[status])
 
 			self._slider_list["Global"][curr_connector] = []
-			self._global_exp[status] = GlobalExp(self._fitter, curr_connector, status, self._slider_list, self._global_list, self._global_exp, self._connectors_seen)
+
+			if status not in self._global_exp:
+				self._global_exp[status] = GlobalExp(self._fitter, curr_connector, status, self._slider_list, self._global_list, self._global_exp, self._connectors_seen)
+			
+			self._global_exp[status].linked(self)
 			print("connected to " + status)
-			print(curr_connector.params)
+
+			for e in self._local_appended:
+				e.update_req()
+
+			#print(curr_connector.params)
 
 	def global_connect(self, name, connector):
 		"""
@@ -358,6 +368,11 @@ class Experiments(QWidget):
 		divider.setFrameShape(QFrame.HLine)
 		main_layout.addWidget(divider)
 
+		req_box = QFrame()
+		self._req_layout = QVBoxLayout()
+		req_box.setLayout(self._req_layout)
+		main_layout.addWidget(req_box)
+
 		remove = QPushButton("Remove", self)
 		remove.clicked.connect(self.remove)
 
@@ -404,9 +419,11 @@ class LocalExp(Experiments):
 	"""
 	hold local parameters/sliders
 	"""
-	def __init__(self, fitter, exp, name, slider_list, global_var, global_exp, local_exp, connectors_seen):
+	def __init__(self, fitter, exp, name, slider_list, global_var, global_exp, local_exp, connectors_seen, local_appended):
 
 		self._local_exp = local_exp
+		self._local_appended = local_appended
+		self._required_fields = {}
 
 		super().__init__(fitter, exp, name, slider_list, global_var, global_exp, connectors_seen)
 
@@ -414,19 +431,60 @@ class LocalExp(Experiments):
 		"""
 		create sliders for experiment
 		"""
+		self._local_appended.append(self)
+
 		parameters = self._exp.param_values
 
 		for p, v in parameters.items():
-			s = LocalSliders(self._exp, p, v, self._fitter, self._global_var, self._slider_list, self._global_exp, self._connectors_seen)
+			s = LocalSliders(self._exp, p, v, self._fitter, self._global_var, self._slider_list, self._global_exp, self._connectors_seen, self._local_appended)
 			self._slider_list["Local"][self._exp].append(s)
 			self._exp_layout.addWidget(s)
+				
+	def update_req(self):
+		"""
+		checks if any global connectors are connected and updates to add fields for any required data
+		"""
+		exp_connectors = self._connectors_seen[self._exp]
+
+		for c in exp_connectors:
+			required = c.required_data
+			for i in required:
+				if i not in self._required_fields:
+					label_name = str(i).replace("_", " ") + ": "
+					label = QLabel(label_name.title(), self)
+					field = QLineEdit(self)
+					self._required_fields[i] = field
+
+					stretch = QHBoxLayout()
+					stretch.addWidget(label)
+					stretch.addWidget(field)
+					stretch.addStretch(1)
+
+					self._req_layout.addLayout(stretch)
+				else:
+					print("already there")
+
+	def set_attr(self):
+		"""
+		update data from global connector fields
+		"""
+		for n, v in self._required_fields.items():
+			try:
+				val = float(v.text())
+			except:
+				val = v.text()
+			#val = float(v.text()) if v.text().isdigit() else v.text()
+
+			print(self._required_fields, type(val))
+
+			setattr(self._exp, n, val)
 
 	def remove(self):
 		"""
 		"""
+		self._fitter.remove_experiment(self._exp)
 		self._local_exp.pop(self._exp, None)
 		self._slider_list["Local"].pop(self._exp, None)
-		self._fitter.remove_experiment(self._exp)
 		self.close()
 
 class GlobalExp(Experiments):
