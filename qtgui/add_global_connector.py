@@ -10,11 +10,11 @@ class AddGlobalConnectorWindow(QWidget):
 	"""
 	"""
 
-	def __init__(self, fit_env):
+	def __init__(self, end_function):
 
 		super().__init__()
 
-		self._fit_env = fit_env
+		self._end_function = end_function
 
 		possible_subclasses = pytc.global_connectors.GlobalConnector.__subclasses__()
 		self._global_connectors = dict([(s.__name__,s) for s in possible_subclasses])
@@ -41,10 +41,9 @@ class AddGlobalConnectorWindow(QWidget):
 		self._connector_select_widget.activated[str].connect(self._update_connector)
 
 		# Input box holding name
-		self._connector_name_label = QLabel("Name: ",self)
-		random_name = "".join([random.choice(string.ascii_letters) for i in range(3)])
+		self._connector_name_label = QLabel("Prefix: ",self)
 		self._connector_name_input = QLineEdit(self)
-		self._connector_name_input.setText(random_name)
+		self._connector_name_input.setText("")
 
 		# Connector name call back
 		self._connector_name_input.textChanged[str].connect(self._update_connector_name)
@@ -170,7 +169,7 @@ class AddGlobalConnectorWindow(QWidget):
 		kwargs = {}	
 		for k, widget in self._arg_widgets.items():
 			
-			value = widget.currentText()
+			value = widget.text()
 
 			try:
 				final_value = eval(value)
@@ -190,7 +189,13 @@ class AddGlobalConnectorWindow(QWidget):
 		self._selected_connector = connector(name=self._connector_name,
 											 **kwargs)
 
-		## DO SOMETHING WITH CONNECTOR
-	
+		# Get currently selected parameter name
+		index = self._connector_args_layout.count() - 1
+		param_dropbox = self._connector_args_layout.itemAt(index).widget()
+		var_name = param_dropbox.currentText()
+
+		# Pass data back
+		self._end_function(self._selected_connector,var_name)
+
 		self.close()
 	

@@ -24,7 +24,7 @@ class GlobalConnector:
         name: name of the fitter.  will be pre-pended to all parameter names.
         """
     
-        self.name = name
+        self._name = name
 
         self._param_names = list(self.param_guesses.keys())
         
@@ -36,23 +36,30 @@ class GlobalConnector:
                 err = err + "Offending parameter: {}\n".format(p)
 
                 raise ValueError(err)
- 
-        # Uses an "int_name" name without the name prefixed to the parameter.
-        # This is used by __dict__ so the person writing a new connector does not
-        # use a prefix when referring to the parameter.  There is also an 
-        # "ext_name" name with the name of the class prefixed to the parameter.
+
+        self._update_name_dicts()
+
+    def _update_name_dicts(self):
+        """
+        Uses an "int_name" name without the name prefixed to the parameter.
+        This is used by __dict__ so the person writing a new connector does not
+        use a prefix when referring to the parameter.  There is also an 
+        "ext_name" name with the name of the class prefixed to the parameter.
+        """
+
         self._int_to_ext_name = {}
         self._ext_to_int_name = {}
 
-        # If there is only one, unnamed parameter, the mapping is trivial
-        if len(self._param_names) == 1 and self._param_names[0] == "":
-            self._param_names = [self.name]
-            self._int_to_ext_name[self.name] = self.name
-            self._ext_to_int_name[self.name] = self.name
+        # If no prefix is specified, the mapping is trival
+        if self._name == "":
+            self._param_names = list(self.param_guesses.keys())
+            for p in self._param_names:
+                self._int_to_ext_name[p] = p
+                self._ext_to_int_name[p] = p
         else: 
-            self._int_to_ext_name = dict([(p,"{}_{}".format(self.name,p))
+            self._int_to_ext_name = dict([(p,"{}_{}".format(self._name,p))
                                           for p in self._param_names])
-            self._ext_to_int_name = dict([("{}_{}".format(self.name,p),p)
+            self._ext_to_int_name = dict([("{}_{}".format(self._name,p),p)
                                           for p in self._param_names])
 
         self._param_dict = {}
@@ -61,6 +68,23 @@ class GlobalConnector:
             self._param_dict[ext_name] = fit_param.FitParameter(ext_name,
                                                                 guess=self.param_guesses[int_name])
             self.__dict__[int_name] = self._param_dict[ext_name].value
+
+    @property
+    def name(self):
+        """
+        Return the name of the global connector (string).
+        """
+
+        return self._name
+
+    @name.setter
+    def name(self,name):
+        """
+        Set the name of the connector, updating the parameter names
+        """
+
+        self._name = name
+        self._update_name_dicts()
 
     @property
     def params(self):

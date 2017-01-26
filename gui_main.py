@@ -10,8 +10,6 @@ signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 if __name__ == '__main__':
 
-
-
 	try:
 		app = QApplication(sys.argv)
 		pytc_run = qtgui.Main()

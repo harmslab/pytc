@@ -5,6 +5,8 @@ from qtpy.QtWidgets import *
 import pytc
 import inspect
 
+from . import add_global_connector
+
 class SlidersExpanded(QWidget):
 	"""
 	extra slider options pop-up
@@ -219,12 +221,10 @@ class LocalSliders(Sliders):
 		self._link = QComboBox(self)
 		self._link.addItem("Unlink")
 		self._link.addItem("Add Global Var")
+		self._link.addItem("Add Connector")
 
 		for i in self._global_list:
 			self._link.addItem(i)
-
-		for n, c in self._global_connectors.items():
-			self.global_connect(n, c)
 
 		self._link.activated[str].connect(self.link_unlink)
 		self._main_layout.addWidget(self._link, 1, 3)
@@ -242,6 +242,7 @@ class LocalSliders(Sliders):
 				print("failed")
 
 			print("unlinked")
+
 		elif status == "Add Global Var":
 			text, ok = QInputDialog.getText(self, "Add Global Variable", "Var Name: ")
 			if ok: 
@@ -249,6 +250,20 @@ class LocalSliders(Sliders):
 				for e in self._slider_list["Local"].values():
 					for i in e:
 						i.update_global(text)
+
+		elif status == "Add Connector":
+
+			def do_stuff(connector,var_name):
+				self._global_list.append(connector)
+				for p, v in connector.params.items():
+					self._link.addItem(p)
+
+				i = self._link.findData(var_name)
+				self._link.setCurrentIndex(i)
+			
+			self.diag = add_global_connector.AddGlobalConnectorWindow(do_stuff)
+			self.diag.show()
+
 		elif status not in self._glob_connect_req:
 			# connect to a simple global variable
 			self._fitter.link_to_global(self._exp, self._param_name, status)
