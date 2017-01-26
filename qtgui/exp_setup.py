@@ -11,7 +11,8 @@ class AddExp(QWidget):
 	add experiment pop-up box
 	"""
 
-	def __init__(self, exp_list):
+	def __init__(self, exp_list,on_close_function):
+
 		super().__init__()
 
 		subclasses = pytc.indiv_models.ITCModel.__subclasses__()
@@ -21,6 +22,8 @@ class AddExp(QWidget):
 		self._shot_start = 1
 		self._exp_list = exp_list
 		self._fitter = exp_list["Fitter"]
+
+		self._on_close_function = on_close_function
 
 		self.layout()
 
@@ -59,7 +62,7 @@ class AddExp(QWidget):
 		shot_start_text.setText("0")
 		shot_start_text.textChanged[str].connect(self.shot_select)
 
-		gen_exp = QPushButton("Add Experiment", self)
+		gen_exp = QPushButton("OK", self)
 		gen_exp.clicked.connect(self.generate)
 
 		self.update_widgets()
@@ -144,6 +147,7 @@ class AddExp(QWidget):
 			self._exp_list["Local"][self._exp_name] = itc_exp
 			self._fitter.add_experiment(itc_exp)
 
+			self._on_close_function()
 			self.close()
 		else:
 			error_message = QMessageBox.warning(self, "warning", "No .DH file provided", QMessageBox.Ok)

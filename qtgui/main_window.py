@@ -10,6 +10,8 @@ from qtpy.QtWidgets import *
 from .exp_setup import *
 from .exp_frames import *
 
+from . import add_global_connector
+
 from matplotlib.backends.backend_pdf import PdfPages
 
 class Splitter(QWidget):
@@ -132,6 +134,10 @@ class Main(QMainWindow):
 		"""
 		testing, check pytc experiments loading
 		"""
+		self.x = add_global_connector.AddGlobalConnectorWindow("junk")
+		self.x.setGeometry(530, 400, 100, 200)
+		self.x.show()
+
 		print(self._exp_list["Local"])
 
 	def print_fitter(self):
@@ -145,13 +151,14 @@ class Main(QMainWindow):
 		fitting shortcut
 		"""
 		self._exp.fit_shortcut()
+		self._exp._plot_frame.update_plot()
 
 	def add_file(self):
 		"""
 		add a new pytc experiment.
 		"""
 		if "Fitter" in self._exp_list:
-			self._new_exp = AddExp(self._exp_list)
+			self._new_exp = AddExp(self._exp_list,self.fit_exp)
 			self._new_exp.setGeometry(530, 400, 100, 200)
 			self._new_exp.show()
 		else:
