@@ -2,8 +2,8 @@
 A python software package for analyzing Isothermal Titration Calorimetry
 experiments.
 
-[Documentation](https://pytc.readthedocs.io/en/latest/)
-[Try it Out](XX)
+ + [Documentation](https://pytc.readthedocs.io/en/latest/)
+ + [![Binder](http://mybinder.org/badge.svg)](http://mybinder.org:/repo/harmslab/pytc-binder)
 
 ## Quick Start
  + Install via pip `sudo python3 install pytc-fitter` (Mac/Linux), `python3 -m pip install pytc-fitter` (Windows)
@@ -15,7 +15,7 @@ experiments.
     ```
  + If jupyter is installed, you can open the `demos/Demo.ipynb` jupyter notebook to see a collection of example fits. 
 
-### Example script
+## Example script
 Fit a Ca2+/EDTA binding experiment.
 
 ```Python

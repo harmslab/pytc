@@ -1,3 +1,5 @@
+:orphan:
+
 =================
 Global ITC Models
 =================
@@ -98,13 +100,13 @@ where :math:`\Delta H_{intrinsic}` is the buffer-independent binding enthalpy,
 Van't Hoff
 ----------
 
-A standard van't Hoff analysis assuming a constant enthalpy.
+A standard Van't Hoff analysis assuming a constant enthalpy.
 
 `global_connectors\.VantHoff <https://github.com/harmslab/pytc/blob/master/pytc/global_connectors/vant_hoff.py>`_
 
 Fits a collection of ITC experiments collected in identical buffer conditions, but
 at different temperatures.  The temperature of each experiment is taken from the
-heats file.  Allows extraction of the van't Hoff enthalpy and binding constant 
+heats file.  Allows extraction of the Van't Hoff enthalpy and binding constant 
 for the reaction at a defined reference temperature.
 
 Model parameters
@@ -134,14 +136,14 @@ Model Scheme
     K = K(T_{ref})exp \Big ( \frac{-\Delta H_{vh}}{R} \Big (\frac{1}{T} - \frac{1}{T_{ref}} \Big ) \Big )
 
 By performing experiments at a minimum of two temperatures, one can extract the
-van't Hoff enthalpy :math:`\Delta H_{vh}` and binding constant at the reference 
+Van't Hoff enthalpy :math:`\Delta H_{vh}` and binding constant at the reference 
 temperature :math:`K(T_{ref})`.
 
 
 Extended Van't Hoff
 -------------------
 
-An extended van't Hoff analysis that assumes constant heat capacity.
+An extended Van't Hoff analysis that assumes constant heat capacity.
 
 `global_connectors\.VantHoff <https://github.com/harmslab/pytc/blob/master/pytc/global_connectors/vant_hoff_extended.py>`_
 
@@ -174,7 +176,8 @@ Model Scheme
 ~~~~~~~~~~~~
 
 .. math::
-    \Delta H(T) = \frac{-\Delta H_{ref}}{R} \Big ( \frac{1}{T} - \frac{1}{T_{ref}} \Big ) 
+    \Delta H(T) = \Delta H_{ref} + \Delta C_{p}(T - T_{ref})
+
 .. math::
     K = K(T_{ref})exp \Big ( \frac{-\Delta H_{ref}}{R} \Big (\frac{1}{T} - \frac{1}{T_{ref}} \Big ) + \frac{\Delta C_{p}}{R} \Big ( ln(T/T_{re}) + T/T_{ref} - 1 \Big ) \Big )
 

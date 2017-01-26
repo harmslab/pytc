@@ -1,8 +1,10 @@
+:orphan:
+
 ======================
 Writing New ITC Models
 ======================
 
-There are two types of models in *pytc*: individual models and global models. 
+There are two types of models in **pytc**: individual models and global models. 
 Individual models describe a single ITC experiment under a single set of 
 conditions.  Global models describe relationships between individual ITC 
 experiments. Individual models and global models are both appended to 
@@ -10,7 +12,7 @@ instances of :code:`pytc.GlobalFit`, which then simultaneously fits parameters
 from all models. 
 
 See the `here <indiv_models.html>`_ for descriptions of the individual models
-already implemented. See `here <global_models.html`>_ for the global models
+already implemented. See `here <global_models.html>`_ for the global models
 already implemented.
 
 The following sections describe how to write new individual and global models.
@@ -24,8 +26,7 @@ individual experiment.
 
 To define a new fitting model, create a new subcass of
 :code:`pytc.indiv_models.ITCModel`.  Here is an implementation of a single-site
-binding model. A full description of the model is
-`here <indiv_models.html#single_site>`_. 
+binding model. A full description of the model is `here <indiv_models.html>`_. 
 
 .. sourcecode:: python
 
@@ -63,14 +64,14 @@ The new class does two things.
    for each shot. It access the parameters defined in :code:`param_definition`
    using :code:`self.param_values[PARAMETER_NAME]`.  
 
-The requirements for an individul model are:
+The requirements for an individual model are:
  + It is a subclass of :code:`pytc.indiv_models.ITCModel`
  + It defines a :code:`param_definition` method with all fittable parameters as
    arguments.  Each paramter should have a default value that is a reasonable
    guess for that parameter. 
  + Expose a :code:`dQ` property that gives the heat change per shot.
 
-More complex models might require a few additional pieces.  
+More complex models might require a few additional pieces of code.
  + To pass information to the model that is not present in a .DH file,
    define a new :code:`__init__` function that has new arguments.  For example,
    one might define an :code:`__init__` function that takes the pH of the 
@@ -107,7 +108,7 @@ where :math:`\Delta H_{intrinsic}` is the buffer-independent binding enthalpy,
 :math:`\Delta H_{ionization,buffer}` is the buffer ionization enthalpy, and 
 :math:`n_{proton}` is the number of protons gained or lost.  
 
-One can encode thisrelationship using a subclasse of
+One can encode this relationship using a subclass of
 :code:`pytc.global_models.GlobalConnector`.  We will illustrate this by
 implementing the relationship between buffer ionization enthalpy and observed
 enthalpy from above.  
