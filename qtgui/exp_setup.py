@@ -39,7 +39,10 @@ class AddExp(QWidget):
 		self._gen_widgets = {}
 
 		model_select = QComboBox(self)
-		for k, v in self._models.items():
+		model_names = list(self._models.keys())
+		model_names.sort()
+
+		for k in model_names:
 			model_select.addItem(k)
 
 		self._exp_model = self._models[str(model_select.currentText())]
@@ -53,9 +56,10 @@ class AddExp(QWidget):
 		shot_label = QLabel("Shot Start: ", self)
 
 		shot_start_text = QLineEdit(self)
+		shot_start_text.setText("0")
 		shot_start_text.textChanged[str].connect(self.shot_select)
 
-		gen_exp = QPushButton("Generate Experiment", self)
+		gen_exp = QPushButton("Add Experiment", self)
 		gen_exp.clicked.connect(self.generate)
 
 		self.update_widgets()

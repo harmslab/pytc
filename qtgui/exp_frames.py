@@ -20,9 +20,6 @@ class Plot(FigureCanvas):
 
 		fig, ax = fitter.plot()
 
-		#self._fig = Figure(figsize = (width, height), dpi = dpi)
-		#self._axes = fig.add_subplot(111)
-
 		super().__init__(fig)
 		self.setParent(parent)
 
@@ -89,6 +86,7 @@ class AllExp(QWidget):
 	"""
 
 	def __init__(self, exp_list):
+
 		super().__init__()
 
 		self._exp_list = exp_list
@@ -101,32 +99,33 @@ class AllExp(QWidget):
 	def layout(self):
 		"""
 		"""
-		main_layout = QVBoxLayout(self)
 
-		scroll = QScrollArea(self)
+		self._main_layout = QVBoxLayout(self)
 
-		exp_content = QWidget()
-		self._exp_box = QVBoxLayout(exp_content)
-		scroll.setWidget(exp_content)
-		scroll.setWidgetResizable(True)
+		self._scroll = QScrollArea(self)
+		self._exp_content = QWidget()
+		self._exp_box = QVBoxLayout(self._exp_content)
+		self._scroll.setWidget(self._exp_content)
+		self._scroll.setWidgetResizable(True)
 
 		self._param_box = QTextEdit(self)
 		self._param_box.setReadOnly(True)
 
-		splitter = QSplitter(Qt.Vertical)
-		splitter.addWidget(scroll)
-		splitter.addWidget(self._param_box)
-		splitter.setSizes([200, 200])
+		self._splitter = QSplitter(Qt.Vertical)
+		self._splitter.addWidget(self._scroll)
+		self._splitter.addWidget(self._param_box)
+		self._splitter.setSizes([200, 200])
 
-		main_layout.addWidget(splitter)
+		self._main_layout.addWidget(self._splitter)
 
-		gen_experiments = QPushButton("Fit Experiments", self)
-		gen_experiments.clicked.connect(self.add_exp)
-		main_layout.addWidget(gen_experiments)
+		# Fit experiments button
+		self._gen_experiments = QPushButton("Fit Experiments", self)
+		self._gen_experiments.clicked.connect(self.add_exp)
+		self._main_layout.addWidget(self._gen_experiments)
 
 		print_exp = QPushButton("Print Experiments (Testing)", self)
 		print_exp.clicked.connect(self.print_exp)
-		main_layout.addWidget(print_exp)
+		self._main_layout.addWidget(print_exp)
 
 	def add_exp(self):
 		"""
@@ -146,7 +145,7 @@ class AllExp(QWidget):
 
 				self._slider_list["Local"][e] = []
 				self._connectors_seen[e] = []
-				exp = LocalExp(self._fitter, e, n, self._slider_list, self._global_var, self._global_exp, self._local_exp, self._connectors_seen, self._local_appended)
+				exp = LocalExp(self._fitter, e, n, self._slider_list, self._global_var,self._global_exp, self._local_exp, self._connectors_seen, self._local_appended)
 				self._exp_box.addWidget(exp)
 
 			for n, e in self._global_exp.items():
@@ -155,8 +154,6 @@ class AllExp(QWidget):
 
 			for ex in self._local_appended:
 				ex.set_attr()
-
-			#print(self._local_appended)
 
 			self._fitter.fit()
 			self.return_param()
