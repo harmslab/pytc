@@ -2,20 +2,27 @@ from qtpy.QtGui import *
 from qtpy.QtCore import *
 from qtpy.QtWidgets import *
 
-import string, random, inspect
+import string, random, inspect, ast
 
 import pytc
 
 class AddGlobalConnectorWindow(QWidget):
 	"""
+	Construct a window that allows the user to build a GlobalConnector object.
 	"""
 
 	def __init__(self, end_function):
+		"""
+		:param end_function: a function to call when the "OK" button is called.  This
+							 should take the connector and param_name to use.
+		"""
+	
 
 		super().__init__()
 
 		self._end_function = end_function
 
+		# Figure out the global connectors loaded
 		possible_subclasses = pytc.global_connectors.GlobalConnector.__subclasses__()
 		self._global_connectors = dict([(s.__name__,s) for s in possible_subclasses])
 
@@ -23,6 +30,7 @@ class AddGlobalConnectorWindow(QWidget):
 
 	def layout(self):
 		"""
+		Populate the window.
 		"""
 
 		main_layout = QGridLayout()
@@ -58,7 +66,7 @@ class AddGlobalConnectorWindow(QWidget):
 
 		# Final OK button
 		self._OK_button = QPushButton("OK", self)
-		self._OK_button.clicked.connect(self._create_final_connector)
+		self._OK_button.clicked.connect(self._return_final_connector)
 
 		# Build grid layout
 		main_layout.addWidget(self._connector_label,0,0)
@@ -131,6 +139,7 @@ class AddGlobalConnectorWindow(QWidget):
 
 	def _update_connector_name(self):
 		"""
+		If the user alters the name of the connector, upate the parameters.
 		"""
 
 		# Change inside of connector and update dropdown box with parameters to select
@@ -154,8 +163,9 @@ class AddGlobalConnectorWindow(QWidget):
 		for k in param_names:
 			param_dropbox.addItem(k)
 		
-	def _create_final_connector(self):
+	def _return_final_connector(self):
 		"""
+		Construct the final connector, run the end_function, and close.
 		"""
 
 		# Grab connector and name
@@ -168,12 +178,13 @@ class AddGlobalConnectorWindow(QWidget):
 		# Create kwargs to initialize the connector
 		kwargs = {}	
 		for k, widget in self._arg_widgets.items():
-			
+		
+			# Parse the value.	
 			value = widget.text()
 
 			try:
-				final_value = eval(value)
-			except NameError:
+				final_value = ast.literal_eval(value)
+			except ValueError:
 				if value.lower() in ["true","t"]:
 					final_value = True
 				elif value.lower() in ["false","f"]:

@@ -134,10 +134,6 @@ class Main(QMainWindow):
 		"""
 		testing, check pytc experiments loading
 		"""
-		self.x = add_global_connector.AddGlobalConnectorWindow("junk")
-		self.x.setGeometry(530, 400, 100, 200)
-		self.x.show()
-
 		print(self._exp_list["Local"])
 
 	def print_fitter(self):
@@ -158,7 +154,7 @@ class Main(QMainWindow):
 		add a new pytc experiment.
 		"""
 		if "Fitter" in self._exp_list:
-			self._new_exp = AddExp(self._exp_list,self.fit_exp)
+			self._new_exp = AddExperimentWindow(self._exp_list,self.fit_exp)
 			self._new_exp.setGeometry(530, 400, 100, 200)
 			self._new_exp.show()
 		else:

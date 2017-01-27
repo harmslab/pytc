@@ -2,11 +2,12 @@ import pytc
 from qtpy.QtGui import *
 from qtpy.QtCore import *
 from qtpy.QtWidgets import *
+
 import pandas as pd
 from inspect import signature
 import re
 
-class AddExp(QWidget):
+class AddExperimentWindow(QWidget):
 	"""
 	add experiment pop-up box
 	"""
@@ -126,7 +127,6 @@ class AddExp(QWidget):
 			self._shot_start = int(shot)
 		except:
 			pass
-		#print(self._shot_start, type(self._shot_start))
 
 	def add_file(self):
 		"""
@@ -135,7 +135,6 @@ class AddExp(QWidget):
 		self._exp_file = str(file_name)
 		self._exp_name = file_name.split("/")[-1]
 		self._exp_label.setText(self._exp_name)
-		#print(self._exp_file, type(self._exp_file))
 
 	def generate(self):
 		"""

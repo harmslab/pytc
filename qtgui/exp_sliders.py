@@ -186,7 +186,6 @@ class Sliders(QWidget):
 		"""
 		self._fitter.update_guess(self._param_name, value, self._exp)
 		self._param_guess_label.setText(str(value))
-		#print(value)
 
 
 class LocalSliders(Sliders):
@@ -239,9 +238,7 @@ class LocalSliders(Sliders):
 				self._fitter.unlink_from_global(self._exp, self._param_name)
 				self._global_exp[status].unlinked(self)
 			except:
-				print("failed")
-
-			print("unlinked")
+				pass
 
 		elif status == "Add Global Var":
 			text, ok = QInputDialog.getText(self, "Add Global Variable", "Var Name: ")
@@ -250,18 +247,24 @@ class LocalSliders(Sliders):
 				for e in self._slider_list["Local"].values():
 					for i in e:
 						i.update_global(text)
+			else:
+				i = self._link.findText("Unlink")
+				self._link.setCurrentIndex(i)
 
 		elif status == "Add Connector":
 
-			def do_stuff(connector,var_name):
+			def connector_handler(connector,var_name):
+
 				self._global_list.append(connector)
 				for p, v in connector.params.items():
-					self._link.addItem(p)
+					for e in self._slider_list["Local"].values():
+						for i in e:
+							i.update_global(p)
 
-				i = self._link.findData(var_name)
+				i = self._link.findText(var_name)
 				self._link.setCurrentIndex(i)
 			
-			self.diag = add_global_connector.AddGlobalConnectorWindow(do_stuff)
+			self.diag = add_global_connector.AddGlobalConnectorWindow(connector_handler)
 			self.diag.show()
 
 		elif status not in self._glob_connect_req:
@@ -344,7 +347,7 @@ class GlobalSliders(Sliders):
 		"""
 		update min/max for slider
 		"""
-		exp_range = self._fitter.param_ranges[0][self._param_name]
+		exp_range = self._fitter.param_ranges[1][self._param_name]
 
 		self._slider.setMinimum(exp_range[0])
 		self._slider.setMaximum(exp_range[1])
@@ -497,9 +500,6 @@ class LocalExp(Experiments):
 				val = float(v.text())
 			except:
 				val = v.text()
-			#val = float(v.text()) if v.text().isdigit() else v.text()
-
-			print(self._required_fields, type(val))
 
 			setattr(self._exp, n, val)
 
