@@ -49,9 +49,11 @@ class AddGlobalConnectorWindow(QWidget):
 		self._connector_select_widget.activated[str].connect(self._update_connector)
 
 		# Input box holding name
-		self._connector_name_label = QLabel("Prefix: ",self)
+		self._connector_name_label = QLabel("Name: ",self)
 		self._connector_name_input = QLineEdit(self)
-		self._connector_name_input.setText("")
+
+		random_name = "".join([random.choice(string.ascii_letters) for i in range(3)])
+		self._connector_name_input.setText(random_name)
 
 		# Connector name call back
 		self._connector_name_input.textChanged[str].connect(self._update_connector_name)
@@ -151,14 +153,13 @@ class AddGlobalConnectorWindow(QWidget):
 		Update the parameter box.
 		"""
 		
-		# Clear existing entries in the dropbox
+		# Clear existing entries in the dropbox (it's the last widget)
 		index = self._connector_args_layout.count() - 1
 		param_dropbox = self._connector_args_layout.itemAt(index).widget()
-			
 		param_dropbox.clear()
 
 		# Update the names of the parameters
-		param_names = list(self._selected_connector.params.keys())
+		param_names = list(self._selected_connector.local_methods.keys())
 		param_names.sort()
 		for k in param_names:
 			param_dropbox.addItem(k)

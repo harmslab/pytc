@@ -106,3 +106,28 @@ class GlobalConnector:
             self._param_dict[ext_name].value = param_dict[ext_name]
             self.__dict__[int_name] = self._param_dict[ext_name].value
 
+    @property
+    def local_methods(self):
+        """
+        Return the connector functions defined for this class (things like
+        self.dH and self.K).
+        """
+
+        output = {}
+
+        # Determine the functions defined in the parent class(es)
+        parent_classes = self.__class__.__bases__
+        parent_functions = []
+        for p in parent_classes:
+            for f in inspect.getmembers(p,inspect.isfunction):
+                if not f[0].startswith("_"):
+                    parent_functions.append(f[0])
+
+        # Determine the methods defined specifically for this class
+        child_functions = inspect.getmembers(self.__class__, inspect.isfunction)
+        for f in child_functions:
+            if not f[0].startswith("_") and f[0] not in parent_functions:
+                output["{}.{}".format(self.name,f[0])] = getattr(self,f[0])
+
+
+        return output 

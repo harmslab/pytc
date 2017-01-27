@@ -252,15 +252,21 @@ class LocalSliders(Sliders):
 				self._link.setCurrentIndex(i)
 
 		elif status == "Add Connector":
-
+	
 			def connector_handler(connector,var_name):
-
+		
 				self._global_list.append(connector)
-				for p, v in connector.params.items():
+
+				# Link to the global parameter
+				self._fitter.link_to_global(self._exp,self._param_name,connector.local_methods[var_name])
+
+				# Append connector methods to dropbdown lists
+				for p, v in connector.local_methods.items():
 					for e in self._slider_list["Local"].values():
 						for i in e:
 							i.update_global(p)
 
+				# Set the dropdown to have the currently selected var_name
 				i = self._link.findText(var_name)
 				self._link.setCurrentIndex(i)
 			
