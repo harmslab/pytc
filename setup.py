@@ -2,6 +2,9 @@
 
 import sys
 
+if sys.version_info[0] < 3:
+    sys.exit('Sorry, Python < 3.x is not supported')
+
 # Try using setuptools first, if it's installed
 from setuptools import setup, find_packages
 
@@ -15,6 +18,6 @@ setup(name='pytc',
       url='https://github.com/harmslab/pytc',
       download_url='https://github.com/harmslab/pytc/tarball/0.1.0',
       zip_safe=False,
-      install_requires=["matplotlib","scipy","numpy"],
+      install_requires=["matplotlib","scipy","numpy","pandas","qtpy","pyqt5","seaborn"],
       classifiers=['Programming Language :: Python'])
 
