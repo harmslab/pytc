@@ -8,7 +8,7 @@ experiments.
 __author__ = "Michael J. Harms"
 __date__ = "2016-06-22"
 
-import copy, inspect, warnings
+import copy, inspect, warnings, sys
 import numpy as np
 import scipy.optimize as optimize
 from matplotlib import pyplot as plt
@@ -145,7 +145,6 @@ class GlobalFit:
         # remove expt --> global link
         self._expt_dict[expt_name].model.update_aliases({expt_param:None})
 
-
     def remove_global(self,global_param_name):
         """
         Remove a global parameter, unlinking all local parameters.
@@ -227,9 +226,9 @@ class GlobalFit:
         return np.array(all_residuals)
 
 
-    def fit(self):
+    def _prep_fit(self):
         """
-        Perform a global fit using nonlinear regression.
+        Prep the fit, creating all appropriate parameter mappings etc.
         """
 
         self._float_param = []
@@ -310,20 +309,75 @@ class GlobalFit:
 
         self._float_param = np.array(self._float_param,dtype=float)
 
-        # Do the actual fit
-        self._fit_result = optimize.least_squares(self._residuals, 
-                                                  x0=self._float_param,
-                                                  bounds=self._float_bounds)
-        fit_parameters = self._fit_result.x
 
-        # Determine the covariance matrix (Jacobian * residual variance)
-        pcov = self._fit_result.jac*(np.sum(self._fit_result.fun**2)/(len(self._fit_result.fun)-len(self._fit_result.x)))
+    def _least_squares_fit(self,num_bootstrap=0,perturb_size=1.0):
+        """
+        Perform a global fit using nonlinear regression.
+        """
 
-        # Estimates of parameter uncertainty
-        error = np.absolute(np.diagonal(pcov))**0.5
+        # Record actual heat files
+        tmp_dict = {}
+        for k in self._expt_dict.keys():
+            tmp_dict[k] = copy.copy(self._expt_dict[k].heats)
+          
+        # Create array to store bootstrap replicates 
+        params = np.zeros((num_bootstrap + 1,len(self._float_param)),dtype=float)
+
+        # Go through bootstrap reps
+        for i in range(num_bootstrap + 1):
+
+            # Don't perturb first rep
+            if i != 0:
+                if i % 10 == 0:
+                    print("Bootstrap {} of {}".format(i,num_bootstrap + 1))
+                    sys.stdout.flush()
+
+                # Perturb other rep
+                for k in self._expt_dict.keys():
+                    self._expt_dict[k].heats = tmp_dict[k] + np.random.normal(0.0,perturb_size,len(tmp_dict[k]))
+
+            # Do the actual fit
+            self._fit_result = optimize.least_squares(self._residuals, 
+                                                      x0=self._float_param,
+                                                      bounds=self._float_bounds)
+
+            # Record first rep as best estimate
+            if i == 0:
+                self._final_fit_params = self._fit_result.x
+
+            params[i,:] = self._fit_result.x
+
+        # Restore heats
+        for k in self._expt_dict.keys():
+            self._expt_dict[k].heats = tmp_dict[k]
+        
+        # Record 95% confidence interval   
+        self._final_fit_error = np.std(params,0)*1.96  
+            
+
+    def _parse_fit(self):
+        """
+        Parse the fit results.
+        """
+
+        fit_parameters = self._final_fit_params
+        error = self._final_fit_error
+
+        #fit_parameters = self._fit_result.x
+
+        # Determine the covariance matrix (Jacobian * residual variance)  See:
+        # http://stackoverflow.com/questions/14854339/in-scipy-how-and-why-does-curve-fit-calculate-the-covariance-of-the-parameter-es
+        # http://stackoverflow.com/questions/14581358/getting-standard-errors-on-fitted-parameters-using-the-optimize-leastsq-method-i
+        #s_sq = np.sum(self._fit_result.fun**2)/(len(self._fit_result.fun)-len(self._fit_result.x))
+        #pcov = self._fit_result.jac*s_sq
+
+        # 95% confidence interval estimates of parameter uncertainty
+        #error = 1.96*(np.absolute(np.diagonal(pcov))**0.5)
 
         # Store the result
         for i in range(len(fit_parameters)):
+                
+            confidence = error[i]
 
             # local variable
             if self._float_param_type[i] == 0:
@@ -332,7 +386,7 @@ class GlobalFit:
                 parameter_name = self._float_param_mapping[i][1]
 
                 self._expt_dict[experiment].model.update_values({parameter_name:fit_parameters[i]})
-                self._expt_dict[experiment].model.update_errors({parameter_name:error[i]})
+                self._expt_dict[experiment].model.update_errors({parameter_name:confidence})
 
             # Vanilla global variable
             elif self._float_param_type[i] == 1:
@@ -341,7 +395,7 @@ class GlobalFit:
                 for k, p in self._global_param_mapping[param_key]:
                     self._expt_dict[k].model.update_values({p:fit_parameters[i]})
                     self._global_params[param_key].value = fit_parameters[i]
-                    self._global_params[param_key].error = error[i]
+                    self._global_params[param_key].error = confidence
 
             # Global connector global variable
             elif self._float_param_type[i] == 2:
@@ -354,12 +408,20 @@ class GlobalFit:
                 # directly via params.  So, this has to use the .update_values
                 # method. 
                 connector.update_values({param_name:fit_parameters[i]})
-                connector.params[param_name].error = error[i]
+                connector.params[param_name].error = confidence
 
             else:
-                err = "Paramter type {} not recongized.\n".format(self._float_param_type[i])
+                err = "Paramter type {} not recognized.\n".format(self._float_param_type[i])
                 raise ValueError(err) 
 
+    def fit(self,num_bootstrap=0,perturb_size=1.0):
+        """
+        Public fitting function that fits the data.
+        """
+
+        self._prep_fit()
+        self._least_squares_fit(num_bootstrap,perturb_size=1.0)
+        self._parse_fit()
 
     def plot(self,correct_molar_ratio=False,subtract_dilution=False,
              color_list=None,data_symbol="o",linewidth=1.5):
