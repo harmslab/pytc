@@ -1,11 +1,30 @@
 import scipy
 from scipy import stats
+import numpy as np
 
-def choose_model(model1,model2,alpha=0.05):
+def _simple_compare(m1,m2,key):
     """
-    Use an F-test to select between model1 and model2 with a cutoff of alpha.
-    
-    Returns acceptance (True or False) and p-value
+    Likelihood tests.
+    """  
+ 
+    m1_w = np.exp(-m1[key]/2)
+    m2_w = np.exp(-m2[key]/2)
+
+    weight = m1_w/(m1_w + m2_w)
+ 
+    if m1[key] < m2[key]:
+        status = True
+        print("{}: model 1 one favored over model 2 (weight = {:.3e})".format(key,weight))
+    else:
+        status = False
+        print("{}: model 2 one favored over model 1 (weight = {:.3e})".format(key,1-weight))
+
+    return status, weight
+
+def choose_model(model1,model2):
+    """
+    Compare two models and test which is better supported using an AIC, AICc,
+    and BIC test.
     """
 
     if model1.fit_sum_of_squares == None:
@@ -31,26 +50,16 @@ def choose_model(model1,model2,alpha=0.05):
     print("Model 2 fit")
     print(model2.fit_as_csv)
     print("")
-        
-    # Calculate the F-statistic 
-    if model1.fit_degrees_freedom == model2.fit_degrees_freedom:
-        F = model1.fit_sum_of_squares/model2.fit_sum_of_squares
-    else:
-        num = (model1.fit_sum_of_squares - model2.fit_sum_of_squares)/(model1.fit_degrees_freedom - model2.fit_degrees_freedom)
-        den = model2.fit_degrees_freedom/model2.fit_sum_of_squares
-        F = num/den
-   
-    # Determine the p-value 
-    p_value = 1 - stats.f.cdf(F,model2.fit_degrees_freedom,model1.fit_degrees_freedom)
-   
-    # Print status 
-    if p_value < alpha:
-        print("Model 1 (p: {:.5e})".format(p_value))
-        status = True
-    else:
-        print("Model 2 (p: {:.5e})".format(p_value))
-        status = False
 
-    return status, p_value
+    m1_stats = model1.fit_stats
+    m2_stats = model2.fit_stats
+
+    out = {}
     
+    out["AIC"]  = _simple_compare(m1_stats,m2_stats,"AIC")
+    out["AICc"] = _simple_compare(m1_stats,m2_stats,"AICc")
+    out["BIC"]  = _simple_compare(m1_stats,m2_stats,"BIC")
+   
+    return out 
+
 
