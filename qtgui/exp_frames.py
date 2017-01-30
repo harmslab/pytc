@@ -20,9 +20,6 @@ class Plot(FigureCanvas):
 
 		fig, ax = fitter.plot()
 
-		#self._fig = Figure(figsize = (width, height), dpi = dpi)
-		#self._axes = fig.add_subplot(111)
-
 		super().__init__(fig)
 		self.setParent(parent)
 
@@ -79,22 +76,19 @@ class PlotBox(QWidget):
 		for i in reversed(range(self._plot_layout.count())): 
 			self._plot_layout.itemAt(i).widget().setParent(None)
 
-class ParamTable():
-
-	pass
-
-class AllExp(QWidget):
+class ParamTable(QWidget):
 	"""
-	experiment box widget
+	take csv style param string and put into table widget
 	"""
 
-	def __init__(self, exp_list):
+	def __init__(self, fitter):
 		super().__init__()
 
-		self._exp_list = exp_list
-		self._slider_list = {"Global" : {}, "Local" : {}}
-		self._global_var = []
-		self._connectors_seen = {}
+		self._fitter = fitter
+		self._header = []
+		self._col_name = []
+		self._data = []
+
 		self.layout()
 
 	def layout(self):
@@ -102,30 +96,99 @@ class AllExp(QWidget):
 		"""
 		main_layout = QVBoxLayout(self)
 
-		scroll = QScrollArea(self)
+		self._param_table = QTableWidget()
+		main_layout.addWidget(self._param_table)
 
-		exp_content = QWidget()
-		self._exp_box = QVBoxLayout(exp_content)
-		scroll.setWidget(exp_content)
-		scroll.setWidgetResizable(True)
+		#self.csv_to_table()
+		self.load_table()
 
-		self._param_box = QTextEdit(self)
-		self._param_box.setReadOnly(True)
+	def load_table(self):
+		"""
+		"""
+		for i, row in enumerate(self._data):
+			for j, col in enumerate(row):
+				item = QTableWidgetItem(col)
+				self._param_table.setItem(i, j, item)
 
-		splitter = QSplitter(Qt.Vertical)
-		splitter.addWidget(scroll)
-		splitter.addWidget(self._param_box)
-		splitter.setSizes([200, 200])
+	def csv_to_table(self):
+		"""
+		"""
+		self._header = []
+		self._col_name = []
+		self._data = []
 
-		main_layout.addWidget(splitter)
+		file_data = self._fitter.fit_as_csv
+		string_file = StringIO(file_data)
 
-		gen_experiments = QPushButton("Fit Experiments", self)
-		gen_experiments.clicked.connect(self.add_exp)
-		main_layout.addWidget(gen_experiments)
+		for i in string_file:
+		    if i.startswith("#"):
+		        self._header.append(i.rstrip())
+		    elif i.startswith("type"):
+		        i = i.rstrip().split(',')
+		        self._col_name = i
+		    else:
+		        i = i.rstrip().split(',')
+		        self._data.append(i)
+
+	def update(self):
+		"""
+		"""
+		self.csv_to_table()
+		self.load_table()
+
+		self._param_table.setRowCount(len(self._data))
+		self._param_table.setColumnCount(len(self._data[0]))
+		self._param_table.setHorizontalHeaderLabels(self._col_name)
+
+
+class AllExp(QWidget):
+	"""
+	experiment box widget
+	"""
+
+	def __init__(self, exp_list):
+
+		super().__init__()
+
+		self._exp_list = exp_list
+		self._slider_list = {"Global" : {}, "Local" : {}}
+		self._global_var = []
+		self._connectors_seen = {}
+		self._local_appended = []
+		self.layout()
+
+	def layout(self):
+		"""
+		"""
+
+		self._main_layout = QVBoxLayout(self)
+
+		self._scroll = QScrollArea(self)
+		self._exp_content = QWidget()
+		self._exp_box = QVBoxLayout(self._exp_content)
+		self._scroll.setWidget(self._exp_content)
+		self._scroll.setWidgetResizable(True)
+
+		#self._param_box = QTextEdit(self)
+		#self._param_box.setReadOnly(True)
+
+		self._param_box = ParamTable(self._exp_list["Fitter"])
+
+		self._splitter = QSplitter(Qt.Vertical)
+		self._splitter.addWidget(self._scroll)
+		self._splitter.addWidget(self._param_box)
+		self._splitter.setSizes([200, 200])
+
+		self._main_layout.addWidget(self._splitter)
+
+		# Fit experiments button
+		self._gen_experiments = QPushButton("Fit Experiments", self)
+		self._gen_experiments.clicked.connect(self.add_exp)
+		self._main_layout.addWidget(self._gen_experiments)
 
 		print_exp = QPushButton("Print Experiments (Testing)", self)
 		print_exp.clicked.connect(self.print_exp)
-		main_layout.addWidget(print_exp)
+		self._main_layout.addWidget(print_exp)
 
 	def add_exp(self):
 		"""
@@ -145,15 +208,19 @@ class AllExp(QWidget):
 
 				self._slider_list["Local"][e] = []
 				self._connectors_seen[e] = []
-				exp = LocalExp(self._fitter, e, n, self._slider_list, self._global_var, self._global_exp, self._local_exp, self._connectors_seen)
+				exp = LocalExp(self._fitter, e, n, self._slider_list, self._global_var,self._global_exp, self._local_exp, self._connectors_seen, self._local_appended)
 				self._exp_box.addWidget(exp)
 
 			for n, e in self._global_exp.items():
 				if e not in self._slider_list["Global"]:
 					self._exp_box.addWidget(e)
 
+			for ex in self._local_appended:
+				ex.set_attr()
+
 			self._fitter.fit()
-			self.return_param()
+			self._param_box.update()
+			#self.return_param()
 		else:
 			print("failed :(")
 
@@ -161,10 +228,15 @@ class AllExp(QWidget):
 		"""
 		update parameter box 
 		"""
-		self._param_box.clear()
-		string = StringIO(self._fitter.fit_as_csv)
+		for i in reversed(range(self._plot_layout.count())): 
+			self._plot_layout.itemAt(i).widget().setParent(None)
+
+		self._param_box.update
+		#self._param_box.clear()
+		#data = self._fitter.fit_as_csv
+		#string = StringIO(data)
 		#param_df = pd.read_csv(string)
-		self._param_box.append(self._fitter.fit_as_csv)
+		#self._param_box.append(data)
 
 		#print(param_df)
 
