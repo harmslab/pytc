@@ -5,6 +5,8 @@ from qtpy.QtWidgets import *
 import pytc
 import inspect
 
+from . import add_global_connector
+
 class SlidersExpanded(QWidget):
 	"""
 	extra slider options pop-up
@@ -184,7 +186,6 @@ class Sliders(QWidget):
 		"""
 		self._fitter.update_guess(self._param_name, value, self._exp)
 		self._param_guess_label.setText(str(value))
-		#print(value)
 
 
 class LocalSliders(Sliders):
@@ -219,12 +220,10 @@ class LocalSliders(Sliders):
 		self._link = QComboBox(self)
 		self._link.addItem("Unlink")
 		self._link.addItem("Add Global Var")
+		self._link.addItem("Add Connector")
 
 		for i in self._global_list:
 			self._link.addItem(i)
-
-		for n, c in self._global_connectors.items():
-			self.global_connect(n, c)
 
 		self._link.activated[str].connect(self.link_unlink)
 		self._main_layout.addWidget(self._link, 1, 3)
@@ -239,9 +238,8 @@ class LocalSliders(Sliders):
 				self._fitter.unlink_from_global(self._exp, self._param_name)
 				self._global_exp[status].unlinked(self)
 			except:
-				print("failed")
+				pass
 
-			print("unlinked")
 		elif status == "Add Global Var":
 			text, ok = QInputDialog.getText(self, "Add Global Variable", "Var Name: ")
 			if ok: 
@@ -249,6 +247,32 @@ class LocalSliders(Sliders):
 				for e in self._slider_list["Local"].values():
 					for i in e:
 						i.update_global(text)
+			else:
+				i = self._link.findText("Unlink")
+				self._link.setCurrentIndex(i)
+
+		elif status == "Add Connector":
+	
+			def connector_handler(connector,var_name):
+		
+				self._global_list.append(connector)
+
+				# Link to the global parameter
+				self._fitter.link_to_global(self._exp,self._param_name,connector.local_methods[var_name])
+
+				# Append connector methods to dropbdown lists
+				for p, v in connector.local_methods.items():
+					for e in self._slider_list["Local"].values():
+						for i in e:
+							i.update_global(p)
+
+				# Set the dropdown to have the currently selected var_name
+				i = self._link.findText(var_name)
+				self._link.setCurrentIndex(i)
+			
+			self.diag = add_global_connector.AddGlobalConnectorWindow(connector_handler)
+			self.diag.show()
+
 		elif status not in self._glob_connect_req:
 			# connect to a simple global variable
 			self._fitter.link_to_global(self._exp, self._param_name, status)
@@ -329,7 +353,7 @@ class GlobalSliders(Sliders):
 		"""
 		update min/max for slider
 		"""
-		exp_range = self._fitter.param_ranges[0][self._param_name]
+		exp_range = self._fitter.param_ranges[1][self._param_name]
 
 		self._slider.setMinimum(exp_range[0])
 		self._slider.setMaximum(exp_range[1])
@@ -337,10 +361,11 @@ class GlobalSliders(Sliders):
 
 class Experiments(QWidget):
 	"""
-	experiment box widget
+	Experiment box widget
 	"""
 
 	def __init__(self, fitter, exp, name, slider_list, global_var, global_exp, connectors_seen):
+
 		super().__init__()
 
 		self._fitter = fitter
@@ -356,42 +381,48 @@ class Experiments(QWidget):
 	def layout(self):
 		"""
 		"""
-		main_layout = QVBoxLayout(self)
+		self._main_layout = QVBoxLayout(self)
 
-		name_label = QLabel(self._name)
-		name_stretch = QHBoxLayout()
-		name_stretch.addStretch(1)
-		name_stretch.addWidget(name_label)
-		main_layout.addLayout(name_stretch)
+		# Construct the header for the experiment
+		self._name_stretch = QHBoxLayout()
+		self._name_stretch.addStretch(1)
+		self._name_label = QLabel(self._name)
+		self._name_stretch.addWidget(self._name_label)
+		self._main_layout.addLayout(self._name_stretch)
 
-		divider = QFrame()
-		divider.setFrameShape(QFrame.HLine)
-		main_layout.addWidget(divider)
+		# Create divider	
+		self._divider = QFrame()
+		self._divider.setFrameShape(QFrame.HLine)
+		self._main_layout.addWidget(self._divider)
 
-		req_box = QFrame()
+		# Create SOMETHING???
+		self._req_box = QFrame()
 		self._req_layout = QVBoxLayout()
-		req_box.setLayout(self._req_layout)
-		main_layout.addWidget(req_box)
+		self._req_box.setLayout(self._req_layout)
+		self._main_layout.addWidget(self._req_box)
 
-		remove = QPushButton("Remove", self)
-		remove.clicked.connect(self.remove)
+		# Button to hide and show advanced options for the experiment
+		self._show_options_button = QPushButton("Show Options", self)
+		self._show_options_button.setCheckable(True)
+		self._show_options_button.clicked[bool].connect(self.hide_show)
 
-		hide_show = QPushButton("Hide/Show", self)
-		hide_show.setCheckable(True)
-		hide_show.clicked[bool].connect(self.hide_show)
+		# Button to remove experiment
+		self._remove_button = QPushButton("Remove", self)
+		self._remove_button.clicked.connect(self.remove)
 
-		stretch = QHBoxLayout()
-		stretch.addStretch(1)
-		stretch.addWidget(hide_show)
-		stretch.addWidget(remove)
-		main_layout.addLayout(stretch)
+		# Create layout that holds the options and removal buttons
+		self._button_stretch = QHBoxLayout()
+		self._button_stretch.addStretch(1)
+		self._button_stretch.addWidget(self._show_options_button)
+		self._button_stretch.addWidget(self._remove_button)
+		self._main_layout.addLayout(self._button_stretch)
 
+		# Box that holds the actual fit slider widgets, etc.
 		self._exp_layout = QVBoxLayout()
 		self._exp_widget = QFrame()
 		self._exp_widget.setLayout(self._exp_layout)
 		self._exp_widget.hide()
-
-		main_layout.addWidget(self._exp_widget)
+		self._main_layout.addWidget(self._exp_widget)
 
 		self.exp_widgets()
 
@@ -412,8 +443,10 @@ class Experiments(QWidget):
 
 		if pressed: 
 			self._exp_widget.show()
+			self._show_options_button.setText("Hide Options")
 		else:
 			self._exp_widget.hide()
+			self._show_options_button.setText("Show Options")
 
 class LocalExp(Experiments):
 	"""
@@ -473,9 +506,6 @@ class LocalExp(Experiments):
 				val = float(v.text())
 			except:
 				val = v.text()
-			#val = float(v.text()) if v.text().isdigit() else v.text()
-
-			print(self._required_fields, type(val))
 
 			setattr(self._exp, n, val)
 

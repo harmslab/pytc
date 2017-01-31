@@ -44,14 +44,6 @@ pytc.indiv_models.single_site_competitor module
     :undoc-members:
     :show-inheritance:
 
-pytc.indiv_models.two_site module
----------------------------------
-
-.. automodule:: pytc.indiv_models.two_site
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 
 Module contents
 ---------------

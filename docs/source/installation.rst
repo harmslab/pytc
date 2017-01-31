@@ -1,3 +1,4 @@
+:orphan:
 ============
 Installation
 ============
@@ -23,11 +24,11 @@ Mac
 
  2. Install :code:`pip3`.  Open a terminal and type:
     ::
-        sudo easy_install pip3
+    sudo easy_install pip3
 
  3. Once this has run, type:
     ::
-        sudo pip3 install pytc-fitter
+    sudo pip3 install pytc-fitter
 
 Linux
 -----
@@ -40,15 +41,15 @@ Linux
     or obtain it via your package manner.  On Ubuntu and other Debian-like
     systems, this would be:
     :: 
-        sudo apt-get install python3
+    sudo apt-get install python3
 
  2. Install :code:`pip3`.  Open a terminal and type:
     ::
-        sudo easy_install pip3
+    sudo easy_install pip3
 
  3. Once this has run, type:
     ::
-        sudo pip3 install pytc-fitter
+    sudo pip3 install pytc-fitter
 
 .. note::
     On some linux distributions, qt5 does not play nice with qt4.  

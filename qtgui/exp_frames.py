@@ -162,6 +162,7 @@ class AllExp(QWidget):
 		"""
 
 		self._main_layout = QVBoxLayout(self)
+<<<<<<< HEAD
 
 		self._scroll = QScrollArea(self)
 		self._exp_content = QWidget()
@@ -171,6 +172,14 @@ class AllExp(QWidget):
 
 		#self._param_box = QTextEdit(self)
 		#self._param_box.setReadOnly(True)
+=======
+
+		self._scroll = QScrollArea(self)
+		self._exp_content = QWidget()
+		self._exp_box = QVBoxLayout(self._exp_content)
+		self._scroll.setWidget(self._exp_content)
+		self._scroll.setWidgetResizable(True)
+>>>>>>> 831cf826404800b42a66746376e31c819b7c21d7
 
 		self._param_box = ParamTable(self._exp_list["Fitter"])
 

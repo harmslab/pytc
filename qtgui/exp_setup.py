@@ -2,16 +2,18 @@ import pytc
 from qtpy.QtGui import *
 from qtpy.QtCore import *
 from qtpy.QtWidgets import *
+
 import pandas as pd
 from inspect import signature
 import re
 
-class AddExp(QWidget):
+class AddExperimentWindow(QWidget):
 	"""
 	add experiment pop-up box
 	"""
 
-	def __init__(self, exp_list):
+	def __init__(self, exp_list,on_close_function):
+
 		super().__init__()
 
 		subclasses = pytc.indiv_models.ITCModel.__subclasses__()
@@ -21,6 +23,8 @@ class AddExp(QWidget):
 		self._shot_start = 1
 		self._exp_list = exp_list
 		self._fitter = exp_list["Fitter"]
+
+		self._on_close_function = on_close_function
 
 		self.layout()
 
@@ -39,7 +43,10 @@ class AddExp(QWidget):
 		self._gen_widgets = {}
 
 		model_select = QComboBox(self)
-		for k, v in self._models.items():
+		model_names = list(self._models.keys())
+		model_names.sort()
+
+		for k in model_names:
 			model_select.addItem(k)
 
 		self._exp_model = self._models[str(model_select.currentText())]
@@ -53,9 +60,10 @@ class AddExp(QWidget):
 		shot_label = QLabel("Shot Start: ", self)
 
 		shot_start_text = QLineEdit(self)
+		shot_start_text.setText("0")
 		shot_start_text.textChanged[str].connect(self.shot_select)
 
-		gen_exp = QPushButton("Generate Experiment", self)
+		gen_exp = QPushButton("OK", self)
 		gen_exp.clicked.connect(self.generate)
 
 		self.update_widgets()
@@ -119,7 +127,6 @@ class AddExp(QWidget):
 			self._shot_start = int(shot)
 		except:
 			pass
-		#print(self._shot_start, type(self._shot_start))
 
 	def add_file(self):
 		"""
@@ -128,7 +135,6 @@ class AddExp(QWidget):
 		self._exp_file = str(file_name)
 		self._exp_name = file_name.split("/")[-1]
 		self._exp_label.setText(self._exp_name)
-		#print(self._exp_file, type(self._exp_file))
 
 	def generate(self):
 		"""
@@ -140,6 +146,7 @@ class AddExp(QWidget):
 			self._exp_list["Local"][self._exp_name] = itc_exp
 			self._fitter.add_experiment(itc_exp)
 
+			self._on_close_function()
 			self.close()
 		else:
 			error_message = QMessageBox.warning(self, "warning", "No .DH file provided", QMessageBox.Ok)

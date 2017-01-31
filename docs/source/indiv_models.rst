@@ -1,23 +1,37 @@
+:orphan:
+
 =============================================
 Models for fitting individual ITC experiments
 =============================================
 
 Basic model pipeline
 ====================
-The basic procedure for fitting a model to an individual ITC experiments is:
+Under the hood, individual models do the following:
 
 1. Guess model parameters.
-2. Use the parameter guesses to calculate the concentrations of all molecular species over the course of the experiment.
-3. Combine the estimated species concentrations with the guessed enthalpy(s) to calculate the heat change for each shot. 
+2. Calculate the concentrations of all molecular species using guessed binding 
+   constants (as well as the titration shot sizes and initial concentrations
+   in the cell and syringe).
+3. Calculate the heat change per shot using the guess reaction enthalpies and
+   species concentrations from (2). 
 4. Compare the calculated and measured heat changes at each shot.  
 5. Iterate through steps 2-4 using nonlinear regression to find maximum likelihood parameter estimates. 
 
 Differences from other modeling approaches
 ==========================================
-The models used by *pytc* differ from models in Origin in two ways:
 
-1. The dilution correction is a fittable parameter within each model, treated as a linear function of titrant concentration.  To incorporate a blank titration, you globally fit the dilution for the blank and production experiments (see `Demo.ipynb <https://github.com/harmslab/pytc/https://github.com/harmslab/pytc/blob/master/Demo.ipynb>`_ for an example). 
-2. The stoichiometry of each model is fixed (rather than fittable). Instead, there is a fraction competent (:code:`fx_competent`) parameter that floats to account for inaccurate measurements of the concentrations of either the titrant or stationary phase.  This follows the approach used by `sedphat <http://www.analyticalultracentrifugation.com/sedphat/sedphat.htm>`_.  If this value is very different than one, it indicates a problem with the experiment.  
+1. In **pytc**, the heat of dilution is a fittable parameter within each model.
+   It is described as a linear function of titrant concentration.  This means 
+   that a blank titration should **not** be subtracted from the heats before 
+   fitting.  To incorporate a blank titration, globally fit the dilution for the
+   blank and production experiments (see the `demo <XX>`_ for an example). 
+2. The stoichiometry of each model is fixed (rather than fittable). Instead,
+   of a fractional stoichiometry, there is a fraction competent (:code:`fx_competent`)
+   parameter that floats to account for the fact that not all molecules may
+   be competent to bind in either the titrant or cell. This follows the approach
+   used by `sedphat <http://www.analyticalultracentrifugation.com/sedphat/sedphat.htm>`_.
+   If this value is very different than one, it may indicate a problem with the
+   experiment.  
 
 Specific Models
 ===============
@@ -117,7 +131,7 @@ The change in heat for each shot :math:`i` (:math:`\Delta Q_{i}`) is:
 .. math::
     \Delta Q_{i} = V_{0}[S]_{total,i}(\Delta H(x_{ST,i} - x_{ST,i-1})) + q_{dilution,i},
 
-where :math:`V_{0}` is the volume of the cell (fixed) and :math:`\Delta H` is the enthalpy of binding. Note that we do not deal with dilution here, as *pytc* calculates :math:`x_{ST,i}` for the entire titration, accouting for dilution at each step.  :math:`V_{0}` is held constant as the total cell volume (not the volume of solution including the neck) as only the cell, not the neck, is detected in the signal.  
+where :math:`V_{0}` is the volume of the cell (fixed) and :math:`\Delta H` is the enthalpy of binding. Note that we do not deal with dilution here, as **pytc** calculates :math:`x_{ST,i}` for the entire titration, accouting for dilution at each step.  :math:`V_{0}` is held constant as the total cell volume (not the volume of solution including the neck) as only the cell, not the neck, is detected in the signal.  
 
 
 Competitive ligand binding
@@ -235,7 +249,7 @@ where :math:`V_{0}` is the volume of the cell, :math:`\Delta H_{A}` is the entha
 
 where :math:`V_{0}` is the volume of the cell and :math:`V_{i}` is the volume of the :math:`i`-th injection.
 
-*pytc* calculates :math:`x_{PA,i}` and friends for the entire titration, correcting for dilution.  This means the :math:`f_{i}` term is superfluous.  Thus, heats are related by:
+**pytc** calculates :math:`x_{PA,i}` and friends for the entire titration, correcting for dilution.  This means the :math:`f_{i}` term is superfluous.  Thus, heats are related by:
 
 .. math::
     \Delta Q_{i} = V_{0}P_{total,i}(\Delta H_{A}(x_{PA,i} - x_{PA,i-1}) + \Delta H_{B}(x_{PB,i} - x_{PB,i-1})) + q_{dilution}.
@@ -252,21 +266,21 @@ This model was described by Freire et al. (2009). *Methods in Enzymology* 455:12
 
 Model parameters
 ~~~~~~~~~~~~~~~~
-+--------------------------------+------------------------+----------------------+---------------+
-|parameter                       | variable               | parameter name       | class         |
++--------------------------------+------------------------+----------------------------+---------------+
+|parameter                       | variable               | parameter name             | class         |
 +================================+========================+======================+===============+
-|adair constant for site 1       | :math:`\beta_{1}`      | `beta1`              | thermodynamic |
-+--------------------------------+------------------------+----------------------+---------------+
-|binding enthalpy for site 1     | :math:`\Delta H_{1}`   | `dH1`                | thermodynamic |
-+--------------------------------+------------------------+----------------------+---------------+
-| This will have as many :math:`\beta` and :math:`\Delta H` terms as sites defined in the model. |
-+--------------------------------+------------------------+----------------------+---------------+
-|fraction competent              | ---                    | `fx_competent`       | nuisance      |
-+--------------------------------+------------------------+----------------------+---------------+
-|slope of heat of dilution       | ---                    | `dilution_heat`      | nuisance      |
-+--------------------------------+------------------------+----------------------+---------------+
-|intercept of heat of dilution   | ---                    | `dilution_intercept` | nuisance      |
-+--------------------------------+------------------------+----------------------+---------------+
+|Adair constant for site 1       | :math:`\beta_{1}`      | :code:`beta1`              | thermodynamic |
++--------------------------------+------------------------+----------------------------+---------------+
+|binding enthalpy for site 1     | :math:`\Delta H_{1}`   | :code:`dH1`                | thermodynamic |
++--------------------------------+------------------------+----------------------------+---------------+
+| This will have as many :math:`\beta` and :math:`\Delta H` terms as sites defined in the model.       |
++--------------------------------+------------------------+----------------------------+---------------+
+|fraction competent              | ---                    | :code:`fx_competent`       | nuisance      |
++--------------------------------+------------------------+----------------------------+---------------+
+|slope of heat of dilution       | ---                    | :code:`dilution_heat`      | nuisance      |
++--------------------------------+------------------------+----------------------------+---------------+
+|intercept of heat of dilution   | ---                    | :code:`dilution_intercept` | nuisance      |
++--------------------------------+------------------------+----------------------------+---------------+
 
 Model Scheme
 ~~~~~~~~~~~~
