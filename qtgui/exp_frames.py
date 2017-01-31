@@ -208,6 +208,7 @@ class AllExp(QWidget):
 
 				self._slider_list["Local"][e] = []
 				self._connectors_seen[e] = []
+
 				exp = LocalExp(self._fitter, e, n, self._slider_list, self._global_var,self._global_exp, self._local_exp, self._connectors_seen, self._local_appended)
 				self._exp_box.addWidget(exp)
 
