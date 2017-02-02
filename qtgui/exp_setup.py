@@ -12,7 +12,7 @@ class AddExperimentWindow(QWidget):
 	add experiment pop-up box
 	"""
 
-	def __init__(self, exp_list,on_close_function):
+	def __init__(self, exp_list, on_close_function):
 
 		super().__init__()
 
@@ -143,7 +143,7 @@ class AddExperimentWindow(QWidget):
 			model_param = {k: int(v.text()) for (k, v) in self._gen_widgets.items()}
 
 			itc_exp = pytc.ITCExperiment(self._exp_file, self._exp_model, shot_start = self._shot_start, **model_param)
-			self._exp_list["Local"][self._exp_name] = itc_exp
+			#self._exp_list["Local"][self._exp_name] = itc_exp
 			self._fitter.add_experiment(itc_exp)
 
 			self._on_close_function()

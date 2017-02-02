@@ -7,10 +7,8 @@ from qtpy.QtGui import *
 from qtpy.QtCore import *
 from qtpy.QtWidgets import *
 
-from .exp_setup import *
-from .exp_frames import *
-
-from . import add_global_connector
+from .exp_setup import AddExperimentWindow
+from .fit_update import AllExp, PlotBox
 
 from matplotlib.backends.backend_pdf import PdfPages
 
@@ -61,7 +59,7 @@ class Main(QMainWindow):
 	def __init__(self):
 		super().__init__()
 
-		self._exp_list = {"Fitter" : GlobalFit(), "Local" : {}, "Global" : {}}
+		self._exp_list = {"Fitter" : GlobalFit(), "Connectors" : []}
 
 		self.menu()
 
@@ -134,7 +132,7 @@ class Main(QMainWindow):
 		"""
 		testing, check pytc experiments loading
 		"""
-		print(self._exp_list["Local"])
+		print(self._exp_list["Fitter"].experiments)
 
 	def print_fitter(self):
 		"""
@@ -154,7 +152,7 @@ class Main(QMainWindow):
 		add a new pytc experiment.
 		"""
 		if "Fitter" in self._exp_list:
-			self._new_exp = AddExperimentWindow(self._exp_list,self.fit_exp)
+			self._new_exp = AddExperimentWindow(self._exp_list, self.fit_exp)
 			self._new_exp.setGeometry(530, 400, 100, 200)
 			self._new_exp.show()
 		else:
@@ -167,7 +165,7 @@ class Main(QMainWindow):
 		warning_message = QMessageBox.warning(self, "warning!", "Are you sure you want to start a new session?", QMessageBox.Yes | QMessageBox.No)
 
 		if warning_message == QMessageBox.Yes:
-			self._exp_list = {"Fitter" : GlobalFit(), "Local" : {}, "Global" : {}}
+			self._exp_list = {"Fitter" : GlobalFit(), "Connectors" : []}
 			self._exp.clear()
 		else:
 			print("don't clear!")

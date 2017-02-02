@@ -9,7 +9,7 @@ import seaborn
 import pandas as pd
 from io import StringIO
 
-from .exp_sliders import *
+from .exp_frames import LocalExp
 
 class Plot(FigureCanvas):
 	"""
@@ -150,7 +150,7 @@ class AllExp(QWidget):
 
 		super().__init__()
 
-		self._exp_list = exp_list
+		self._fitter = exp_list["Fitter"]
 		self._slider_list = {"Global" : {}, "Local" : {}}
 		self._global_var = []
 		self._connectors_seen = {}
@@ -162,7 +162,6 @@ class AllExp(QWidget):
 		"""
 
 		self._main_layout = QVBoxLayout(self)
-<<<<<<< HEAD
 
 		self._scroll = QScrollArea(self)
 		self._exp_content = QWidget()
@@ -172,16 +171,8 @@ class AllExp(QWidget):
 
 		#self._param_box = QTextEdit(self)
 		#self._param_box.setReadOnly(True)
-=======
 
-		self._scroll = QScrollArea(self)
-		self._exp_content = QWidget()
-		self._exp_box = QVBoxLayout(self._exp_content)
-		self._scroll.setWidget(self._exp_content)
-		self._scroll.setWidgetResizable(True)
->>>>>>> 831cf826404800b42a66746376e31c819b7c21d7
-
-		self._param_box = ParamTable(self._exp_list["Fitter"])
+		self._param_box = ParamTable(self._fitter)
 
 		self._splitter = QSplitter(Qt.Vertical)
 		self._splitter.addWidget(self._scroll)
@@ -195,22 +186,19 @@ class AllExp(QWidget):
 		self._gen_experiments.clicked.connect(self.add_exp)
 		self._main_layout.addWidget(self._gen_experiments)
 
-		print_exp = QPushButton("Print Experiments (Testing)", self)
-		print_exp.clicked.connect(self.print_exp)
+		print_exp = QPushButton("Print Experiments/Sliders (Testing)", self)
+		print_exp.clicked.connect(self.print_sliders)
 		self._main_layout.addWidget(print_exp)
 
 	def add_exp(self):
 		"""
 		update fit and parameters, update sliders as well
 		"""
-		self._local_exp = self._exp_list["Local"]
-		self._global_exp = self._exp_list["Global"]
+		self._experiments = self._fitter.experiments
 
-		if len(self._local_exp) != 0:
+		if len(self._experiments) != 0:
 
-			self._fitter = self._exp_list["Fitter"]
-
-			for n, e in self._local_exp.items():
+			for e in self._experiments:
 
 				if e in self._slider_list["Local"]:
 					continue
@@ -218,12 +206,15 @@ class AllExp(QWidget):
 				self._slider_list["Local"][e] = []
 				self._connectors_seen[e] = []
 
-				exp = LocalExp(self._fitter, e, n, self._slider_list, self._global_var,self._global_exp, self._local_exp, self._connectors_seen, self._local_appended)
+				file_name = e.dh_file
+				exp_name = file_name.split("/")[-1]
+
+				exp = LocalExp(self._fitter, e, exp_name, self._slider_list, self._global_var, self._experiments, self._connectors_seen, self._local_appended)
 				self._exp_box.addWidget(exp)
 
-			for n, e in self._global_exp.items():
-				if e not in self._slider_list["Global"]:
-					self._exp_box.addWidget(e)
+			#for n, e in self._global_exp.items():
+			#	if e not in self._slider_list["Global"]:
+			#		self._exp_box.addWidget(e)
 
 			for ex in self._local_appended:
 				ex.set_attr()
@@ -250,7 +241,7 @@ class AllExp(QWidget):
 
 		#print(param_df)
 
-	def print_exp(self):
+	def print_sliders(self):
 		"""
 		testing function, make sure sliders getting added to dictionary
 		"""
