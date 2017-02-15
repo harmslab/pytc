@@ -141,7 +141,7 @@ class AddGlobalConnectorWindow(QWidget):
 
 	def _update_connector_name(self):
 		"""
-		If the user alters the name of the connector, upate the parameters.
+		If the user alters the name of the connector, update the parameters.
 		"""
 
 		# Change inside of connector and update dropdown box with parameters to select

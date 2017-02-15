@@ -39,7 +39,7 @@ class ConnectorsBox(Experiments):
 		"""
 
 		self._slider_window = slider_popup.ConnectorPopUp(self)
-		self._slider_window.setGeometry(530, 400, 100, 200)
+		self._slider_window.setGeometry(450, 200, 600, 100)
 		self._slider_window.show()
 
 	def linked(self, loc_slider):

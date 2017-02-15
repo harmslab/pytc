@@ -39,7 +39,7 @@ class LocalBox(Experiments):
 		hide and show slider window
 		"""
 		self._slider_window = slider_popup.LocalPopUp(self)
-		self._slider_window.setGeometry(300, 350, 500, 300)
+		self._slider_window.setGeometry(450, 200, 600, 300)
 		self._slider_window.show()
 				
 	def update_req(self):

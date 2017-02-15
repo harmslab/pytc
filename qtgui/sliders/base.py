@@ -59,12 +59,18 @@ class Sliders(QWidget):
 		self._fix_int.textChanged[str].connect(self.fix)
 		self._fix_int.hide()
 
+		update_min_label = QLabel("min: ", self)
+		self._main_layout.addWidget(update_min_label, 1, 4)
+
 		update_min = QLineEdit(self)
-		self._main_layout.addWidget(update_min, 1, 4)
+		self._main_layout.addWidget(update_min, 1, 5)
 		update_min.textChanged[str].connect(self.min_bounds)
 
+		update_max_label = QLabel("max: ", self)
+		self._main_layout.addWidget(update_max_label, 1, 6)
+
 		update_max = QLineEdit(self)
-		self._main_layout.addWidget(update_max, 1, 5)
+		self._main_layout.addWidget(update_max, 1, 7)
 		update_max.textChanged[str].connect(self.max_bounds)
 
 	def fix_layout(self, state):
@@ -114,7 +120,7 @@ class Sliders(QWidget):
 		except:
 			pass
 
-		print("min bound updated: " + self._min)
+		print("min bound updated: " + value)
 
 	def max_bounds(self, value):
 		"""
@@ -126,7 +132,7 @@ class Sliders(QWidget):
 		except:
 			pass
 
-		print("max bound updated: " + self._max)
+		print("max bound updated: " + value)
 
 	def update_bounds(self):
 		"""

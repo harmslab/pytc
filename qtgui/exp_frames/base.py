@@ -28,24 +28,10 @@ class Experiments(QWidget):
 		"""
 		"""
 		self._main_layout = QVBoxLayout(self)
+		self._header_layout = QHBoxLayout()
 
 		# Construct the header for the experiment
-		self._name_stretch = QHBoxLayout()
-		self._name_stretch.addStretch(1)
 		self._name_label = QLabel(self._name)
-		self._name_stretch.addWidget(self._name_label)
-		self._main_layout.addLayout(self._name_stretch)
-
-		# Create divider	
-		self._divider = QFrame()
-		self._divider.setFrameShape(QFrame.HLine)
-		self._main_layout.addWidget(self._divider)
-
-		# Create empty box for any required parameters
-		self._req_box = QFrame()
-		self._req_layout = QVBoxLayout()
-		self._req_box.setLayout(self._req_layout)
-		self._main_layout.addWidget(self._req_box)
 
 		# Button to hide and show advanced options for the experiment
 		self._show_options_button = QPushButton("Show Sliders", self)
@@ -55,12 +41,25 @@ class Experiments(QWidget):
 		self._remove_button = QPushButton("Remove", self)
 		self._remove_button.clicked.connect(self.remove)
 
-		# Create layout that holds the options and removal buttons
-		self._button_stretch = QHBoxLayout()
-		self._button_stretch.addStretch(1)
-		self._button_stretch.addWidget(self._show_options_button)
-		self._button_stretch.addWidget(self._remove_button)
-		self._main_layout.addLayout(self._button_stretch)
+		# add exp name, remove and show sliders buttons to layout
+		self._header_layout.addWidget(self._name_label)
+		self._header_layout.addStretch(1)
+		self._header_layout.addWidget(self._show_options_button)
+		self._header_layout.addWidget(self._remove_button)
+		self._header_layout.addStretch(2)
+
+		self._main_layout.addLayout(self._header_layout)
+
+		# Create empty box for any required parameters
+		self._req_box = QFrame()
+		self._req_layout = QVBoxLayout()
+		self._req_box.setLayout(self._req_layout)
+		self._main_layout.addWidget(self._req_box)
+
+		# Create divider	
+		self._divider = QFrame()
+		self._divider.setFrameShape(QFrame.HLine)
+		self._main_layout.addWidget(self._divider)
 
 		self.exp_widgets()
 

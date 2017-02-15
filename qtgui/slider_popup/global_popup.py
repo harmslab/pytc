@@ -24,5 +24,4 @@ class GlobalPopUp(SliderPopUp):
 		sliders = self._slider_list["Global"][self._name]
 
 		# add sliders to layout
-		for s in sliders:
-			self._main_layout.addWidget(s)
+		self._main_layout.addWidget(sliders)

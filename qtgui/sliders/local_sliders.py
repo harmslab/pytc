@@ -29,7 +29,6 @@ class LocalSliders(Sliders):
 		update the min max for the slider
 		"""
 		subclasses = pytc.global_connectors.GlobalConnector.__subclasses__()
-
 		self._global_connectors = {i.__name__: i(i.__name__) for i in subclasses}
 
 		exp_range = self._exp.model.param_guess_ranges[self._param_name]
@@ -77,6 +76,8 @@ class LocalSliders(Sliders):
 			def connector_handler(connector,var_name):
 		
 				self._global_var.append(connector)
+				self._glob_connect_req[var_name] = connector.local_methods[var_name]
+				self._global_connectors[var_name] = connector
 
 				# Append connector methods to dropbdown lists
 				for p, v in connector.local_methods.items():
@@ -101,8 +102,7 @@ class LocalSliders(Sliders):
 			self._slider.hide()
 			self._fix.hide()
 
-			connector_name = self._link.currentText().split(".")[0]
-			curr_connector = self._global_connectors[connector_name]
+			curr_connector = self._global_connectors[status]
 			self._connectors_seen[self._exp].append(curr_connector)
 			self._fitter.link_to_global(self._exp, self._param_name, self._glob_connect_req[status])
 
@@ -113,8 +113,6 @@ class LocalSliders(Sliders):
 
 			for e in self._local_appended:
 				e.update_req()
-
-			#print(curr_connector.params)
 
 	def global_connect(self, name, connector):
 		"""
@@ -130,7 +128,7 @@ class LocalSliders(Sliders):
 		for i in child_func:
 			func_name = name + '.' + i[0]
 			self._glob_connect_req[func_name] = i[1]
-			self._link.addItem(func_name)
+			#self._link.addItem(func_name)
 
 	def update_global(self, value):
 		"""
