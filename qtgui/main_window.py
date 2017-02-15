@@ -124,7 +124,7 @@ class Main(QMainWindow):
 		self._exp = Splitter(self._exp_list)
 		self.setCentralWidget(self._exp)
 
-		self.setGeometry(300, 150, 950, 600)
+		self.setGeometry(300, 150, 1000, 600)
 		self.setWindowTitle('pytc')
 		self.show()
 
@@ -132,7 +132,7 @@ class Main(QMainWindow):
 		"""
 		testing, check pytc experiments loading
 		"""
-		print(self._exp_list["Fitter"].experiments)
+		print(self._exp_list["Fitter"].experiments, self._exp_list["Fitter"].global_param)
 
 	def print_fitter(self):
 		"""

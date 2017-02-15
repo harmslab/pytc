@@ -12,14 +12,17 @@ class GlobalSliders(Sliders):
 	create sliders for a global exp object
 	"""
 
-	def __init__(self, exp, param_name, fitter):
-		super().__init__(exp, param_name, fitter,)
+	def __init__(self, param_name, parent):
+		"""
+		"""
+		self._global_obj = parent._global_obj
+		super().__init__(param_name, parent)
 
 	def bounds(self):
 		"""
 		update min/max for slider
 		"""
-		exp_range = self._fitter.param_ranges[1][self._param_name]
+		exp_range = self._fitter.param_ranges[0][self._param_name]
 
 		self._slider.setMinimum(exp_range[0])
 		self._slider.setMaximum(exp_range[1])

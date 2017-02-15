@@ -6,20 +6,21 @@ import pytc
 import inspect
 
 from .base import Experiments
+from .. import slider_popup
 from .. import sliders
 
-class LocalExp(Experiments):
+class LocalBox(Experiments):
 	"""
 	hold local parameters/sliders
 	"""
-	def __init__(self, fitter, exp, name, slider_list, global_var, experiments, connectors_seen, local_appended):
+	def __init__(self, exp, name, parent):
 
-		#self._local_exp = local_exp
-		self._local_appended = local_appended
+		self._exp = exp
+		self._local_appended = parent._local_appended
 		self._required_fields = {}
-		self._experiments = experiments
+		self._experiments = parent._experiments
 
-		super().__init__(fitter, exp, name, slider_list, global_var, connectors_seen)
+		super().__init__(name, parent)
 
 	def exp_widgets(self):
 		"""
@@ -30,9 +31,16 @@ class LocalExp(Experiments):
 		parameters = self._exp.param_values
 
 		for p, v in parameters.items():
-			s = sliders.LocalSliders(self._exp, p, v, self._fitter, self._global_var, self._slider_list, self._connectors_seen, self._local_appended)
+			s = sliders.LocalSliders(p, v, self)
 			self._slider_list["Local"][self._exp].append(s)
-			self._exp_layout.addWidget(s)
+
+	def slider_popup(self):
+		"""
+		hide and show slider window
+		"""
+		self._slider_window = slider_popup.LocalPopUp(self)
+		self._slider_window.setGeometry(300, 350, 500, 300)
+		self._slider_window.show()
 				
 	def update_req(self):
 		"""

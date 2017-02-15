@@ -6,10 +6,9 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import seaborn
-import pandas as pd
 from io import StringIO
 
-from .exp_frames import LocalExp
+from .exp_frames import LocalBox, GlobalBox
 
 class Plot(FigureCanvas):
 	"""
@@ -25,7 +24,6 @@ class Plot(FigureCanvas):
 
 		FigureCanvas.setSizePolicy(self, QSizePolicy.Expanding, QSizePolicy.Expanding)
 		FigureCanvas.updateGeometry(self)
-
 
 class PlotBox(QWidget):
 	"""
@@ -62,13 +60,12 @@ class PlotBox(QWidget):
 	def update_plot(self):
 		"""
 		"""
-		if "Fitter" in self._exp_list:
-			for i in reversed(range(self._plot_layout.count())): 
-				self._plot_layout.itemAt(i).widget().setParent(None)
+		for i in reversed(range(self._plot_layout.count())): 
+			self._plot_layout.itemAt(i).widget().setParent(None)
 
-			fitter = self._exp_list["Fitter"]
-			plot_figure = Plot(fitter)
-			self._plot_layout.addWidget(plot_figure)
+		fitter = self._exp_list["Fitter"]
+		plot_figure = Plot(fitter)
+		self._plot_layout.addWidget(plot_figure)
 
 	def clear(self):
 		"""
@@ -195,9 +192,11 @@ class AllExp(QWidget):
 		update fit and parameters, update sliders as well
 		"""
 		self._experiments = self._fitter.experiments
+		self._global_seen = self._fitter.global_param
 
 		if len(self._experiments) != 0:
 
+			# create local holder if doesn't exist
 			for e in self._experiments:
 
 				if e in self._slider_list["Local"]:
@@ -209,12 +208,17 @@ class AllExp(QWidget):
 				file_name = e.dh_file
 				exp_name = file_name.split("/")[-1]
 
-				exp = LocalExp(self._fitter, e, exp_name, self._slider_list, self._global_var, self._experiments, self._connectors_seen, self._local_appended)
+				exp = LocalBox(e, exp_name, self)
 				self._exp_box.addWidget(exp)
 
-			#for n, e in self._global_exp.items():
-			#	if e not in self._slider_list["Global"]:
-			#		self._exp_box.addWidget(e)
+			# create global holder if doesn't exist
+			for n, e in self._global_seen.items():
+
+				if n in self._slider_list["Global"]:
+					continue
+
+				global_e = GlobalBox(n, e, self)
+				self._exp_box.addWidget(global_e)
 
 			for ex in self._local_appended:
 				ex.set_attr()
@@ -233,13 +237,6 @@ class AllExp(QWidget):
 			self._plot_layout.itemAt(i).widget().setParent(None)
 
 		self._param_box.update
-		#self._param_box.clear()
-		#data = self._fitter.fit_as_csv
-		#string = StringIO(data)
-		#param_df = pd.read_csv(string)
-		#self._param_box.append(data)
-
-		#print(param_df)
 
 	def print_sliders(self):
 		"""

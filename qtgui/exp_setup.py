@@ -3,7 +3,6 @@ from qtpy.QtGui import *
 from qtpy.QtCore import *
 from qtpy.QtWidgets import *
 
-import pandas as pd
 from inspect import signature
 import re
 
@@ -33,12 +32,12 @@ class AddExperimentWindow(QWidget):
 		"""
 		# exp text, model dropdown, shots select
 
-		main_layout = QGridLayout()
-		self.setLayout(main_layout)
+		main_layout = QGridLayout(self)
 
 		new_widgets = QFrame()
 		self._new_w_layout = QGridLayout()
 		new_widgets.setLayout(self._new_w_layout)
+		new_widgets.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
 		self._gen_widgets = {}
 

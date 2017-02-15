@@ -6,17 +6,20 @@ import pytc
 import inspect
 
 from .base import Experiments
+from .. import slider_popup
 from .. import sliders
 
-class GlobalExp(Experiments):
+class ConnectorsBox(Experiments):
 	"""
 	hold global parameter/sliders
 	"""
-	def __init__(self, fitter, exp, name, slider_list, global_var, connectors_seen):
+	def __init__(self, connector, name, parent):
 
-		super().__init__(fitter, exp, name, slider_list, global_var, connectors_seen)
-
+		self._connector = connector
 		self._linked_list = []
+		self._exp = None
+
+		super().__init__(name, parent)
 
 	def exp_widgets(self):
 		"""
@@ -24,17 +27,20 @@ class GlobalExp(Experiments):
 		"""
 
 		# see if global variable is a connector or simple var
-		if isinstance(self._exp, pytc.global_connectors.GlobalConnector):
-			param = self._exp.params
+		param = self._connector.params
 
-			for p, v in param.items():
-				s = sliders.GlobalSliders(None, p, self._fitter, self._global_exp)
-				self._slider_list["Global"][self._exp].append(s)
-				self._exp_layout.addWidget(s)
-		else:
-			s = sliders.GlobalSliders(None, self._name, self._fitter, self._global_exp)
-			self._slider_list["Global"][self._name] = s
-			self._exp_layout.addWidget(s)
+		for p, v in param.items():
+			s = sliders.GlobalSliders(p, self)
+			self._slider_list["Global"][self._connector].append(s)
+
+	def slider_popup(self):
+		"""
+		hide and show slider window
+		"""
+
+		self._slider_window = slider_popup.ConnectorPopUp(self)
+		self._slider_window.setGeometry(530, 400, 100, 200)
+		self._slider_window.show()
 
 	def linked(self, loc_slider):
 		"""
@@ -51,7 +57,7 @@ class GlobalExp(Experiments):
 	def remove(self):
 		"""
 		"""
-		#self._global_exp.pop(self._name, None)
+		#self._global_seen.pop(self._name, None)
 		self._fitter.remove_global(self._name)
 		self._slider_list["Global"].pop(self._name, None)
 

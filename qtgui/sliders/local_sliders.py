@@ -13,16 +13,16 @@ class LocalSliders(Sliders):
 	create sliders for a local exp object
 	"""
 
-	def __init__(self, exp, param_name, value, fitter, global_list, slider_list, connectors_seen, local_appended):
+	def __init__(self, param_name, value, parent):
 
-		self._global_list = global_list
-		self._slider_list = slider_list
 		self._value = value
-		self._connectors_seen = connectors_seen
+		self._global_var = parent._global_var
+		self._slider_list = parent._slider_list
+		self._connectors_seen = parent._connectors_seen
 		self._glob_connect_req = {}
-		self._local_appended = local_appended
+		self._local_appended = parent._local_appended
 
-		super().__init__(exp, param_name, fitter)
+		super().__init__(param_name, parent)
 
 	def bounds(self):
 		"""
@@ -42,7 +42,7 @@ class LocalSliders(Sliders):
 		self._link.addItem("Add Global Var")
 		self._link.addItem("Add Connector")
 
-		for i in self._global_list:
+		for i in self._global_var:
 			self._link.addItem(i)
 
 		self._link.activated[str].connect(self.link_unlink)
@@ -57,13 +57,14 @@ class LocalSliders(Sliders):
 			try:
 				self._fitter.unlink_from_global(self._exp, self._param_name)
 				#self._global_exp[status].unlinked(self)
+				#self._update_fit_func
 			except:
 				pass
 
 		elif status == "Add Global Var":
 			text, ok = QInputDialog.getText(self, "Add Global Variable", "Var Name: ")
 			if ok: 
-				self._global_list.append(text)
+				self._global_var.append(text)
 				for e in self._slider_list["Local"].values():
 					for i in e:
 						i.update_global(text)
@@ -75,22 +76,15 @@ class LocalSliders(Sliders):
 	
 			def connector_handler(connector,var_name):
 		
-				self._global_list.append(connector)
-
-				# Link to the global parameter
-				self._fitter.link_to_global(self._exp,self._param_name,connector.local_methods[var_name])
+				self._global_var.append(connector)
 
 				# Append connector methods to dropbdown lists
 				for p, v in connector.local_methods.items():
 					for e in self._slider_list["Local"].values():
 						for i in e:
 							i.update_global(p)
-
-				# Set the dropdown to have the currently selected var_name
-				i = self._link.findText(var_name)
-				self._link.setCurrentIndex(i)
 			
-			self.diag = AddGlobalConnectorWindow(connector_handler)
+			self.diag = add_global_connector.AddGlobalConnectorWindow(connector_handler)
 			self.diag.show()
 
 		elif status not in self._glob_connect_req:
@@ -99,11 +93,9 @@ class LocalSliders(Sliders):
 			self._slider.hide()
 			self._fix.hide()
 
-			if status not in self._global_exp:
-				self._global_exp[status] = GlobalExp(self._fitter, None, status, self._slider_list, self._global_list, self._global_exp)
-
-			self._global_exp[status].linked(self)
+			#self._global_exp[status].linked(self)
 			print("linked to " + status)
+			#self._update_fit_func
 		else:
 			# connect to global connector
 			self._slider.hide()
@@ -115,11 +107,8 @@ class LocalSliders(Sliders):
 			self._fitter.link_to_global(self._exp, self._param_name, self._glob_connect_req[status])
 
 			self._slider_list["Global"][curr_connector] = []
-
-			#if status not in self._global_exp:
-			#	self._global_exp[status] = GlobalExp(self._fitter, curr_connector, status, self._slider_list, self._global_list, self._global_exp, self._connectors_seen)
 			
-			#self._global_exp[status].linked(self)
+			#self._global_seen[status].linked(self)
 			print("connected to " + status)
 
 			for e in self._local_appended:
@@ -130,8 +119,6 @@ class LocalSliders(Sliders):
 	def global_connect(self, name, connector):
 		"""
 		"""
-		#self._glob_connect_req[name] = {}
-
 		parent = inspect.getmembers(pytc.global_connectors.GlobalConnector, inspect.isfunction)
 		parent_list = [i[0] for i in parent]
 		child = inspect.getmembers(connector, inspect.ismethod)
@@ -161,3 +148,16 @@ class LocalSliders(Sliders):
 		unlink_index = self._link.findText("Unlink", Qt.MatchFixedString)
 		self._link.setCurrentIndex(unlink_index)
 		
+	def update_bounds(self):
+		"""
+		update min/max bounds and check if range needs to be updated as well
+		"""
+		bounds = [self._min, self._max]
+		self._fitter.update_bounds(self._param_name, bounds, self._exp)
+
+		# check if bounds are smaller than range, then update.
+		curr_range = self._exp.model.param_guess_ranges[self._param_name]
+		curr_bounds = self._exp.model.bounds[self._param_name]
+
+		if curr_range[0] < curr_bounds[0] or curr_range[1] > curr_bounds[1]:
+			self._fitter.update_range(self._param_name, bounds, self._exp)
