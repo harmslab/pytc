@@ -2,13 +2,14 @@
 pytc documentation
 ================================
 A python software package for analyzing Isothermal Titration Calorimetry data.
+The name is a `portmanteau <https://xkcd.com/739/>`_ of Python and ITC.  
 
 Introduction
 ============
-`pytc` is python software used to extract thermodynamic information from
-isothermal titration calorimetry (ITC) experiments.  The name is portmanteau
-of Python and ITC.  The program is a powerful and flexible tool for fitting
-arbitrary complex thermodynamic models to multiple ITC experiments
+`pytc <https://github.com/harmslab/pytc>`_ is python software used to extract
+thermodynamic information from isothermal titration calorimetry (ITC)
+experiments.  The program is a powerful and flexible tool for fitting
+arbitrarily complex thermodynamic models to multiple ITC experiments
 simultaneously.  We built it with three design principles:
 
  + **Open source and cross platform**. The full source code should be available.
@@ -24,6 +25,11 @@ and `scipy <https://www.scipy.org/>`_.   The GUI is built on `pytq5 <http://pyqt
 Try it out!
 ===========
 
+We have posted a `jupyter <https://jupyter.org/>`_ notebook demonstrating the
+capabilities of the API on `binder <http://mybinder.org:/repo/harmslab/pytc-binder>`_.
+
+.. image:: http://mybinder.org/badge.svg :target: http://mybinder.org:/repo/harmslab/pytc-binder
+
 Features
 ========
 
@@ -32,28 +38,6 @@ Features
  + New models can be defined using a few lines of python code.
  + Easy integration with `jupyter <https://jupyter.org/>`_ notebooks for 
    writing custom fitting scripts.
-
-Documentation
-=============
-
- + `Installation <installation.html>`_
- + `Fitting models experiments using the script API <LINK>`_.
- + `Fitting models using the GUI API <LINK>`_.
- + `Description of individual experiment models included in package <indiv_models.html>`_.
- + `Description of global fits included in package <global_models.html>`_.
- + `Defining new models <writing_new_models.html>`_.
-
-.. warning::
-    **pytc** will fit all sorts of complicated models to your data. It is up to
-    you to make sure the fit is justified by the data.  You should always 
-    follow best practices for selecting the fit model.  To help with this, 
-    **pytc** returns a residuals plot, the root-mean-squared error, the number
-    of free parameters, and number of data points.  
-
-GUI Screenshots
-===============
-
-SCREENSHOT HERE
 
 Example code
 ============
@@ -76,6 +60,29 @@ Fit a :math:`Ca^{2+}/EDTA` binding experiment to a single-site binding model.
     # Print the results out
     g.plot()
     print(g.fit_as_csv)
+
+GUI Screenshots
+===============
+
+SCREENSHOT HERE
+
+Documentation
+=============
+
+ + `Installation <installation.html>`_
+ + `Fitting models using the script API <http://mybinder.org:/repo/harmslab/pytc-binder>`_.
+ + `Fitting models using the GUI API <LINK>`_.
+ + `Description of individual experiment models included in package <indiv_models.html>`_.
+ + `Description of global fits included in package <global_models.html>`_.
+ + `Defining new models <writing_new_models.html>`_.
+
+.. warning::
+    **pytc** will fit all sorts of complicated models to your data. It is up to
+    you to make sure the fit is justified by the data.  You should always 
+    follow best practices for selecting the fit model.  To help with this, 
+    **pytc** returns a residuals plot, the root-mean-squared error, the number
+    of free parameters, and number of data points.  
+
 
      
 .. toctree::

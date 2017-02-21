@@ -7,8 +7,8 @@ from qtpy.QtGui import *
 from qtpy.QtCore import *
 from qtpy.QtWidgets import *
 
-from .exp_setup import *
-from .exp_frames import *
+from .exp_setup import AddExperimentWindow
+from .fit_update import AllExp, PlotBox
 
 from matplotlib.backends.backend_pdf import PdfPages
 
@@ -48,13 +48,18 @@ class Splitter(QWidget):
 		self._plot_frame.clear()
 		self._exp_frame.clear()
 
+	def fit_shortcut(self):
+		"""
+		"""
+		self._exp_frame.add_exp()
+
 class Main(QMainWindow):
 	"""
 	"""
 	def __init__(self):
 		super().__init__()
 
-		self._exp_list = {"Fitter" : GlobalFit(), "Local" : {}, "Global" : {}}
+		self._exp_list = {"Fitter" : GlobalFit(), "Connectors" : []}
 
 		self.menu()
 
@@ -67,6 +72,12 @@ class Main(QMainWindow):
 
 		file_menu = menu.addMenu("Experiments")
 		testing_commands = menu.addMenu("Testing")
+		fitting_commands = menu.addMenu("Fitting")
+
+		fit_exp = QAction("Fit Experiments", self)
+		fit_exp.setShortcut("Ctrl+F")
+		fit_exp.triggered.connect(self.fit_exp)
+		fitting_commands.addAction(fit_exp)
 
 		return_exp = QAction("Print Experiments", self)
 		return_exp.setShortcut("Ctrl+P")
@@ -113,7 +124,7 @@ class Main(QMainWindow):
 		self._exp = Splitter(self._exp_list)
 		self.setCentralWidget(self._exp)
 
-		self.setGeometry(300, 150, 950, 600)
+		self.setGeometry(300, 150, 1000, 600)
 		self.setWindowTitle('pytc')
 		self.show()
 
@@ -121,7 +132,7 @@ class Main(QMainWindow):
 		"""
 		testing, check pytc experiments loading
 		"""
-		print(self._exp_list["Local"])
+		print(self._exp_list["Fitter"].experiments, self._exp_list["Fitter"].global_param)
 
 	def print_fitter(self):
 		"""
@@ -129,12 +140,19 @@ class Main(QMainWindow):
 		"""
 		print(self._exp_list["Fitter"])
 
+	def fit_exp(self):
+		"""
+		fitting shortcut
+		"""
+		self._exp.fit_shortcut()
+		self._exp._plot_frame.update_plot()
+
 	def add_file(self):
 		"""
 		add a new pytc experiment.
 		"""
 		if "Fitter" in self._exp_list:
-			self._new_exp = AddExp(self._exp_list)
+			self._new_exp = AddExperimentWindow(self._exp_list, self.fit_exp)
 			self._new_exp.setGeometry(530, 400, 100, 200)
 			self._new_exp.show()
 		else:
@@ -147,7 +165,7 @@ class Main(QMainWindow):
 		warning_message = QMessageBox.warning(self, "warning!", "Are you sure you want to start a new session?", QMessageBox.Yes | QMessageBox.No)
 
 		if warning_message == QMessageBox.Yes:
-			self._exp_list = {"Fitter" : GlobalFit(), "Local" : {}, "Global" : {}}
+			self._exp_list = {"Fitter" : GlobalFit(), "Connectors" : []}
 			self._exp.clear()
 		else:
 			print("don't clear!")

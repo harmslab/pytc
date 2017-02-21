@@ -1,3 +1,5 @@
+:orphan:
+ 
 pytc
 ====
 
@@ -5,4 +7,3 @@ pytc
    :maxdepth: 4
 
    pytc
-   setup
