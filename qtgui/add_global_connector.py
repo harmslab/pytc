@@ -159,9 +159,9 @@ class AddGlobalConnectorWindow(QWidget):
 		param_dropbox.clear()
 
 		# Update the names of the parameters
-		param_names = list(self._selected_connector.local_methods.keys())
-		param_names.sort()
-		for k in param_names:
+		self._param_names = list(self._selected_connector.local_methods.keys())
+		self._param_names.sort()
+		for k in self._param_names:
 			param_dropbox.addItem(k)
 		
 	def _return_final_connector(self):
@@ -207,7 +207,7 @@ class AddGlobalConnectorWindow(QWidget):
 		var_name = param_dropbox.currentText()
 
 		# Pass data back
-		self._end_function(self._selected_connector,var_name)
+		self._end_function(self._selected_connector,self._param_names)
 
 		self.close()
 	

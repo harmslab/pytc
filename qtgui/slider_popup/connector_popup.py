@@ -13,10 +13,10 @@ class ConnectorPopUp(SliderPopUp):
 	pop-up window for slider widgets
 	"""
 
-	def __init__(self, connector, parent):
+	def __init__(self, parent):
 		"""
 		"""
-		self._connector = connector
+		self._connector = parent._connector
 		self._exp = None
 
 		super().__init__(parent)

@@ -8,7 +8,8 @@ import matplotlib.pyplot as plt
 import seaborn
 from io import StringIO
 
-from .exp_frames import LocalBox, GlobalBox
+from .exp_frames import LocalBox, GlobalBox, ConnectorsBox
+import pytc
 
 class Plot(FigureCanvas):
 	"""
@@ -152,6 +153,7 @@ class AllExp(QWidget):
 		self._global_var = []
 		self._connectors_seen = {}
 		self._local_appended = []
+		self._connectors_to_add = {}
 		self.layout()
 
 	def layout(self):
@@ -165,9 +167,6 @@ class AllExp(QWidget):
 		self._exp_box = QVBoxLayout(self._exp_content)
 		self._scroll.setWidget(self._exp_content)
 		self._scroll.setWidgetResizable(True)
-
-		#self._param_box = QTextEdit(self)
-		#self._param_box.setReadOnly(True)
 
 		self._param_box = ParamTable(self._fitter)
 
@@ -214,17 +213,36 @@ class AllExp(QWidget):
 			# create global holder if doesn't exist
 			for n, e in self._global_seen.items():
 
+				curr_name = n.split('_')[0]
+
+				if curr_name in self._slider_list["Global"] or curr_name in self._connectors_to_add:
+					continue
+
+				# create global exp object and add to layout
+				global_e = GlobalBox(n, e, self)
+				self._exp_box.addWidget(global_e)
+
+			# create holder for a global connector item if it doesn't exist
+			for n, c in self._connectors_to_add.items():
+
 				if n in self._slider_list["Global"]:
 					continue
 
-				global_e = GlobalBox(n, e, self)
-				self._exp_box.addWidget(global_e)
+				self._slider_list["Global"][n] = []
+
+				# create a connector holder and add to layout
+				connector_e = ConnectorsBox(n, c, self)
+				self._exp_box.addWidget(connector_e)
 
 			for ex in self._local_appended:
 				ex.set_attr()
 
-			self._fitter.fit()
-			self._param_box.update()
+			try:
+				self._fitter.fit()
+				self._param_box.update()
+			except:
+				fit_status = self._fitter.fit_status
+				error_message = QMessageBox.warning(self, "warning", "fit failed! " + str(fit_status), QMessageBox.Ok)
 			#self.return_param()
 		else:
 			print("failed :(")

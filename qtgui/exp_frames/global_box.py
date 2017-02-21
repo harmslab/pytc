@@ -13,10 +13,10 @@ class GlobalBox(Experiments):
 	"""
 	hold global parameter/sliders
 	"""
-	def __init__(self, name, global_obj, parent):
+	def __init__(self, name, fit_object, parent):
 
 		self._linked_list = []
-		self._global_obj = global_obj
+		self._fit_object = fit_object
 		self._exp = None
 
 		super().__init__(name, parent)

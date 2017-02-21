@@ -21,6 +21,7 @@ class LocalSliders(Sliders):
 		self._connectors_seen = parent._connectors_seen
 		self._glob_connect_req = {}
 		self._local_appended = parent._local_appended
+		self._connectors_to_add = parent._connectors_to_add
 
 		super().__init__(param_name, parent)
 
@@ -73,17 +74,20 @@ class LocalSliders(Sliders):
 
 		elif status == "Add Connector":
 	
-			def connector_handler(connector,var_name):
+			def connector_handler(connector,var_names):
 		
 				self._global_var.append(connector)
-				self._glob_connect_req[var_name] = connector.local_methods[var_name]
-				self._global_connectors[var_name] = connector
+				for v in var_names:
+					self._glob_connect_req[v] = connector.local_methods[v]
+					self._global_connectors[v] = connector
 
 				# Append connector methods to dropbdown lists
 				for p, v in connector.local_methods.items():
 					for e in self._slider_list["Local"].values():
 						for i in e:
 							i.update_global(p)
+
+				print(self._glob_connect_req)
 			
 			self.diag = add_global_connector.AddGlobalConnectorWindow(connector_handler)
 			self.diag.show()
@@ -93,23 +97,32 @@ class LocalSliders(Sliders):
 			self._fitter.link_to_global(self._exp, self._param_name, status)
 			self._slider.hide()
 			self._fix.hide()
+			self._update_min_label.hide()
+			self._update_min.hide()
+			self._update_max_label.hide()
+			self._update_max.hide()
 
 			#self._global_exp[status].linked(self)
 			print("linked to " + status)
+			#print(self._glob_connect_req)
 			#self._update_fit_func
 		else:
 			# connect to global connector
 			self._slider.hide()
 			self._fix.hide()
+			self._update_min_label.hide()
+			self._update_min.hide()
+			self._update_max_label.hide()
+			self._update_max.hide()
 
 			curr_connector = self._global_connectors[status]
 			self._connectors_seen[self._exp].append(curr_connector)
+			self._connectors_to_add[curr_connector.name] = curr_connector
 			self._fitter.link_to_global(self._exp, self._param_name, self._glob_connect_req[status])
-
-			self._slider_list["Global"][curr_connector] = []
 			
 			#self._global_seen[status].linked(self)
 			print("connected to " + status)
+			#print(self._slider_list)
 
 			for e in self._local_appended:
 				e.update_req()

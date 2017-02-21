@@ -13,8 +13,9 @@ class ConnectorsBox(Experiments):
 	"""
 	hold global parameter/sliders
 	"""
-	def __init__(self, connector, name, parent):
-
+	def __init__(self, name, connector, parent):
+		"""
+		"""
 		self._connector = connector
 		self._linked_list = []
 		self._exp = None
@@ -31,7 +32,7 @@ class ConnectorsBox(Experiments):
 
 		for p, v in param.items():
 			s = sliders.GlobalSliders(p, self)
-			self._slider_list["Global"][self._connector].append(s)
+			self._slider_list["Global"][self._name].append(s)
 
 	def slider_popup(self):
 		"""

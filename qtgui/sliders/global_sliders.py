@@ -15,7 +15,7 @@ class GlobalSliders(Sliders):
 	def __init__(self, param_name, parent):
 		"""
 		"""
-		self._global_obj = parent._global_obj
+		#self._fit_object = parent._fit_object
 		super().__init__(param_name, parent)
 
 	def bounds(self):
