@@ -7,6 +7,7 @@ import inspect
 
 from .. import add_global_connector
 from .base import Sliders
+#from .global_signaling import GlobalConnectSignal
 
 class LocalSliders(Sliders):
 	"""
@@ -22,6 +23,8 @@ class LocalSliders(Sliders):
 		self._glob_connect_req = {}
 		self._local_appended = parent._local_appended
 		self._connectors_to_add = parent._connectors_to_add
+		self._global_tracker = parent._global_tracker
+		self._if_connected = None
 
 		super().__init__(param_name, parent)
 
@@ -52,12 +55,12 @@ class LocalSliders(Sliders):
 		"""
 		add global variable, update if parameter is linked or not to a global paremeter
 		"""
-
 		if status == "Unlink":
 			try:
 				self._fitter.unlink_from_global(self._exp, self._param_name)
-				#self._global_exp[status].unlinked(self)
-				#self._update_fit_func
+				self._global_tracker[self._if_connected].unlinked(self)
+				self.reset()
+				#print(self._fitter.global_param)
 			except:
 				pass
 
@@ -86,8 +89,6 @@ class LocalSliders(Sliders):
 					for e in self._slider_list["Local"].values():
 						for i in e:
 							i.update_global(p)
-
-				print(self._glob_connect_req)
 			
 			self.diag = add_global_connector.AddGlobalConnectorWindow(connector_handler)
 			self.diag.show()
@@ -102,9 +103,11 @@ class LocalSliders(Sliders):
 			self._update_max_label.hide()
 			self._update_max.hide()
 
-			#self._global_exp[status].linked(self)
+			self._global_tracker[status] = self
+			self._if_connected = status
 			print("linked to " + status)
-			#print(self._glob_connect_req)
+			print(self._fitter.global_param)
+			
 			#self._update_fit_func
 		else:
 			# connect to global connector
@@ -120,28 +123,13 @@ class LocalSliders(Sliders):
 			self._connectors_to_add[curr_connector.name] = curr_connector
 			self._fitter.link_to_global(self._exp, self._param_name, self._glob_connect_req[status])
 			
-			#self._global_seen[status].linked(self)
+			self._global_tracker[curr_connector.name] = self
+			self._if_connected = curr_connector.name
+
 			print("connected to " + status)
-			#print(self._slider_list)
 
 			for e in self._local_appended:
 				e.update_req()
-
-	def global_connect(self, name, connector):
-		"""
-		"""
-		parent = inspect.getmembers(pytc.global_connectors.GlobalConnector, inspect.isfunction)
-		parent_list = [i[0] for i in parent]
-		child = inspect.getmembers(connector, inspect.ismethod)
-		child_list = [i[0] for i in child]
-
-		diff = set(child_list).difference(parent_list)
-		child_func = [i for i in child if i[0] in diff]
-
-		for i in child_func:
-			func_name = name + '.' + i[0]
-			self._glob_connect_req[func_name] = i[1]
-			#self._link.addItem(func_name)
 
 	def update_global(self, value):
 		"""
@@ -155,6 +143,10 @@ class LocalSliders(Sliders):
 		"""
 		self._slider.show()
 		self._fix.show()
+		self._update_min_label.show()
+		self._update_min.show()
+		self._update_max_label.show()
+		self._update_max.show()
 
 		unlink_index = self._link.findText("Unlink", Qt.MatchFixedString)
 		self._link.setCurrentIndex(unlink_index)

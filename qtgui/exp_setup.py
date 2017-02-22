@@ -11,7 +11,7 @@ class AddExperimentWindow(QWidget):
 	add experiment pop-up box
 	"""
 
-	def __init__(self, exp_list, on_close_function):
+	def __init__(self, fitter, on_close_function):
 
 		super().__init__()
 
@@ -20,8 +20,7 @@ class AddExperimentWindow(QWidget):
 
 		self._exp_file = None
 		self._shot_start = 1
-		self._exp_list = exp_list
-		self._fitter = exp_list["Fitter"]
+		self._fitter = fitter
 
 		self._on_close_function = on_close_function
 

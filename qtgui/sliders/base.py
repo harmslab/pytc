@@ -16,7 +16,6 @@ class Sliders(QWidget):
 		self._exp = parent._exp
 		self._param_name = param_name
 		self._fitter = parent._fitter
-		#self._update_fit_func = parent._update_fit_func
 
 		self.layout()
 

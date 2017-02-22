@@ -2,18 +2,17 @@ from qtpy.QtCore import QObject, pyqtSlot
 
 class GlobalConnectSignal(QObject):
 	"""
-	link together sliders when connected to the same global variable
+	when fitter is changed, update the GUI (?)
 	"""
 
-	link_sliders = pyqtSignal
+	fit_update = pyqtSignal
 
-	def connect_sliders(self):
+	def update_fit(self):
 		"""
 		"""
+		self.fit_update.connect(self.handle_trigger)
 
-		self.link_sliders.connect()
-
-	@pyqtSlot('QSlider')
-	def slider_slot(self):
-
-		pass
+	def handle_trigger(self):
+		"""
+		"""
+		print("fit updated")

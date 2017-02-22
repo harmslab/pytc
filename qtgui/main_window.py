@@ -17,22 +17,22 @@ class Splitter(QWidget):
 	hold main experiment based widgets
 	"""
 
-	def __init__(self, exp_list):
+	def __init__(self, fitter):
 		super().__init__()
 
-		self._exp_list = exp_list
+		self._fitter = fitter
 
 		self.layout()
 
 	def layout(self):
 		"""
 		"""
-		main_layout = QHBoxLayout(self)
+		main_layout = QVBoxLayout(self)
 
 		#self.setStyleSheet(open("style.qss", "r").read())
 
-		self._exp_frame = AllExp(self._exp_list)
-		self._plot_frame = PlotBox(self._exp_list)
+		self._exp_frame = AllExp(self)
+		self._plot_frame = PlotBox(self)
 
 		splitter = QSplitter(Qt.Horizontal)
 		splitter.addWidget(self._plot_frame)
@@ -40,7 +40,10 @@ class Splitter(QWidget):
 		splitter.setSizes([200, 200])
 
 		main_layout.addWidget(splitter)
-		self.setLayout(main_layout)
+
+		gen_fit = QPushButton("Fit Experiments", self)
+		gen_fit.clicked.connect(self.fit_shortcut)
+		main_layout.addWidget(gen_fit)
 
 	def clear(self):
 		"""
@@ -52,6 +55,7 @@ class Splitter(QWidget):
 		"""
 		"""
 		self._exp_frame.add_exp()
+		self._plot_frame.update_plot()
 
 class Main(QMainWindow):
 	"""
@@ -59,7 +63,7 @@ class Main(QMainWindow):
 	def __init__(self):
 		super().__init__()
 
-		self._exp_list = {"Fitter" : GlobalFit(), "Connectors" : []}
+		self._fitter = GlobalFit()
 
 		self.menu()
 
@@ -121,7 +125,7 @@ class Main(QMainWindow):
 		close_window.triggered.connect(self.close_program)
 		file_menu.addAction(close_window)
 
-		self._exp = Splitter(self._exp_list)
+		self._exp = Splitter(self._fitter)
 		self.setCentralWidget(self._exp)
 
 		self.setGeometry(300, 150, 1000, 600)
@@ -132,31 +136,27 @@ class Main(QMainWindow):
 		"""
 		testing, check pytc experiments loading
 		"""
-		print(self._exp_list["Fitter"].experiments, self._exp_list["Fitter"].global_param)
+		print(self._fitter.experiments, self._fitter.global_param)
 
 	def print_fitter(self):
 		"""
 		testing to make sure fitter selected correctly
 		"""
-		print(self._exp_list["Fitter"])
+		print(self._fitter)
 
 	def fit_exp(self):
 		"""
 		fitting shortcut
 		"""
 		self._exp.fit_shortcut()
-		self._exp._plot_frame.update_plot()
 
 	def add_file(self):
 		"""
 		add a new pytc experiment.
 		"""
-		if "Fitter" in self._exp_list:
-			self._new_exp = AddExperimentWindow(self._exp_list, self.fit_exp)
-			self._new_exp.setGeometry(530, 400, 100, 200)
-			self._new_exp.show()
-		else:
-			error_message = QMessageBox.warning(self, "warning!", "No fitter chosen", QMessageBox.Ok)
+		self._new_exp = AddExperimentWindow(self._fitter, self.fit_exp)
+		self._new_exp.setGeometry(530, 400, 100, 200)
+		self._new_exp.show()
 
 	def new_exp(self):
 		"""
@@ -165,7 +165,7 @@ class Main(QMainWindow):
 		warning_message = QMessageBox.warning(self, "warning!", "Are you sure you want to start a new session?", QMessageBox.Yes | QMessageBox.No)
 
 		if warning_message == QMessageBox.Yes:
-			self._exp_list = {"Fitter" : GlobalFit(), "Connectors" : []}
+			self._fitter = GlobalFit()
 			self._exp.clear()
 		else:
 			print("don't clear!")
@@ -179,14 +179,12 @@ class Main(QMainWindow):
 		plot_name = file_name.split(".")[0] + "_plot.pdf"
 
 		try:
-			fitter = self._exp_list["Fitter"]
-
 			data_file = open(file_name, "w")
-			data_file.write(fitter.fit_as_csv)
+			data_file.write(self._fitter.fit_as_csv)
 			data_file.close()
 
 			plot_save = PdfPages(plot_name)
-			fig, ax = fitter.plot()
+			fig, ax = self._fitter.plot()
 			plot_save.savefig(fig)
 			plot_save.close()
 		except:

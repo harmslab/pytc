@@ -31,10 +31,10 @@ class PlotBox(QWidget):
 	hold plot widget and update plot
 	"""
 
-	def __init__(self, exp_list):
+	def __init__(self, parent):
 		super().__init__()
 
-		self._exp_list = exp_list
+		self._fitter = parent._fitter
 
 		self.layout()
 
@@ -48,24 +48,14 @@ class PlotBox(QWidget):
 		plot_frame = QFrame()
 		plot_frame.setLayout(self._plot_layout)
 
-		# just to get same plot layout upon application start-up
-		#plot_figure = Plot(GlobalFit())
-		#self._plot_layout.addWidget(plot_figure)
-
 		main_layout.addWidget(plot_frame)
-		
-		gen_plot = QPushButton("Generate Plot", self)
-		gen_plot.clicked.connect(self.update_plot)
-		main_layout.addWidget(gen_plot)
 
 	def update_plot(self):
 		"""
 		"""
-		for i in reversed(range(self._plot_layout.count())): 
-			self._plot_layout.itemAt(i).widget().setParent(None)
+		self.clear()
 
-		fitter = self._exp_list["Fitter"]
-		plot_figure = Plot(fitter)
+		plot_figure = Plot(self._fitter)
 		self._plot_layout.addWidget(plot_figure)
 
 	def clear(self):
@@ -144,16 +134,18 @@ class AllExp(QWidget):
 	experiment box widget
 	"""
 
-	def __init__(self, exp_list):
+	def __init__(self, parent):
 
 		super().__init__()
 
-		self._fitter = exp_list["Fitter"]
+		self._fitter = parent._fitter
 		self._slider_list = {"Global" : {}, "Local" : {}}
 		self._global_var = []
 		self._connectors_seen = {}
 		self._local_appended = []
 		self._connectors_to_add = {}
+		self._global_tracker = {}
+
 		self.layout()
 
 	def layout(self):
@@ -177,11 +169,7 @@ class AllExp(QWidget):
 
 		self._main_layout.addWidget(self._splitter)
 
-		# Fit experiments button
-		self._gen_experiments = QPushButton("Fit Experiments", self)
-		self._gen_experiments.clicked.connect(self.add_exp)
-		self._main_layout.addWidget(self._gen_experiments)
-
+		# for testing
 		print_exp = QPushButton("Print Experiments/Sliders (Testing)", self)
 		print_exp.clicked.connect(self.print_sliders)
 		self._main_layout.addWidget(print_exp)
@@ -243,18 +231,8 @@ class AllExp(QWidget):
 			except:
 				fit_status = self._fitter.fit_status
 				error_message = QMessageBox.warning(self, "warning", "fit failed! " + str(fit_status), QMessageBox.Ok)
-			#self.return_param()
 		else:
 			print("failed :(")
-
-	def return_param(self):
-		"""
-		update parameter box 
-		"""
-		for i in reversed(range(self._plot_layout.count())): 
-			self._plot_layout.itemAt(i).widget().setParent(None)
-
-		self._param_box.update
 
 	def print_sliders(self):
 		"""
