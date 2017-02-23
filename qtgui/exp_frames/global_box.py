@@ -40,6 +40,12 @@ class GlobalBox(Experiments):
 		self._slider_window.setGeometry(450, 200, 600, 100)
 		self._slider_window.show()
 
+	def linked(self, loc_slider):
+		"""
+		"""
+		self._linked_list.append(loc_slider)
+		#print(self._linked_list)
+
 	def unlinked(self, loc_slider):
 		"""
 		remove item from linked list if local param unlinked from global param

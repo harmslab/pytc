@@ -17,10 +17,10 @@ class Splitter(QWidget):
 	hold main experiment based widgets
 	"""
 
-	def __init__(self, fitter):
+	def __init__(self, parent):
 		super().__init__()
 
-		self._fitter = fitter
+		self._fitter = parent._fitter
 
 		self.layout()
 
@@ -30,9 +30,8 @@ class Splitter(QWidget):
 		main_layout = QVBoxLayout(self)
 
 		#self.setStyleSheet(open("style.qss", "r").read())
-
-		self._exp_frame = AllExp(self)
 		self._plot_frame = PlotBox(self)
+		self._exp_frame = AllExp(self)
 
 		splitter = QSplitter(Qt.Horizontal)
 		splitter.addWidget(self._plot_frame)
@@ -55,7 +54,7 @@ class Splitter(QWidget):
 		"""
 		"""
 		self._exp_frame.add_exp()
-		self._plot_frame.update_plot()
+		self._plot_frame.update()
 
 class Main(QMainWindow):
 	"""
@@ -125,7 +124,7 @@ class Main(QMainWindow):
 		close_window.triggered.connect(self.close_program)
 		file_menu.addAction(close_window)
 
-		self._exp = Splitter(self._fitter)
+		self._exp = Splitter(self)
 		self.setCentralWidget(self._exp)
 
 		self.setGeometry(300, 150, 1000, 600)
@@ -160,7 +159,7 @@ class Main(QMainWindow):
 
 	def new_exp(self):
 		"""
-		choose fitter and start new fit
+		clear everything and start over
 		"""
 		warning_message = QMessageBox.warning(self, "warning!", "Are you sure you want to start a new session?", QMessageBox.Yes | QMessageBox.No)
 

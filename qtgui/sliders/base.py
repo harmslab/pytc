@@ -16,6 +16,8 @@ class Sliders(QWidget):
 		self._exp = parent._exp
 		self._param_name = param_name
 		self._fitter = parent._fitter
+		self._fit_run = parent._fit_run
+		self._plot_frame = parent._plot_frame
 
 		self.layout()
 
@@ -72,6 +74,15 @@ class Sliders(QWidget):
 		self._main_layout.addWidget(self._update_max, 1, 7)
 		self._update_max.textChanged[str].connect(self.max_bounds)
 
+	def check_if_fit(self):
+		"""
+		if a fit has been run, and a slider is changed, change all parameters back to guesses in slider widgets
+		"""
+		if self._fit_run:
+			self._fitter.guess_to_value
+
+		print(self._fit_run)
+
 	def fix_layout(self, state):
 		"""
 		initial parameter fix and updating whether slider/fixed int is hidden or shown
@@ -80,8 +91,10 @@ class Sliders(QWidget):
 			# change widget views
 			self._fix_int.show()
 			self._slider.hide()
-
 			self._fitter.update_fixed(self._param_name, int(self._fix_int.text()), self._exp)
+			self.check_if_fit()
+			self._plot_frame.update()
+			
 			print(self._fix_int.text())
 		else:
 			#change widget views
@@ -97,6 +110,8 @@ class Sliders(QWidget):
 		"""
 		if value:
 			self._fitter.update_fixed(self._param_name, int(value), self._exp)
+			self.check_if_fit()
+			self._plot_frame.update()
 		else:
 			print("unabled to fix")
 
@@ -106,8 +121,14 @@ class Sliders(QWidget):
 		"""
 		update value for paremter based on slider value
 		"""
+
+		# if guess update, update parameter as well for plot
 		self._fitter.update_guess(self._param_name, value, self._exp)
+		self._fitter.update_value(self._param_name, value, self._exp)
 		self._param_guess_label.setText(str(value))
+
+		self.check_if_fit()
+		self._plot_frame.update()
 
 	def min_bounds(self, value):
 		"""

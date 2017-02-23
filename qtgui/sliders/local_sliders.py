@@ -55,6 +55,8 @@ class LocalSliders(Sliders):
 		"""
 		add global variable, update if parameter is linked or not to a global paremeter
 		"""
+		#self._global_seen = self._fitter.global_param
+
 		if status == "Unlink":
 			try:
 				self._fitter.unlink_from_global(self._exp, self._param_name)
@@ -103,12 +105,14 @@ class LocalSliders(Sliders):
 			self._update_max_label.hide()
 			self._update_max.hide()
 
-			self._global_tracker[status] = self
 			self._if_connected = status
+
+			if status not in self._global_tracker:
+				self._global_tracker[status] = self
+			else:
+				self._global_tracker[status].linked(self)
+
 			print("linked to " + status)
-			print(self._fitter.global_param)
-			
-			#self._update_fit_func
 		else:
 			# connect to global connector
 			self._slider.hide()
@@ -164,3 +168,5 @@ class LocalSliders(Sliders):
 
 		if curr_range[0] < curr_bounds[0] or curr_range[1] > curr_bounds[1]:
 			self._fitter.update_range(self._param_name, bounds, self._exp)
+
+			

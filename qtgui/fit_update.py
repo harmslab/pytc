@@ -50,7 +50,7 @@ class PlotBox(QWidget):
 
 		main_layout.addWidget(plot_frame)
 
-	def update_plot(self):
+	def update(self):
 		"""
 		"""
 		self.clear()
@@ -145,6 +145,9 @@ class AllExp(QWidget):
 		self._local_appended = []
 		self._connectors_to_add = {}
 		self._global_tracker = {}
+		self._fit_run = False
+
+		self._plot_frame = parent._plot_frame
 
 		self.layout()
 
@@ -203,7 +206,7 @@ class AllExp(QWidget):
 
 				curr_name = n.split('_')[0]
 
-				if curr_name in self._slider_list["Global"] or curr_name in self._connectors_to_add:
+				if n in self._slider_list["Global"] or curr_name in self._connectors_to_add:
 					continue
 
 				# create global exp object and add to layout
@@ -227,6 +230,7 @@ class AllExp(QWidget):
 
 			try:
 				self._fitter.fit()
+				self._fit_run = True
 				self._param_box.update()
 			except:
 				fit_status = self._fitter.fit_status
