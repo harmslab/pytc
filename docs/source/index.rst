@@ -8,9 +8,8 @@ Introduction
 ============
 `pytc <https://github.com/harmslab/pytc>`_ is python software used to extract
 thermodynamic information from isothermal titration calorimetry (ITC)
-experiments.  The program is a powerful and flexible tool for fitting
-arbitrarily complex thermodynamic models to multiple ITC experiments
-simultaneously.  We built it with three design principles:
+experiments.  It fits arbitrarily complex thermodynamic models to multiple ITC
+experiments simultaneously.  We built it with three design principles:
 
  + **Open source and cross platform**. The full source code should be available.
    The program should not require proprietary software to run. 
@@ -22,14 +21,6 @@ simultaneously.  We built it with three design principles:
 Our implementation is built on `python3 <https://www.python.org/>`_ extended with  `numpy <http://www.numpy.org/>`_ 
 and `scipy <https://www.scipy.org/>`_.   The GUI is built on `pytq5 <http://pyqt.sourceforge.net/Docs/PyQt5/installation.html>`_ and `pandas <http://pandas.pydata.org/>`_.
 
-Try it out!
-===========
-
-We have posted a `jupyter <https://jupyter.org/>`_ notebook demonstrating the
-capabilities of the API on `binder <http://mybinder.org:/repo/harmslab/pytc-binder>`_.
-
-.. image:: http://mybinder.org/badge.svg :target: http://mybinder.org:/repo/harmslab/pytc-binder
-
 Features
 ========
 
@@ -39,8 +30,36 @@ Features
  + Easy integration with `jupyter <https://jupyter.org/>`_ notebooks for 
    writing custom fitting scripts.
 
-Example code
-============
+Try it out!
+===========
+
+We have posted a `jupyter <https://jupyter.org/>`_ notebook demonstrating the
+capabilities of the API on `binder <http://mybinder.org:/repo/harmslab/pytc-binder>`_.
+
+.. image:: http://mybinder.org/badge.svg :target: http://mybinder.org:/repo/harmslab/pytc-binder
+
+
+API Quick Start
+===============
+
+If you already have a python3-based scientific computing environment installed, 
+you can start using the API by:
+
+.. sourcecode::
+
+    # Install pytc
+    sudo pip3 install pytc-fitter
+
+    # Clone the repo (to bring in demos)
+    git clone https://github.com/harmslab/pytc
+
+    # Fire up jupyter and open Demo.ipynb
+    cd pytc/demos
+    jupyter notebook
+
+
+Example code using the API
+==========================
 
 Fit a :math:`Ca^{2+}/EDTA` binding experiment to a single-site binding model.
 
@@ -61,8 +80,8 @@ Fit a :math:`Ca^{2+}/EDTA` binding experiment to a single-site binding model.
     g.plot()
     print(g.fit_as_csv)
 
-GUI Screenshots
-===============
+GUI Screen shots
+================
 
 SCREENSHOT HERE
 
@@ -72,19 +91,17 @@ Documentation
  + `Installation <installation.html>`_
  + `Fitting models using the script API <http://mybinder.org:/repo/harmslab/pytc-binder>`_.
  + `Fitting models using the GUI API <LINK>`_.
+ + `Fitting and statistics <statistics.html>`_.
  + `Description of individual experiment models included in package <indiv_models.html>`_.
  + `Description of global fits included in package <global_models.html>`_.
  + `Defining new models <writing_new_models.html>`_.
 
 .. warning::
     **pytc** will fit all sorts of complicated models to your data. It is up to
-    you to make sure the fit is justified by the data.  You should always 
-    follow best practices for selecting the fit model.  To help with this, 
-    **pytc** returns a residuals plot, the root-mean-squared error, the number
-    of free parameters, and number of data points.  
+    you to make sure the fit is justified by the data.  See the 
+    `Fitting and statistics <statistics.html>`_ section to see what **pytc** 
+    reports to help in this decision making.
 
-
-     
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
