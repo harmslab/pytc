@@ -5,7 +5,7 @@ from qtpy.QtWidgets import *
 import pytc
 import inspect
 
-from .. import add_global_connector
+from .add_global_connector import AddGlobalConnectorWindow
 from .base import Sliders
 from .. import exp_frames
 
@@ -94,7 +94,7 @@ class LocalSliders(Sliders):
 						for i in e:
 							i.update_global(p)
 			
-			self.diag = add_global_connector.AddGlobalConnectorWindow(connector_handler)
+			self.diag = AddGlobalConnectorWindow(connector_handler)
 			self.diag.show()
 
 		elif status not in self._glob_connect_req:
