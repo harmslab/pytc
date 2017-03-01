@@ -27,6 +27,7 @@ class LocalPopUp(SliderPopUp):
 		"""
 
 		sliders = self._slider_list["Local"][self._exp]
+		sliders.sort(key = lambda x: x.name)
 
 		# add sliders to layout
 		for s in sliders:

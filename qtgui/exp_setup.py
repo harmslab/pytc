@@ -11,7 +11,7 @@ class AddExperimentWindow(QWidget):
 	add experiment pop-up box
 	"""
 
-	def __init__(self, exp_list, on_close_function):
+	def __init__(self, fitter, on_close_function):
 
 		super().__init__()
 
@@ -20,8 +20,7 @@ class AddExperimentWindow(QWidget):
 
 		self._exp_file = None
 		self._shot_start = 1
-		self._exp_list = exp_list
-		self._fitter = exp_list["Fitter"]
+		self._fitter = fitter
 
 		self._on_close_function = on_close_function
 
@@ -31,7 +30,6 @@ class AddExperimentWindow(QWidget):
 		"""
 		"""
 		# exp text, model dropdown, shots select
-
 		main_layout = QGridLayout(self)
 
 		new_widgets = QFrame()
@@ -139,7 +137,19 @@ class AddExperimentWindow(QWidget):
 		"""
 		"""
 		if self._exp_file != None:
-			model_param = {k: int(v.text()) for (k, v) in self._gen_widgets.items()}
+
+			# set up dictionary for paramter names and their values in float or int
+			model_param = {}
+			for k, v in self._gen_widgets.items():
+				val = None
+				if "." in v.text():
+					val = float(v.text())
+				else:
+					val = int(v.text())
+
+				model_param[k] = val
+
+			#model_param = {k: float(v.text()) for (k, v) in self._gen_widgets.items()}
 
 			itc_exp = pytc.ITCExperiment(self._exp_file, self._exp_model, shot_start = self._shot_start, **model_param)
 			#self._exp_list["Local"][self._exp_name] = itc_exp

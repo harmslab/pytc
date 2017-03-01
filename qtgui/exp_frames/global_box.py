@@ -25,6 +25,10 @@ class GlobalBox(Experiments):
 		"""
 		create slider
 		"""
+		linked_item = self._global_tracker[self._name]
+		self._linked_list.append(linked_item)
+		self._global_tracker[self._name] = self
+
 		s = sliders.GlobalSliders(self._name, self)
 		self._slider_list["Global"][self._name] = s
 
@@ -38,9 +42,9 @@ class GlobalBox(Experiments):
 
 	def linked(self, loc_slider):
 		"""
-		update list of sliders linked to global param
 		"""
 		self._linked_list.append(loc_slider)
+		#print(self._linked_list)
 
 	def unlinked(self, loc_slider):
 		"""
@@ -48,14 +52,20 @@ class GlobalBox(Experiments):
 		"""
 		self._linked_list.remove(loc_slider)
 
+		# if nothing linked, delete the glob exp object
+		if len(self._linked_list) == 0:
+			self.remove()
+
 	def remove(self):
 		"""
 		"""
+		try:
+			self._fitter.remove_global(self._name)
+			self._slider_list["Global"].pop(self._name, None)
 
-		self._fitter.remove_global(self._name)
-		self._slider_list["Global"].pop(self._name, None)
-
-		for s in self._linked_list:
-			s.reset()
+			for s in self._linked_list:
+				s.reset()
+		except:
+			pass
 
 		self.close()

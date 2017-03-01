@@ -22,6 +22,7 @@ class GlobalPopUp(SliderPopUp):
 		"""
 		"""
 		sliders = self._slider_list["Global"][self._name]
+		sliders.sort(key = lambda x: x.name)
 
 		# add sliders to layout
 		self._main_layout.addWidget(sliders)

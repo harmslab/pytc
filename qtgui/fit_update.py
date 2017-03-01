@@ -11,68 +11,39 @@ from io import StringIO
 from .exp_frames import LocalBox, GlobalBox, ConnectorsBox
 import pytc
 
-class Plot(FigureCanvas):
-	"""
-	create a plot widget
-	"""
-
-	def __init__(self, fitter, parent = None, width = 6, height = 6, dpi = 80):
-
-		fig, ax = fitter.plot()
-
-		super().__init__(fig)
-		self.setParent(parent)
-
-		FigureCanvas.setSizePolicy(self, QSizePolicy.Expanding, QSizePolicy.Expanding)
-		FigureCanvas.updateGeometry(self)
-
 class PlotBox(QWidget):
 	"""
 	hold plot widget and update plot
 	"""
 
-	def __init__(self, exp_list):
+	def __init__(self, parent):
 		super().__init__()
 
-		self._exp_list = exp_list
+		self._fitter = parent._fitter
 
 		self.layout()
 
 	def layout(self):
 		"""
 		"""
-		main_layout = QVBoxLayout(self)
-		main_layout.setContentsMargins(0, 0, 0, 0)
+		self._main_layout = QVBoxLayout(self)
 
-		self._plot_layout = QVBoxLayout()
-		plot_frame = QFrame()
-		plot_frame.setLayout(self._plot_layout)
 
-		# just to get same plot layout upon application start-up
-		#plot_figure = Plot(GlobalFit())
-		#self._plot_layout.addWidget(plot_figure)
-
-		main_layout.addWidget(plot_frame)
-		
-		gen_plot = QPushButton("Generate Plot", self)
-		gen_plot.clicked.connect(self.update_plot)
-		main_layout.addWidget(gen_plot)
-
-	def update_plot(self):
+	def update(self):
 		"""
+		clear main layout and add new graph to layout
 		"""
-		for i in reversed(range(self._plot_layout.count())): 
-			self._plot_layout.itemAt(i).widget().setParent(None)
+		self.clear()
+		self._figure, self._ax = self._fitter.plot()
 
-		fitter = self._exp_list["Fitter"]
-		plot_figure = Plot(fitter)
-		self._plot_layout.addWidget(plot_figure)
+		plot_figure = FigureCanvas(self._figure)
+		self._main_layout.addWidget(plot_figure)
 
 	def clear(self):
 		"""
 		"""
-		for i in reversed(range(self._plot_layout.count())): 
-			self._plot_layout.itemAt(i).widget().setParent(None)
+		for i in reversed(range(self._main_layout.count())): 
+			self._main_layout.itemAt(i).widget().deleteLater()
 
 class ParamTable(QWidget):
 	"""
@@ -138,28 +109,41 @@ class ParamTable(QWidget):
 		self._param_table.setColumnCount(len(self._data[0]))
 		self._param_table.setHorizontalHeaderLabels(self._col_name)
 
+	def clear(self):
+		"""
+		"""
+		self._param_table.clear()
+		self._header = []
+		self._col_name = []
+		self._data = []
+
 
 class AllExp(QWidget):
 	"""
 	experiment box widget
 	"""
 
-	def __init__(self, exp_list):
+	def __init__(self, parent):
 
 		super().__init__()
 
-		self._fitter = exp_list["Fitter"]
+		self._fitter = parent._fitter
 		self._slider_list = {"Global" : {}, "Local" : {}}
 		self._global_var = []
 		self._connectors_seen = {}
 		self._local_appended = []
 		self._connectors_to_add = {}
+		self._global_tracker = {}
+		self._glob_connect_req = {}
+		self._global_connectors = {}
+		self._fit_run = False
+		self._plot_frame = parent._plot_frame
+
 		self.layout()
 
 	def layout(self):
 		"""
 		"""
-
 		self._main_layout = QVBoxLayout(self)
 
 		self._scroll = QScrollArea(self)
@@ -177,18 +161,14 @@ class AllExp(QWidget):
 
 		self._main_layout.addWidget(self._splitter)
 
-		# Fit experiments button
-		self._gen_experiments = QPushButton("Fit Experiments", self)
-		self._gen_experiments.clicked.connect(self.add_exp)
-		self._main_layout.addWidget(self._gen_experiments)
-
+		# for testing
 		print_exp = QPushButton("Print Experiments/Sliders (Testing)", self)
 		print_exp.clicked.connect(self.print_sliders)
 		self._main_layout.addWidget(print_exp)
 
 	def add_exp(self):
 		"""
-		update fit and parameters, update sliders as well
+		update fit and parameters, update experiments added to fitter
 		"""
 		self._experiments = self._fitter.experiments
 		self._global_seen = self._fitter.global_param
@@ -215,7 +195,7 @@ class AllExp(QWidget):
 
 				curr_name = n.split('_')[0]
 
-				if curr_name in self._slider_list["Global"] or curr_name in self._connectors_to_add:
+				if n in self._slider_list["Global"] or curr_name in self._connectors_to_add:
 					continue
 
 				# create global exp object and add to layout
@@ -239,22 +219,15 @@ class AllExp(QWidget):
 
 			try:
 				self._fitter.fit()
+				self._fit_run = True
 				self._param_box.update()
+
+				print(self._fit_run)
 			except:
 				fit_status = self._fitter.fit_status
 				error_message = QMessageBox.warning(self, "warning", "fit failed! " + str(fit_status), QMessageBox.Ok)
-			#self.return_param()
 		else:
 			print("failed :(")
-
-	def return_param(self):
-		"""
-		update parameter box 
-		"""
-		for i in reversed(range(self._plot_layout.count())): 
-			self._plot_layout.itemAt(i).widget().setParent(None)
-
-		self._param_box.update
 
 	def print_sliders(self):
 		"""
@@ -268,5 +241,5 @@ class AllExp(QWidget):
 		self._slider_list = {"Global" : {}, "Local" : {}}
 		self._param_box.clear()
 		for i in reversed(range(self._exp_box.count())): 
-			self._exp_box.itemAt(i).widget().setParent(None)
+			self._exp_box.itemAt(i).widget().deleteLater()
 

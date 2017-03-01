@@ -19,8 +19,11 @@ class Experiments(QWidget):
 		self._slider_list = parent._slider_list
 		self._global_var = parent._global_var
 		self._connectors_seen = parent._connectors_seen
-		#self._global_seen = parent._global_seen
-		#self._update_fit_func = parent.add_exp()
+		self._global_tracker = parent._global_tracker
+		self._fit_run = parent._fit_run
+		self._plot_frame = parent._plot_frame
+		self._glob_connect_req = parent._glob_connect_req
+		self._global_connectors = parent._global_connectors
 
 		self.layout()
 
