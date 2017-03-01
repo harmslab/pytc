@@ -11,5 +11,4 @@ from .main_window import *
 from .fit_update import *
 from .sliders import *
 from .exp_frames import *
-from .add_global_connector import AddGlobalConnectorWindow
 from .slider_popup import *
