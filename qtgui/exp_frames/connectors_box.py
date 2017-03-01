@@ -26,10 +26,6 @@ class ConnectorsBox(Experiments):
 		"""
 		create slider
 		"""
-		linked_item = self._global_tracker[self._name]
-		self._linked_list.append(linked_item)
-		self._global_tracker[self._name] = self
-
 		# see if global variable is a connector or simple var
 		param = self._connector.params
 

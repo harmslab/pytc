@@ -7,6 +7,7 @@ import inspect
 
 from .. import add_global_connector
 from .base import Sliders
+from .. import exp_frames
 
 class LocalSliders(Sliders):
 	"""
@@ -24,6 +25,7 @@ class LocalSliders(Sliders):
 		self._connectors_to_add = parent._connectors_to_add
 		self._global_tracker = parent._global_tracker
 		self._global_connectors = parent._global_connectors
+		self._exp_box = parent._exp_box
 		self._if_connected = None
 
 		super().__init__(param_name, parent)
@@ -32,9 +34,6 @@ class LocalSliders(Sliders):
 		"""
 		update the min max for the slider
 		"""
-		subclasses = pytc.global_connectors.GlobalConnector.__subclasses__()
-		self._global_connectors = {i.__name__: i(i.__name__) for i in subclasses}
-
 		exp_range = self._exp.model.param_guess_ranges[self._param_name]
 
 		self._slider.setMinimum(exp_range[0])
@@ -45,8 +44,14 @@ class LocalSliders(Sliders):
 		self._link.addItem("Add Global Var")
 		self._link.addItem("Add Connector")
 
+		# update lists of variables for each new slider, check if var is a string or a connector object
 		for i in self._global_var:
-			self._link.addItem(i)
+			if isinstance(i, str):
+				self._link.addItem(i)
+			else: 
+				for p, v in i.local_methods.items():
+					self._link.addItem(p)
+
 
 		self._link.activated[str].connect(self.link_unlink)
 		self._main_layout.addWidget(self._link, 1, 3)
@@ -55,14 +60,11 @@ class LocalSliders(Sliders):
 		"""
 		add global variable, update if parameter is linked or not to a global paremeter
 		"""
-		#self._global_seen = self._fitter.global_param
-
 		if status == "Unlink":
 			try:
 				self._fitter.unlink_from_global(self._exp, self._param_name)
 				self.reset()
 				self._global_tracker[self._if_connected].unlinked(self)
-				#print(self._fitter.global_param)
 			except:
 				pass
 
@@ -85,7 +87,6 @@ class LocalSliders(Sliders):
 				for v in var_names:
 					self._glob_connect_req[v] = connector.local_methods[v]
 					self._global_connectors[v] = connector
-					print("var name: " + v)
 
 				# Append connector methods to dropbdown lists
 				for p, v in connector.local_methods.items():
@@ -108,10 +109,17 @@ class LocalSliders(Sliders):
 
 			self._if_connected = status
 
-			if status not in self._global_tracker:
-				self._global_tracker[status] = self
-			else:
-				self._global_tracker[status].linked(self)
+			# add global exp to experiments widget
+			if status not in self._slider_list["Global"]:
+				# create global exp object and add to layout
+				param_obj = self._fitter.global_param[status]
+				global_e = exp_frames.GlobalBox(status, param_obj, self)
+				self._global_tracker[status] = global_e
+				self._exp_box.addWidget(global_e)
+
+			self._global_tracker[status].linked(self)
+			print(self._slider_list["Global"])
+
 		else:
 			# connect to global connector
 			self._slider.hide()
@@ -121,23 +129,26 @@ class LocalSliders(Sliders):
 			self._update_max_label.hide()
 			self._update_max.hide()
 
-			print("global_connectors: ", self._global_connectors)
-
 			curr_connector = self._global_connectors[status]
+			name = curr_connector.name
 			self._connectors_seen[self._exp].append(curr_connector)
 			self._connectors_to_add[curr_connector.name] = curr_connector
 			self._fitter.link_to_global(self._exp, self._param_name, self._glob_connect_req[status])
-			
-			if curr_connector.name not in self._global_tracker:
-				self._global_tracker[curr_connector.name] = self
-			else:
-				self._global_tracker[curr_connector.name].linked(self)
 
-			self._if_connected = curr_connector.name
+			# add connector to experiments widget
+			if name not in self._slider_list["Global"]:
+				self._slider_list["Global"][name] = []
+
+				# create a connector holder and add to layout
+				connector_e = exp_frames.ConnectorsBox(name, curr_connector, self)
+				self._exp_box.addWidget(connector_e)
+				self._global_tracker[name] = connector_e
+
+			self._global_tracker[name].linked(self)
+			self._if_connected = name
 
 			for e in self._local_appended:
 				e.update_req()
-				print(self._local_appended)
 
 	def update_global(self, value):
 		"""

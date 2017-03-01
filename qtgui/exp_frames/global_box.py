@@ -25,10 +25,6 @@ class GlobalBox(Experiments):
 		"""
 		create slider
 		"""
-		linked_item = self._global_tracker[self._name]
-		self._linked_list.append(linked_item)
-		self._global_tracker[self._name] = self
-
 		s = sliders.GlobalSliders(self._name, self)
 		self._slider_list["Global"][self._name] = s
 
