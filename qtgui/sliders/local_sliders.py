@@ -7,7 +7,6 @@ import inspect
 
 from .. import add_global_connector
 from .base import Sliders
-#from .global_signaling import GlobalConnectSignal
 
 class LocalSliders(Sliders):
 	"""
@@ -20,10 +19,11 @@ class LocalSliders(Sliders):
 		self._global_var = parent._global_var
 		self._slider_list = parent._slider_list
 		self._connectors_seen = parent._connectors_seen
-		self._glob_connect_req = {}
+		self._glob_connect_req = parent._glob_connect_req
 		self._local_appended = parent._local_appended
 		self._connectors_to_add = parent._connectors_to_add
 		self._global_tracker = parent._global_tracker
+		self._global_connectors = parent._global_connectors
 		self._if_connected = None
 
 		super().__init__(param_name, parent)
@@ -60,8 +60,8 @@ class LocalSliders(Sliders):
 		if status == "Unlink":
 			try:
 				self._fitter.unlink_from_global(self._exp, self._param_name)
-				self._global_tracker[self._if_connected].unlinked(self)
 				self.reset()
+				self._global_tracker[self._if_connected].unlinked(self)
 				#print(self._fitter.global_param)
 			except:
 				pass
@@ -85,6 +85,7 @@ class LocalSliders(Sliders):
 				for v in var_names:
 					self._glob_connect_req[v] = connector.local_methods[v]
 					self._global_connectors[v] = connector
+					print("var name: " + v)
 
 				# Append connector methods to dropbdown lists
 				for p, v in connector.local_methods.items():
@@ -111,8 +112,6 @@ class LocalSliders(Sliders):
 				self._global_tracker[status] = self
 			else:
 				self._global_tracker[status].linked(self)
-
-			print("linked to " + status)
 		else:
 			# connect to global connector
 			self._slider.hide()
@@ -122,18 +121,23 @@ class LocalSliders(Sliders):
 			self._update_max_label.hide()
 			self._update_max.hide()
 
+			print("global_connectors: ", self._global_connectors)
+
 			curr_connector = self._global_connectors[status]
 			self._connectors_seen[self._exp].append(curr_connector)
 			self._connectors_to_add[curr_connector.name] = curr_connector
 			self._fitter.link_to_global(self._exp, self._param_name, self._glob_connect_req[status])
 			
-			self._global_tracker[curr_connector.name] = self
-			self._if_connected = curr_connector.name
+			if curr_connector.name not in self._global_tracker:
+				self._global_tracker[curr_connector.name] = self
+			else:
+				self._global_tracker[curr_connector.name].linked(self)
 
-			print("connected to " + status)
+			self._if_connected = curr_connector.name
 
 			for e in self._local_appended:
 				e.update_req()
+				print(self._local_appended)
 
 	def update_global(self, value):
 		"""
@@ -169,4 +173,3 @@ class LocalSliders(Sliders):
 		if curr_range[0] < curr_bounds[0] or curr_range[1] > curr_bounds[1]:
 			self._fitter.update_range(self._param_name, bounds, self._exp)
 
-			

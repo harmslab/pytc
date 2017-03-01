@@ -26,6 +26,12 @@ class Sliders(QWidget):
 		"""
 		pass
 
+	@property
+	def name(self):
+		"""
+		"""
+		return self._param_name
+
 
 	def layout(self):
 		"""
@@ -43,7 +49,7 @@ class Sliders(QWidget):
 		self._main_layout.addWidget(self._fix, 1, 0)
 
 		self._slider = QSlider(Qt.Horizontal)
-		self._slider.valueChanged[int].connect(self.update_val)
+		self._slider.sliderReleased.connect(self.update_val)
 		self._main_layout.addWidget(self._slider, 1, 1)
 
 		self._param_guess_label = QLabel("", self)
@@ -74,14 +80,19 @@ class Sliders(QWidget):
 		self._main_layout.addWidget(self._update_max, 1, 7)
 		self._update_max.textChanged[str].connect(self.max_bounds)
 
+		# if parameter is K, be able to manually enter/change the value of the slider
+		if "K" in self._param_name:
+			print(self._param_name)
+
 	def check_if_fit(self):
 		"""
 		if a fit has been run, and a slider is changed, change all parameters back to guesses in slider widgets
 		"""
 		if self._fit_run:
-			self._fitter.guess_to_value
+			self._fitter.guess_to_value()
+			self._fit_run = False
 
-		print(self._fit_run)
+		print("fit has been run: " + str(self._fit_run))
 
 	def fix_layout(self, state):
 		"""
@@ -93,8 +104,9 @@ class Sliders(QWidget):
 			self._slider.hide()
 			self._fitter.update_fixed(self._param_name, int(self._fix_int.text()), self._exp)
 			self.check_if_fit()
+
 			self._plot_frame.update()
-			
+
 			print(self._fix_int.text())
 		else:
 			#change widget views
@@ -117,10 +129,12 @@ class Sliders(QWidget):
 
 		print("fixed to value " + value)
 
-	def update_val(self, value):
+	def update_val(self):
 		"""
 		update value for paremter based on slider value
 		"""
+
+		value = int(self._slider.value())
 
 		# if guess update, update parameter as well for plot
 		self._fitter.update_guess(self._param_name, value, self._exp)

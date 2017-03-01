@@ -28,6 +28,7 @@ class SliderPopUp(QWidget):
 		"""
 		"""
 		self._main_layout = QVBoxLayout(self)
+		self.setWindowTitle(self._name)
 
 		self.populate()
 
