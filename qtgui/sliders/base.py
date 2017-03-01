@@ -53,7 +53,7 @@ class Sliders(QWidget):
 		self._main_layout.addWidget(self._slider, 1, 1)
 
 		self._param_guess_label = QLabel("", self)
-		self._main_layout.addWidget(self._param_guess_label, 1, 2)
+		self._main_layout.addWidget(self._param_guess_label, 1, 3)
 
 		self.bounds()
 
@@ -61,28 +61,42 @@ class Sliders(QWidget):
 		self._max = self._slider.maximum()
 
 		self._fix_int = QLineEdit(self)
-		self._main_layout.addWidget(self._fix_int, 1, 3)
+		self._main_layout.addWidget(self._fix_int, 1, 4)
 		self._fix_int.setText(str(1))
 		self._fix_int.textChanged[str].connect(self.fix)
 		self._fix_int.hide()
 
 		self._update_min_label = QLabel("min: ", self)
-		self._main_layout.addWidget(self._update_min_label, 1, 4)
+		self._main_layout.addWidget(self._update_min_label, 1, 5)
 
 		self._update_min = QLineEdit(self)
-		self._main_layout.addWidget(self._update_min, 1, 5)
+		self._main_layout.addWidget(self._update_min, 1, 6)
 		self._update_min.textChanged[str].connect(self.min_bounds)
 
 		self._update_max_label = QLabel("max: ", self)
-		self._main_layout.addWidget(self._update_max_label, 1, 6)
+		self._main_layout.addWidget(self._update_max_label, 1, 7)
 
 		self._update_max = QLineEdit(self)
-		self._main_layout.addWidget(self._update_max, 1, 7)
+		self._main_layout.addWidget(self._update_max, 1, 8)
 		self._update_max.textChanged[str].connect(self.max_bounds)
 
 		# if parameter is K, be able to manually enter/change the value of the slider
-		if "K" in self._param_name:
-			print(self._param_name)
+		#if "K" in self._param_name:
+		#	self._update_K = QLineEdit(self)
+		#	self._update_K.textChanged[str].connect(self.slider_link)
+		#	self._main_layout.addWidget(self._update_K, 1, 2)
+
+	def slider_link(self, value):
+		"""
+		if K parameter, be able to update slider value with text box
+		"""
+		if "." not in value:
+			new_val = int(value)
+			self._slider.setValue(new_val)
+			self._param_guess_label.setText(value)
+			print(value)
+		else:
+			print("can't update slider to float")
 
 	def check_if_fit(self):
 		"""

@@ -171,7 +171,6 @@ class AllExp(QWidget):
 		update fit and parameters, update experiments added to fitter
 		"""
 		self._experiments = self._fitter.experiments
-		self._global_seen = self._fitter.global_param
 
 		if len(self._experiments) != 0:
 
@@ -190,30 +189,6 @@ class AllExp(QWidget):
 				exp = LocalBox(e, exp_name, self)
 				self._exp_box.addWidget(exp)
 
-			# create global holder if doesn't exist
-			for n, e in self._global_seen.items():
-
-				curr_name = n.split('_')[0]
-
-				if n in self._slider_list["Global"] or curr_name in self._connectors_to_add:
-					continue
-
-				# create global exp object and add to layout
-				global_e = GlobalBox(n, e, self)
-				self._exp_box.addWidget(global_e)
-
-			# create holder for a global connector item if it doesn't exist
-			for n, c in self._connectors_to_add.items():
-
-				if n in self._slider_list["Global"]:
-					continue
-
-				self._slider_list["Global"][n] = []
-
-				# create a connector holder and add to layout
-				connector_e = ConnectorsBox(n, c, self)
-				self._exp_box.addWidget(connector_e)
-
 			for ex in self._local_appended:
 				ex.set_attr()
 
@@ -228,6 +203,7 @@ class AllExp(QWidget):
 				error_message = QMessageBox.warning(self, "warning", "fit failed! " + str(fit_status), QMessageBox.Ok)
 		else:
 			print("failed :(")
+			print(self._experiments)
 
 	def print_sliders(self):
 		"""
@@ -238,7 +214,17 @@ class AllExp(QWidget):
 	def clear(self):
 		"""
 		"""
+		for l in self._local_appended:
+			self._fitter.remove_experiment(l._exp)
+
 		self._slider_list = {"Global" : {}, "Local" : {}}
+		self._global_var = []
+		self._connectors_seen = {}
+		self._local_appended = []
+		self._connectors_to_add = {}
+		self._global_tracker = {}
+		self._glob_connect_req = {}
+		self._global_connectors = {}
 		self._param_box.clear()
 		for i in reversed(range(self._exp_box.count())): 
 			self._exp_box.itemAt(i).widget().deleteLater()

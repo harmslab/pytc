@@ -20,6 +20,7 @@ class LocalBox(Experiments):
 		self._required_fields = {}
 		self._experiments = parent._experiments
 		self._connectors_to_add = parent._connectors_to_add
+		self._exp_box = parent._exp_box
 
 		super().__init__(name, parent)
 
