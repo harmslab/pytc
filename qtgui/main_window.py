@@ -164,7 +164,6 @@ class Main(QMainWindow):
 		warning_message = QMessageBox.warning(self, "warning!", "Are you sure you want to start a new session?", QMessageBox.Yes | QMessageBox.No)
 
 		if warning_message == QMessageBox.Yes:
-			self._fitter = GlobalFit()
 			self._exp.clear()
 		else:
 			print("don't clear!")

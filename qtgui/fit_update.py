@@ -68,11 +68,9 @@ class ParamTable(QWidget):
 		self._param_table = QTableWidget()
 		main_layout.addWidget(self._param_table)
 
-		#self.csv_to_table()
-		self.load_table()
-
 	def load_table(self):
 		"""
+		load fit data into the table
 		"""
 		for i, row in enumerate(self._data):
 			for j, col in enumerate(row):
@@ -81,6 +79,7 @@ class ParamTable(QWidget):
 
 	def csv_to_table(self):
 		"""
+		convert csv data file to lists to be read by qtablewidget
 		"""
 		self._header = []
 		self._col_name = []
@@ -101,13 +100,15 @@ class ParamTable(QWidget):
 
 	def update(self):
 		"""
+		update the table with updated fit parameters
 		"""
 		self.csv_to_table()
-		self.load_table()
 
 		self._param_table.setRowCount(len(self._data))
 		self._param_table.setColumnCount(len(self._data[0]))
 		self._param_table.setHorizontalHeaderLabels(self._col_name)
+
+		self.load_table()
 
 	def clear(self):
 		"""
@@ -202,8 +203,7 @@ class AllExp(QWidget):
 				fit_status = self._fitter.fit_status
 				error_message = QMessageBox.warning(self, "warning", "fit failed! " + str(fit_status), QMessageBox.Ok)
 		else:
-			print("failed :(")
-			print(self._experiments)
+			print("no experiments loaded in fitter")
 
 	def print_sliders(self):
 		"""
