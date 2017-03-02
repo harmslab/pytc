@@ -949,9 +949,8 @@ class GlobalFit:
             self.global_param[p].value = self.global_param[p].guess
 
         for expt_name in self._expt_list_stable_order:
-            for p in self._expt_dict[expt_name].model.parameters:
+            for n, p in self._expt_dict[expt_name].model.parameters.items():
                 p.value = p.guess
-
 
     def update_value(self,param_name,param_value,expt=None):
         """
