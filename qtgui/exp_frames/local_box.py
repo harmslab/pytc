@@ -80,6 +80,14 @@ class LocalBox(Experiments):
 
 			setattr(self._exp, n, val)
 
+	def set_fit_true(self):
+		"""
+		"""
+		sliders = self._slider_list["Local"][self._exp]
+
+		for s in sliders:
+			s._fit_run = True
+
 	def remove(self):
 		"""
 		"""
