@@ -58,6 +58,14 @@ class ConnectorsBox(Experiments):
 		if len(self._linked_list) == 0:
 			self.remove()
 
+	def set_fit_true(self):
+		"""
+		"""
+		sliders = self._slider_list["Global"][self._name]
+
+		for s in sliders:
+			s._fit_run = True
+
 	def remove(self):
 		"""
 		"""

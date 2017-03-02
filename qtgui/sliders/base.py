@@ -2,6 +2,8 @@ from qtpy.QtGui import *
 from qtpy.QtCore import *
 from qtpy.QtWidgets import *
 
+from math import pow
+
 import pytc
 import inspect
 
@@ -16,7 +18,7 @@ class Sliders(QWidget):
 		self._exp = parent._exp
 		self._param_name = param_name
 		self._fitter = parent._fitter
-		self._fit_run = parent._fit_run
+		self._fit_run = False
 		self._plot_frame = parent._plot_frame
 
 		self.layout()
@@ -53,7 +55,7 @@ class Sliders(QWidget):
 		self._main_layout.addWidget(self._slider, 1, 1)
 
 		self._param_guess_label = QLabel("", self)
-		self._main_layout.addWidget(self._param_guess_label, 1, 3)
+		self._main_layout.addWidget(self._param_guess_label, 1, 2)
 
 		self.bounds()
 
@@ -61,52 +63,34 @@ class Sliders(QWidget):
 		self._max = self._slider.maximum()
 
 		self._fix_int = QLineEdit(self)
-		self._main_layout.addWidget(self._fix_int, 1, 4)
+		self._main_layout.addWidget(self._fix_int, 1, 3)
 		self._fix_int.setText(str(1))
 		self._fix_int.textChanged[str].connect(self.fix)
 		self._fix_int.hide()
 
 		self._update_min_label = QLabel("min: ", self)
-		self._main_layout.addWidget(self._update_min_label, 1, 5)
+		self._main_layout.addWidget(self._update_min_label, 1, 4)
 
 		self._update_min = QLineEdit(self)
-		self._main_layout.addWidget(self._update_min, 1, 6)
+		self._main_layout.addWidget(self._update_min, 1, 5)
 		self._update_min.textChanged[str].connect(self.min_bounds)
 
 		self._update_max_label = QLabel("max: ", self)
-		self._main_layout.addWidget(self._update_max_label, 1, 7)
+		self._main_layout.addWidget(self._update_max_label, 1, 6)
 
 		self._update_max = QLineEdit(self)
-		self._main_layout.addWidget(self._update_max, 1, 8)
+		self._main_layout.addWidget(self._update_max, 1, 7)
 		self._update_max.textChanged[str].connect(self.max_bounds)
-
-		# if parameter is K, be able to manually enter/change the value of the slider
-		#if "K" in self._param_name:
-		#	self._update_K = QLineEdit(self)
-		#	self._update_K.textChanged[str].connect(self.slider_link)
-		#	self._main_layout.addWidget(self._update_K, 1, 2)
-
-	def slider_link(self, value):
-		"""
-		if K parameter, be able to update slider value with text box
-		"""
-		if "." not in value:
-			new_val = int(value)
-			self._slider.setValue(new_val)
-			self._param_guess_label.setText(value)
-			print(value)
-		else:
-			print("can't update slider to float")
 
 	def check_if_fit(self):
 		"""
 		if a fit has been run, and a slider is changed, change all parameters back to guesses in slider widgets
 		"""
+		print("fit has been run: " + str(self._fit_run))
+
 		if self._fit_run:
 			self._fitter.guess_to_value()
 			self._fit_run = False
-
-		print("fit has been run: " + str(self._fit_run))
 
 	def fix_layout(self, state):
 		"""
@@ -150,10 +134,17 @@ class Sliders(QWidget):
 
 		value = int(self._slider.value())
 
-		# if guess update, update parameter as well for plot
-		self._fitter.update_guess(self._param_name, value, self._exp)
-		self._fitter.update_value(self._param_name, value, self._exp)
 		self._param_guess_label.setText(str(value))
+
+		if "K" in self._param_name:
+			value = pow(value, 10)
+
+		if value != 0:
+			# if guess update, update parameter as well for plot
+			self._fitter.update_guess(self._param_name, value, self._exp)
+			self._fitter.update_value(self._param_name, value, self._exp)
+		else:
+			print("value is", value)
 
 		self.check_if_fit()
 		self._plot_frame.update()

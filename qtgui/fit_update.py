@@ -131,13 +131,12 @@ class AllExp(QWidget):
 		self._fitter = parent._fitter
 		self._slider_list = {"Global" : {}, "Local" : {}}
 		self._global_var = []
-		self._connectors_seen = {}
 		self._local_appended = []
-		self._connectors_to_add = {}
 		self._global_tracker = {}
 		self._glob_connect_req = {}
 		self._global_connectors = {}
-		self._fit_run = False
+		self._connectors_to_add = {}
+		self._connectors_seen = {}
 		self._plot_frame = parent._plot_frame
 
 		self.layout()
@@ -195,10 +194,14 @@ class AllExp(QWidget):
 
 			try:
 				self._fitter.fit()
-				self._fit_run = True
-				self._param_box.update()
 
-				print(self._fit_run)
+				for e in self._local_appended:
+					e.set_fit_true()
+
+				for n, e in self._global_tracker.items():
+					e.set_fit_true()
+
+				self._param_box.update()
 			except:
 				fit_status = self._fitter.fit_status
 				error_message = QMessageBox.warning(self, "warning", "fit failed! " + str(fit_status), QMessageBox.Ok)

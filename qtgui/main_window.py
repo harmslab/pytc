@@ -153,7 +153,7 @@ class Main(QMainWindow):
 		"""
 		add a new pytc experiment.
 		"""
-		self._new_exp = AddExperimentWindow(self._fitter, self.fit_exp)
+		self._new_exp = AddExperimentWindow(self._fitter, self._exp._plot_frame.update)
 		self._new_exp.setGeometry(530, 400, 100, 200)
 		self._new_exp.show()
 
@@ -166,7 +166,7 @@ class Main(QMainWindow):
 		if warning_message == QMessageBox.Yes:
 			self._exp.clear()
 		else:
-			print("don't clear!")
+			print("don't start over!")
 
 	def save_file(self):
 		"""

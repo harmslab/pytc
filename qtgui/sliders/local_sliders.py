@@ -2,6 +2,8 @@ from qtpy.QtGui import *
 from qtpy.QtCore import *
 from qtpy.QtWidgets import *
 
+from math import log10
+
 import pytc
 import inspect
 
@@ -36,8 +38,16 @@ class LocalSliders(Sliders):
 		"""
 		exp_range = self._exp.model.param_guess_ranges[self._param_name]
 
-		self._slider.setMinimum(exp_range[0])
-		self._slider.setMaximum(exp_range[1])
+		min_range = exp_range[0]
+		max_range = exp_range[1]
+
+		# convert values for K to log10(K)
+		if "K" in self._param_name:
+			min_range = log10(exp_range[0])
+			max_range = log10(exp_range[1])
+
+		self._slider.setMinimum(min_range)
+		self._slider.setMaximum(max_range)
 
 		self._link = QComboBox(self)
 		self._link.addItem("Unlink")
@@ -118,7 +128,6 @@ class LocalSliders(Sliders):
 				self._exp_box.addWidget(global_e)
 
 			self._global_tracker[status].linked(self)
-			print(self._slider_list["Global"])
 
 		else:
 			# connect to global connector
