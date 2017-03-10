@@ -17,4 +17,4 @@ from . import util
 from .experiments import ITCExperiment
 from .global_fit import GlobalFit
 from .global_connectors import GlobalConnector
-
+from .qtgui import Main

@@ -38,13 +38,20 @@ class LocalSliders(Sliders):
 		"""
 		exp_range = self._exp.model.param_guess_ranges[self._param_name]
 
-		min_range = exp_range[0]
-		max_range = exp_range[1]
+		min_range = 0
+		max_range = 0
 
-		# convert values for K to log10(K)
-		if "K" in self._param_name:
-			min_range = log10(exp_range[0])
-			max_range = log10(exp_range[1])
+		# transform values based on parameter to allow floats to pass to fitter and 
+		# make sliders easier to use, QtSlider only allows integers
+		if "fx_competent" in self._param_name:
+			min_range = exp_range[0]*10
+			max_range = exp_range[1]*10
+		elif "K" in self._param_name:
+			min_range = exp_range[0]/100000
+			max_range = exp_range[1]/100000
+		else:
+			min_range = exp_range[0]/100
+			max_range = exp_range[1]/100
 
 		self._slider.setMinimum(min_range)
 		self._slider.setMaximum(max_range)
@@ -192,4 +199,7 @@ class LocalSliders(Sliders):
 
 		if curr_range[0] < curr_bounds[0] or curr_range[1] > curr_bounds[1]:
 			self._fitter.update_range(self._param_name, bounds, self._exp)
+
+		self._slider.setMinimum(self._min)
+		self._slider.setMaximum(self._max)
 

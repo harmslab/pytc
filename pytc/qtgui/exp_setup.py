@@ -3,7 +3,7 @@ from qtpy.QtGui import *
 from qtpy.QtCore import *
 from qtpy.QtWidgets import *
 
-from inspect import signature
+import inspect
 import re
 
 class AddExperimentWindow(QWidget):
@@ -79,6 +79,7 @@ class AddExperimentWindow(QWidget):
 	def update_widgets(self):
 		"""
 		"""
+		# check for any model specific parameters and update text fields with those values
 		self._gen_widgets = {}
 
 		for i in reversed(range(self._new_w_layout.count())): 
@@ -86,20 +87,18 @@ class AddExperimentWindow(QWidget):
 
 		parent_req = pytc.indiv_models.ITCModel()
 
-		sig_parent = signature(parent_req.__init__)
-		param_parent = sig_parent.parameters
+		sig_parent = inspect.getargspec(parent_req.__init__)
+		sig_child = inspect.getargspec(self._exp_model.__init__)
 
-		sig_child = signature(self._exp_model.__init__)
-		param_child = sig_child.parameters
+		args = {arg: param for arg, param in zip(sig_child.args[1:], sig_child.defaults)}
 
-		unique = list(set(param_child.keys()) - set(param_parent.keys()))
+		unique = list(set(sig_child.args) - set(sig_parent.args))
 
 		for i in unique:
-			if i == 'self':
-				continue
-
 			self._gen_widgets[i] = QLineEdit(self)
+			self._gen_widgets[i].setText(str(args[i]))
 
+		# add widgets to the pop-up box
 		position = 0
 
 		for name, entry in self._gen_widgets.items():
@@ -149,10 +148,7 @@ class AddExperimentWindow(QWidget):
 
 				model_param[k] = val
 
-			#model_param = {k: float(v.text()) for (k, v) in self._gen_widgets.items()}
-
 			itc_exp = pytc.ITCExperiment(self._exp_file, self._exp_model, shot_start = self._shot_start, **model_param)
-			#self._exp_list["Local"][self._exp_name] = itc_exp
 			self._fitter.add_experiment(itc_exp)
 
 			self._on_close_function()

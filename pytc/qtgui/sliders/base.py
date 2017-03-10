@@ -74,6 +74,7 @@ class Sliders(QWidget):
 		self._update_min = QLineEdit(self)
 		self._main_layout.addWidget(self._update_min, 1, 5)
 		self._update_min.textChanged[str].connect(self.min_bounds)
+		self._update_min.setFixedWidth(100)
 
 		self._update_max_label = QLabel("max: ", self)
 		self._main_layout.addWidget(self._update_max_label, 1, 6)
@@ -81,13 +82,12 @@ class Sliders(QWidget):
 		self._update_max = QLineEdit(self)
 		self._main_layout.addWidget(self._update_max, 1, 7)
 		self._update_max.textChanged[str].connect(self.max_bounds)
+		self._update_max.setFixedWidth(100)
 
 	def check_if_fit(self):
 		"""
 		if a fit has been run, and a slider is changed, change all parameters back to guesses in slider widgets
 		"""
-		print("fit has been run: " + str(self._fit_run))
-
 		if self._fit_run:
 			self._fitter.guess_to_value()
 			self._fit_run = False
@@ -104,15 +104,12 @@ class Sliders(QWidget):
 			self.check_if_fit()
 
 			self._plot_frame.update()
-
-			print(self._fix_int.text())
 		else:
 			#change widget views
 			self._fix_int.hide()
 			self._slider.show()
 
 			self._fitter.update_fixed(self._param_name, None, self._exp)
-			print('unfixed')
 
 	def fix(self, value):
 		"""
@@ -123,9 +120,7 @@ class Sliders(QWidget):
 			self.check_if_fit()
 			self._plot_frame.update()
 		else:
-			print("unabled to fix")
-
-		print("fixed to value " + value)
+			pass
 
 	def update_val(self):
 		"""
@@ -136,15 +131,22 @@ class Sliders(QWidget):
 
 		self._param_guess_label.setText(str(value))
 
-		if "K" in self._param_name:
-			value = pow(value, 10)
+		# transform values back
+		if "fx_competent" in self._param_name:
+			value = value/10
+		elif "K" in self._param_name:
+			value *= 100000
+		else:
+			value *= 100
+
+		print(value)
 
 		if value != 0:
 			# if guess update, update parameter as well for plot
 			self._fitter.update_guess(self._param_name, value, self._exp)
 			self._fitter.update_value(self._param_name, value, self._exp)
 		else:
-			print("value is", value)
+			pass
 
 		self.check_if_fit()
 		self._plot_frame.update()

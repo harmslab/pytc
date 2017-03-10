@@ -9,15 +9,14 @@ from .base import Experiments
 from .. import slider_popup
 from .. import sliders
 
-class ConnectorsBox(Experiments):
+class GlobalBox(Experiments):
 	"""
 	hold global parameter/sliders
 	"""
-	def __init__(self, name, connector, parent):
-		"""
-		"""
-		self._connector = connector
+	def __init__(self, name, fit_object, parent):
+
 		self._linked_list = []
+		self._fit_object = fit_object
 		self._exp = None
 
 		super().__init__(name, parent)
@@ -26,20 +25,14 @@ class ConnectorsBox(Experiments):
 		"""
 		create slider
 		"""
-		# see if global variable is a connector or simple var
-		param = self._connector.params
-
-		for p, v in param.items():
-			s = sliders.GlobalSliders(p, self)
-			self._slider_list["Global"][self._name].append(s)
-
-		print(self._linked_list)
+		s = sliders.GlobalSliders(self._name, self)
+		self._slider_list["Global"][self._name] = s
 
 	def slider_popup(self):
 		"""
 		hide and show slider window
 		"""
-		self._slider_window = slider_popup.ConnectorPopUp(self)
+		self._slider_window = slider_popup.GlobalPopUp(self)
 		self._slider_window.setGeometry(450, 200, 600, 100)
 		self._slider_window.show()
 
@@ -47,6 +40,7 @@ class ConnectorsBox(Experiments):
 		"""
 		"""
 		self._linked_list.append(loc_slider)
+		#print(self._linked_list)
 
 	def unlinked(self, loc_slider):
 		"""
@@ -63,8 +57,7 @@ class ConnectorsBox(Experiments):
 		"""
 		sliders = self._slider_list["Global"][self._name]
 
-		for s in sliders:
-			s._fit_run = True
+		sliders._fit_run = True
 
 	def remove(self):
 		"""
@@ -72,6 +65,7 @@ class ConnectorsBox(Experiments):
 		try:
 			self._fitter.remove_global(self._name)
 			self._slider_list["Global"].pop(self._name, None)
+			self._global_tracker.pop(self._name, None)
 
 			for s in self._linked_list:
 				s.reset()

@@ -207,6 +207,7 @@ class AllExp(QWidget):
 				error_message = QMessageBox.warning(self, "warning", "fit failed! " + str(fit_status), QMessageBox.Ok)
 		else:
 			print("no experiments loaded in fitter")
+			self._param_box.clear()
 
 	def print_sliders(self):
 		"""
@@ -217,8 +218,11 @@ class AllExp(QWidget):
 	def clear(self):
 		"""
 		"""
-		for l in self._local_appended:
-			self._fitter.remove_experiment(l._exp)
+		try:
+			for l in self._local_appended:
+				self._fitter.remove_experiment(l._exp)
+		except:
+			pass
 
 		self._slider_list = {"Global" : {}, "Local" : {}}
 		self._global_var = []
