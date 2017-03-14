@@ -15,7 +15,7 @@ built on PyQt5
 Notes on Installation 
 =====================
 
-* If using python <3.5, PyQt5 is unable to be pip/conda installed
+* If using python < 3.5, PyQt5 is unable to be pip/conda installed
 
 Start-up
 ========
@@ -31,3 +31,5 @@ Main Interface
 
  * add in new experiments
  * until a fit is performed, plot will show the guesses put in from the slider values
+ * saving and opening your session allows to save the current experiments being used to save time in reloading each one again later on
+ * saving out the data saves out a .csv with fit data as well as the graph from the fit

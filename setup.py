@@ -18,7 +18,6 @@ setup(name='pytc',
       url='https://github.com/harmslab/pytc',
       download_url='https://github.com/harmslab/pytc/tarball/0.1.0',
       zip_safe=False,
-      install_requires=["matplotlib","scipy","numpy","qtpy","seaborn"],
-      classifiers=['Programming Language :: Python'],
-      scripts=['scripts/pytc-gui.py'])
+      install_requires=["matplotlib","scipy","numpy"],
+      classifiers=['Programming Language :: Python'])
 
