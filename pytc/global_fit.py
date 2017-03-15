@@ -419,7 +419,7 @@ class GlobalFit:
             if len(e.dQ) > 0:
 
                 ax[0].plot(mr,calc,color=color_list[i],linewidth=linewidth)
-                ax[0].set_ylabel("heat per shot (kJ/mol)")
+                ax[0].set_ylabel("heat per shot (kcal/mol)")
 
                 ax[1].plot([np.min(mr),np.max(mr)],[0,0],"--",linewidth=1.0,color="gray")
                 ax[1].plot(mr,(calc-heats),data_symbol,color=color_list[i])     
