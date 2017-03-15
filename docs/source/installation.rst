@@ -10,7 +10,6 @@ Dependencies
  + `scipy <https://www.scipy.org/>`_
  + `matplotlib <http://matplotlib.org/>`_
  + `pyqt5 <http://pyqt.sourceforge.net/Docs/PyQt5/installation.html>`_ (for the GUI)
- + `pandas <http://pandas.pydata.org/>`_ (for the GUI)
  + `jupyter <https://jupyter.org/>`_ (useful for fit scripting)
 
 Mac

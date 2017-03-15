@@ -20,7 +20,7 @@ simultaneously.  We built it with three design principles:
    well-documented API. 
 
 Our implementation is built on `python3 <https://www.python.org/>`_ extended with  `numpy <http://www.numpy.org/>`_ 
-and `scipy <https://www.scipy.org/>`_.   The GUI is built on `pytq5 <http://pyqt.sourceforge.net/Docs/PyQt5/installation.html>`_ and `pandas <http://pandas.pydata.org/>`_.
+and `scipy <https://www.scipy.org/>`_.   The GUI is built on `pytq5 <http://pyqt.sourceforge.net/Docs/PyQt5/installation.html>`_.
 
 Try it out!
 ===========
