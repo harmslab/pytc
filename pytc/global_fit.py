@@ -427,8 +427,9 @@ class GlobalFit:
                 ax[1].set_ylabel("residual")
 
                 plt.setp(ax[0].get_xticklabels(), visible=False)
-            
-        plt.tight_layout()
+        
+        fig.set_tight_layout(True)
+        #plt.tight_layout()
 
         return fig, ax
 
