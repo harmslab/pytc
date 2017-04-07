@@ -824,7 +824,7 @@ class GlobalFit:
                 err = "param \"{}\" is not global.  You must specify an experiment.\n".format(param_name)
                 raise KeyError(err)
         else:
-            self._expt_dict[expt.experiment_id].model.update_ranges({param_name:param_range})
+            self._expt_dict[expt.experiment_id].model.update_guess_ranges({param_name:param_range})
 
     #--------------------------------------------------------------------------
     # fixed parameters
