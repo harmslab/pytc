@@ -489,7 +489,7 @@ class GlobalFit:
             if len(e.dQ) > 0:
 
                 ax[0].plot(mr,calc,color=color_list[i],linewidth=linewidth)
-                ax[0].set_ylabel("heat per shot (kJ/mol)")
+                ax[0].set_ylabel("heat per shot (kcal/mol)")
 
                 ax[1].plot([np.min(mr),np.max(mr)],[0,0],"--",linewidth=1.0,color="gray")
                 ax[1].plot(mr,(calc-heats),data_symbol,color=color_list[i])     
@@ -497,8 +497,9 @@ class GlobalFit:
                 ax[1].set_ylabel("residual")
 
                 plt.setp(ax[0].get_xticklabels(), visible=False)
-            
-        plt.tight_layout()
+        
+        fig.set_tight_layout(True)
+        #plt.tight_layout()
 
         return fig, ax
 
@@ -1064,5 +1065,37 @@ class GlobalFit:
         else:
             self._expt_dict[expt.experiment_id].model.update_bounds({param_name:param_bounds})
 
+    #--------------------------------------------------------------------------
+    # Functions for updating values directly (used in gui)
 
+    def guess_to_value(self):
+        """
+        Set all parameter values back to their guesses.
+        """       
+ 
+        for p in self.global_param.keys():
+            self.global_param[p].value = self.global_param[p].guess
+
+        for expt_name in self._expt_list_stable_order:
+            for n, p in self._expt_dict[expt_name].model.parameters.items():
+                p.value = p.guess
+
+    def update_value(self,param_name,param_value,expt=None):
+        """
+        Update the one of the values for this fit.  If the experiment is None,
+        set a global parameter.  Otherwise, set the specified experiment.
+
+            param_name: name of parameter to set
+            param_value: value to set parameter to
+            expt_name: name of experiment
+        """
+
+        if expt == None:
+            try:
+                self.global_param[param_name].value = param_value
+            except KeyError:
+                err = "param \"{}\" is not global.  You must specify an experiment.\n".format(param_name)
+                raise KeyError(err)
+        else:
+            self._expt_dict[expt.experiment_id].model.update_values({param_name:param_value})
 
