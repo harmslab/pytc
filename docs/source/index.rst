@@ -19,7 +19,7 @@ experiments simultaneously.  We built it with three design principles:
    well-documented API. 
 
 Our implementation is built on `python3 <https://www.python.org/>`_ extended with  `numpy <http://www.numpy.org/>`_ 
-and `scipy <https://www.scipy.org/>`_.   The GUI is built on `pytq5 <http://pyqt.sourceforge.net/Docs/PyQt5/installation.html>`_ and `pandas <http://pandas.pydata.org/>`_.
+and `scipy <https://www.scipy.org/>`_.   The GUI is built on `pytq5 <http://pyqt.sourceforge.net/Docs/PyQt5/installation.html>`_.
 
 Features
 ========
@@ -83,18 +83,20 @@ Fit a :math:`Ca^{2+}/EDTA` binding experiment to a single-site binding model.
 GUI Screen shots
 ================
 
-SCREENSHOT HERE
+.. image:: images/gui_01.png
+.. image:: images/gui_02.png
 
 Documentation
 =============
 
  + `Installation <installation.html>`_
  + `Fitting models using the script API <http://mybinder.org:/repo/harmslab/pytc-binder>`_.
- + `Fitting models using the GUI API <LINK>`_.
+ + `Fitting models using the GUI API <https://pytc-gui.readthedocs.io/en/latest/>`_.
  + `Fitting and statistics <statistics.html>`_.
  + `Description of individual experiment models included in package <indiv_models.html>`_.
  + `Description of global fits included in package <global_models.html>`_.
  + `Defining new models <writing_new_models.html>`_.
+
 
 .. warning::
     **pytc** will fit all sorts of complicated models to your data. It is up to

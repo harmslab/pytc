@@ -9,8 +9,8 @@ if sys.version_info[0] < 3:
 from setuptools import setup, find_packages
 
 # Need to add all dependencies to setup as we go!
-setup(name='pytc',
-      packages=['pytc', 'qtgui'],
+setup(name='pytc-fitter',
+      packages=find_packages(),
       version='0.1.0',
       description="Python software package for analyzing Isothermal Titration Calorimetry data",
       author='Michael J. Harms',
