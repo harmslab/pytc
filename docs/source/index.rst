@@ -45,7 +45,7 @@ API Quick Start
 If you already have a python3-based scientific computing environment installed, 
 you can start using the API by:
 
-.. sourcecode::
+.. sourcecode ::
 
     # Install pytc
     sudo pip3 install pytc-fitter

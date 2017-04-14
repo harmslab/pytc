@@ -57,6 +57,13 @@ These are determined using the diagonal of the parameter Jacobian estimated
 during least-squares regression.  This is susceptible to numerical problems and
 may not always be reliable.  
 
+:code:`pytc` also implements a bootstrap sampler that samples from uncertainty
+in each data point and then uses each pseudoreplicate to refit.  This analysis
+assumes that each point has the same uncertainty (specificed by 
+:code:`perturb_size` in the :code:`GlobalModel.fit` call).  The parameter 
+estimates returned are the mean of the bootstrap replicates; the error is the
+standard deviation of those replicates.  
+
 Residuals
 ~~~~~~~~~
 
