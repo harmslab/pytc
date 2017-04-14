@@ -119,6 +119,14 @@ class ITCExperiment:
         """
         return self._heats[self._shot_start:]
 
+    @heats.setter
+    def heats(self,heats):
+        """
+        Set the heats.
+        """
+        
+        self._heats[self._shot_start:] = heats[:]
+
     @property
     def mole_ratio(self):
         """
