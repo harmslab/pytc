@@ -64,17 +64,19 @@ Fit a :math:`Ca^{2+}/EDTA` binding experiment to a single-site binding model.
 GUI Screenshots
 ===============
 
-SCREENSHOT HERE
+.. image:: images/gui_01.png
+.. image:: images/gui_02.png
 
 Documentation
 =============
 
  + `Installation <installation.html>`_
  + `Fitting models using the script API <http://mybinder.org:/repo/harmslab/pytc-binder>`_.
- + `Fitting models using the GUI API <LINK>`_.
+ + `Fitting models using the GUI API <https://pytc-gui.readthedocs.io/en/latest/>`_.
  + `Description of individual experiment models included in package <indiv_models.html>`_.
  + `Description of global fits included in package <global_models.html>`_.
  + `Defining new models <writing_new_models.html>`_.
+
 
 .. warning::
     **pytc** will fit all sorts of complicated models to your data. It is up to
