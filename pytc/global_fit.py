@@ -311,7 +311,7 @@ class GlobalFit:
         self._float_param = np.array(self._float_param,dtype=float)
 
 
-    def _least_squares_fit(self,num_bootstrap=0,perturb_size=1.0):
+    def _least_squares_fit(self,num_bootstrap=0,perturb_size=1.00):
         """
         Perform a global fit using nonlinear regression.
         """
@@ -347,7 +347,7 @@ class GlobalFit:
             if i == 0:
                 self._fit_result = fit_result
 
-            self._bootstrap_params[i,:] = fit_result.x
+            self._bootstrap_params[i,:] = fit_result.x[:]
 
         # Restore heats
         for k in self._expt_dict.keys():
@@ -513,9 +513,13 @@ class GlobalFit:
         """
 
         out = ["# Fit successful? {}\n".format(self.fit_success)]
-        out.append("# Fit sum of square residuals: {}\n".format(self.fit_sum_of_squares))
-        out.append("# Fit num param: {}\n".format(self.fit_num_param))
-        out.append("# Fit num observations: {}\n".format(self.fit_num_obs))
+        
+        fit_stats_keys = list(self.fit_stats.keys())
+        fit_stats_keys.sort()
+    
+        for k in fit_stats_keys:
+            out.append("# {}: {}\n".format(k,self.fit_stats[k]))
+
         out.append("type,name,dh_file,value,uncertainty,fixed,guess,lower_bound,upper_bound\n") 
         for k in self.fit_param[0].keys():
 
