@@ -41,7 +41,7 @@ class VantHoffExtended(GlobalConnector):
         T_ref = self.reference_temp
 
         a = -(self.dH_ref/self.R)*(1/T - 1/T_ref)
-        b = (self.dCp/self.R)*(np.log(T/T_ref) + T/T_ref - 1)
+        b = (self.dCp/self.R)*(np.log(T/T_ref) + T_ref/T - 1)
 
         return self.K_ref*np.exp(a + b)
 
