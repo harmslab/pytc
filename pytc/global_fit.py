@@ -268,8 +268,12 @@ class GlobalFit:
             # Now update parameter values, bounds, and mapping 
             for e in enumerate_over.keys(): 
 
-                # skip fixed paramters
+                # write fixed parameter values to the appropriate experiment,
+                # then skip
                 if enumerate_over[e].fixed:
+                    fixed_value = enumerate_over[e].value
+                    for expt, expt_param in self._global_param_mapping[k]:
+                        self._expt_dict[expt].model.update_fixed({expt_param:fixed_value})
                     continue
 
                 self._float_param.append(enumerate_over[e].guess)
@@ -291,7 +295,7 @@ class GlobalFit:
                 if e.model.fixed_param[p]:
                     continue
 
-                # If the paramter is global, ignore it.
+                # If the parameter is global, ignore it.
                 try:
                     e.model.param_aliases[p]
                     continue
@@ -311,7 +315,7 @@ class GlobalFit:
         self._float_param = np.array(self._float_param,dtype=float)
 
 
-    def _least_squares_fit(self,num_bootstrap=0,perturb_size=1.0):
+    def _least_squares_fit(self,num_bootstrap=0,perturb_size=1.00):
         """
         Perform a global fit using nonlinear regression.
         """
@@ -328,30 +332,33 @@ class GlobalFit:
         # Go through bootstrap reps
         for i in range(num_bootstrap + 1):
 
-            # Don't perturb first rep
-            if i != 0:
-                if i % 10 == 0:
-                    print("Bootstrap {} of {}".format(i,num_bootstrap + 1))
-                    sys.stdout.flush()
+            if i != 0 and i % 10 == 0:
+                print("Bootstrap {} of {}".format(i,num_bootstrap + 1))
+                sys.stdout.flush()
 
-                # Perturb other rep
+            # Perturb rep heats
+            for k in self._expt_dict.keys():
+                self._expt_dict[k].heats = tmp_dict[k] + np.random.normal(0.0,perturb_size,len(tmp_dict[k]))
+            
+            # Last fit should be ML to the experiments all have ML parameter
+            # by end. 
+            if i == num_bootstrap:
+
+                # Restore heats
                 for k in self._expt_dict.keys():
-                    self._expt_dict[k].heats = tmp_dict[k] + np.random.normal(0.0,perturb_size,len(tmp_dict[k]))
+                    self._expt_dict[k].heats = tmp_dict[k]
 
             # Do the actual fit
             fit_result = optimize.least_squares(self._residuals, 
                                                 x0=self._float_param,
                                                 bounds=self._float_bounds)
 
-            # Record first rep as best estimate
-            if i == 0:
+            # Record ML best estimate
+            if i == num_bootstrap:
                 self._fit_result = fit_result
 
-            self._bootstrap_params[i,:] = fit_result.x
+            self._bootstrap_params[i,:] = fit_result.x[:]
 
-        # Restore heats
-        for k in self._expt_dict.keys():
-            self._expt_dict[k].heats = tmp_dict[k]
         
     def _parse_fit(self):
         """
@@ -359,7 +366,7 @@ class GlobalFit:
         """
 
         if self._bootstrap_params.shape[0] > 1:
-            fit_parameters = self._bootstrap_params[0,:]
+            fit_parameters = self._bootstrap_params[-1,:]
             std_error = np.std(self._bootstrap_params,0)
            
         else: 
@@ -513,9 +520,13 @@ class GlobalFit:
         """
 
         out = ["# Fit successful? {}\n".format(self.fit_success)]
-        out.append("# Fit sum of square residuals: {}\n".format(self.fit_sum_of_squares))
-        out.append("# Fit num param: {}\n".format(self.fit_num_param))
-        out.append("# Fit num observations: {}\n".format(self.fit_num_obs))
+        
+        fit_stats_keys = list(self.fit_stats.keys())
+        fit_stats_keys.sort()
+    
+        for k in fit_stats_keys:
+            out.append("# {}: {}\n".format(k,self.fit_stats[k]))
+
         out.append("type,name,dh_file,value,uncertainty,fixed,guess,lower_bound,upper_bound\n") 
         for k in self.fit_param[0].keys():
 

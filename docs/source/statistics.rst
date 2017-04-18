@@ -38,7 +38,7 @@ F-statistic.
 These statistics are accessible via :code:`GlobalModel.fit_stats`, a dictionary
 keyed to these values (:code:`AIC`, :code:`AICc`, :code:`BIC`, and :code:`F`). 
 The implementation of these statistics is in the :code:`GlobalModel.fit_stats`
-property in :code:`pytc/global_fit.py <https://XX>`_.  
+property in :code:`pytc/global_fit.py`.  
 
 The :code:`pytc.util.compare_models` function will conveniently 
 compare two models to one another.  This will automatically calculate the 
