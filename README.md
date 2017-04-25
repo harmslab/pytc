@@ -1,12 +1,12 @@
-#pytc
+# pytc
 A python software package for analyzing Isothermal Titration Calorimetry
 experiments.
 
- + [Documentation](https://pytc.readthedocs.io/en/latest/)
- + [![Binder](http://mybinder.org/badge.svg)](http://mybinder.org:/repo/harmslab/pytc-binder)
+ + [Full documentation](https://pytc.readthedocs.io/en/latest/)
+ + [Graphical User Interface](https://github.com/harmslab/pytc-gui)
 
 ## Quick Start
- + Install via pip `sudo python3 install pytc-fitter` (Mac/Linux), `python3 -m pip install pytc-fitter` (Windows)
+ + Install via pip `sudo pip3 install pytc-fitter` (Mac/Linux), `python3 -m pip install pytc-fitter` (Windows)
  + Alternatively, clone from github and install 
     ```
     git clone https://github.com/harmslab/pytc.git

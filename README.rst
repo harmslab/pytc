@@ -32,15 +32,6 @@ Features
  + Easy integration with `jupyter <https://jupyter.org/>`_ notebooks for 
    writing custom fitting scripts.
 
-Try it out!
-===========
-
-We have posted a `jupyter <https://jupyter.org/>`_ notebook demonstrating the
-capabilities of the API on `binder <http://mybinder.org:/repo/harmslab/pytc-binder>`_.
-
-.. image:: http://mybinder.org/badge.svg :target: http://mybinder.org:/repo/harmslab/pytc-binder
-
-
 API Quick Start
 ===============
 
