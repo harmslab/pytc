@@ -30,22 +30,13 @@ Features
  + Easy integration with `jupyter <https://jupyter.org/>`_ notebooks for 
    writing custom fitting scripts.
 
-Try it out!
-===========
-
-We have posted a `jupyter <https://jupyter.org/>`_ notebook demonstrating the
-capabilities of the API on `binder <http://mybinder.org:/repo/harmslab/pytc-binder>`_.
-
-.. image:: http://mybinder.org/badge.svg :target: http://mybinder.org:/repo/harmslab/pytc-binder
-
-
 API Quick Start
 ===============
 
 If you already have a python3-based scientific computing environment installed, 
 you can start using the API by:
 
-.. sourcecode ::
+.. sourcecode:: bash
 
     # Install pytc
     sudo pip3 install pytc-fitter
@@ -80,8 +71,10 @@ Fit a :math:`Ca^{2+}/EDTA` binding experiment to a single-site binding model.
     g.plot()
     print(g.fit_as_csv)
 
-GUI Screen shots
-================
+GUI
+===
+
+`GUI docs <https://pytc-gui.readthedocs.io/en/latest/>`_.
 
 .. image:: images/gui_01.png
 .. image:: images/gui_02.png
@@ -90,8 +83,8 @@ Documentation
 =============
 
  + `Installation <installation.html>`_
- + `Fitting models using the script API <http://mybinder.org:/repo/harmslab/pytc-binder>`_.
- + `Fitting models using the GUI API <https://pytc-gui.readthedocs.io/en/latest/>`_.
+ + Fitting models using the script API `see demos/Demo.ipynb. <https://github.com/harmslab/pytc/blob/master/demos/Demo.ipynb>`_.
+ + `Fitting models using the GUI <https://pytc-gui.readthedocs.io/en/latest/>`_.
  + `Fitting and statistics <statistics.html>`_.
  + `Description of individual experiment models included in package <indiv_models.html>`_.
  + `Description of global fits included in package <global_models.html>`_.
