@@ -1,6 +1,6 @@
-================================
-pytc documentation
-================================
+====
+pytc
+====
 A python software package for analyzing Isothermal Titration Calorimetry data.
 The name is a `portmanteau <https://xkcd.com/739/>`_ of Python and ITC.  
 
@@ -30,6 +30,23 @@ Features
  + Easy integration with `jupyter <https://jupyter.org/>`_ notebooks for 
    writing custom fitting scripts.
 
+Documentation
+=============
+
+ + `Installation <installation.html>`_
+ + `Fitting models using the API <https://github.com/harmslab/pytc-demos/>`_.
+ + `Fitting models using the GUI <https://pytc-gui.readthedocs.io/en/latest/>`_.
+ + `Fitting and statistics <statistics.html>`_.
+ + `Description of individual experiment models included in package <indiv_models.html>`_.
+ + `Description of global fits included in package <global_models.html>`_.
+ + `Defining new models <writing_new_models.html>`_.
+
+.. warning::
+    **pytc** will fit all sorts of complicated models to your data. It is up to
+    you to make sure the fit is justified by the data.  See the 
+    `Fitting and statistics <statistics.html>`_ section to see what **pytc** 
+    reports to help in this decision making.
+
 API Quick Start
 ===============
 
@@ -39,13 +56,13 @@ you can start using the API by:
 .. sourcecode:: bash
 
     # Install pytc
-    sudo pip3 install pytc-fitter
+    pip3 install pytc-fitter
 
-    # Clone the repo (to bring in demos)
-    git clone https://github.com/harmslab/pytc
+    # Clone the demos repo
+    git clone https://github.com/harmslab/pytc-demos
 
-    # Fire up jupyter and open Demo.ipynb
-    cd pytc/demos
+    # Fire up jupyter 
+    cd pytc-demos
     jupyter notebook
 
 
@@ -79,23 +96,6 @@ GUI
 .. image:: images/gui_01.png
 .. image:: images/gui_02.png
 
-Documentation
-=============
-
- + `Installation <installation.html>`_
- + Fitting models using the script API `see demos/Demo.ipynb. <https://github.com/harmslab/pytc/blob/master/demos/Demo.ipynb>`_.
- + `Fitting models using the GUI <https://pytc-gui.readthedocs.io/en/latest/>`_.
- + `Fitting and statistics <statistics.html>`_.
- + `Description of individual experiment models included in package <indiv_models.html>`_.
- + `Description of global fits included in package <global_models.html>`_.
- + `Defining new models <writing_new_models.html>`_.
-
-
-.. warning::
-    **pytc** will fit all sorts of complicated models to your data. It is up to
-    you to make sure the fit is justified by the data.  See the 
-    `Fitting and statistics <statistics.html>`_ section to see what **pytc** 
-    reports to help in this decision making.
 
 .. toctree::
    :maxdepth: 2

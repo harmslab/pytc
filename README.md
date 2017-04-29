@@ -13,7 +13,7 @@ experiments.
     cd pytc
     python3 setup.py install
     ```
- + If jupyter is installed, you can open the `demos/Demo.ipynb` jupyter notebook to see a collection of example fits. 
+ + If jupyter is installed, you can clone the [pytc-demos](https://github.com/harmslba/pytc-demos) repo to see a collection of example fits.
 
 ## Example script
 Fit a Ca2+/EDTA binding experiment.
@@ -22,7 +22,7 @@ Fit a Ca2+/EDTA binding experiment.
 import pytc
 
 # Load in integrated heats from an ITC experiment
-e = pytc.ITCExperiment("demos/ca-edta/tris-01.DH",pytc.indiv_models.SingleSite)
+e = pytc.ITCExperiment("pytc-demos/ca-edta/tris-01.DH",pytc.indiv_models.SingleSite)
 
 # Create the global fitter, add the experiment, and fit
 g = pytc.GlobalFit()
