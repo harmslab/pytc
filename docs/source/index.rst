@@ -91,7 +91,10 @@ Fit a :math:`Ca^{2+}/EDTA` binding experiment to a single-site binding model.
 GUI
 ===
 
-`GUI docs <https://pytc-gui.readthedocs.io/en/latest/>`_.
+The GUI is installed separately from the API. Instructions are 
+`here <https://pytc-gui.readthedocs.io/en/latest/installation.html>`_.  The GUI
+docs are `here <https://pytc-gui.readthedocs.io/en/latest/>`_.  A few 
+screenshots showing the GUI in action are below.
 
 .. image:: images/gui_01.png
 .. image:: images/gui_02.png
