@@ -1,6 +1,6 @@
-================================
-pytc documentation
-================================
+====
+pytc
+====
 A python software package for analyzing Isothermal Titration Calorimetry data.
 The name is a `portmanteau <https://xkcd.com/739/>`_ of Python and ITC.  
 
