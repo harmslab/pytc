@@ -7,7 +7,7 @@ Classes for loading experimental ITC data and associating those data with a mode
 __author__ = "Michael J. Harms"
 __date__ = "2016-06-22"
 
-import random, string
+import random, string, os
 import numpy as np
 
 class ITCExperiment:
@@ -30,7 +30,11 @@ class ITCExperiment:
         self._shot_start = shot_start
 
         # Load in heats
-        self._read_heats_file()
+        extension = self.dh_file.split(".")[-1]
+        if extension == "DH":
+            self._read_heats_file_origin()
+        elif extension == "sedphat":
+            self._read_heats_file_nitpic()
 
         # Initialize model using information read from heats file
         self._model = model(S_cell=self.stationary_cell_conc,
@@ -42,7 +46,7 @@ class ITCExperiment:
                                        for i in range(20)])
 
 
-    def _read_heats_file(self):
+    def _read_heats_file_origin(self):
         """
         Read the heats file written out by the MicroCal/Origin ITC analysis
         package.
@@ -69,6 +73,43 @@ class ITCExperiment:
         self._shots = np.array(shots)
         self._heats = np.array(heats)
 
+    def _read_heats_file_nitpic(self):
+        """
+        Read data files from NITPIC ITC package. Takes the X.sedphat folder output.
+        """
+        read_files = []
+        for path, subdirs, files in os.walk(self.dh_file):
+            for name in files:
+                if name.endswith((".xp", ".nitpic")):
+                    read_files.append(os.path.join(path, name))
+
+        heat_data = next(f for f in read_files if ".nitpic" in f)
+        exp_data = next(f for f in read_files if ".xp" in f)
+
+        f = open(exp_data, 'r')
+        meta = f.readlines()
+        f.close()
+
+        self.temperature = float(next(t for t in meta if "Temperature" in t).split()[0])
+        self.stationary_cell_conc = float(next(t for t in meta if "cellconc" in t).split()[0])/1e6
+        self.titrant_syringe_conc = float(next(t for t in meta if "syringconc" in t).split()[0])*1e-6
+        self.cell_volume = float(next(t for t in meta if "cellvolume" in t).split()[0])
+
+        f = open(heat_data, 'r')
+        lines = f.readlines()
+        f.close()
+
+        shots = []
+        heats = []
+        for l in lines[1:]:
+            if "--" in l:
+                break
+            col = l.split()
+            heats.append(float(col[0]))
+            shots.append(float(col[1]))
+
+        self._shots = np.array(shots)
+        self._heats = np.array(heats)
 
     @property
     def dQ(self):
