@@ -1,4 +1,17 @@
 
+
+def ln_prob(param,bf):
+
+    # Calcualte prior.  If not finite, this solution has an -infinity log 
+    # likelihood
+    ln_prior = bf.ln_prior(param)
+    if not np.isfinite(ln_prior):
+        return -np.inf
+  
+    # log posterior is log prior plus log likelihood 
+    return ln_prior + bf.ln_like(param)
+
+
 class BayesianFitter(Fitter):
     """
     """
@@ -9,23 +22,25 @@ class BayesianFitter(Fitter):
         pass 
 
 
-    def lnlike(self,theta, x, y, yerr):
-        m, b, lnf = theta
-        model = m * x + b
+    def ln_like(self,param):
+        """
+        Log likelihood as a function of fit parameters.
+        """
+
+        self._residuals(param)
+
         inv_sigma2 = 1.0/(yerr**2 + model**2*np.exp(2*lnf))
         return -0.5*(np.sum((y-model)**2*inv_sigma2 - np.log(inv_sigma2)))
 
-    def lnprior(self,theta):
+    def ln_prior(self,theta):
+        """
+        Log prior of fit parameters.
+        """
+
         m, b, lnf = theta
         if -5.0 < m < 0.5 and 0.0 < b < 10.0 and -10.0 < lnf < 1.0:
             return 0.0
         return -np.inf
-
-    def lnprob(self,theta, x, y, yerr):
-        lp = lnprior(theta)
-        if not np.isfinite(lp):
-            return -np.inf
-        return lp + lnlike(theta, x, y, yerr)
 
     def fit(self,residuals,parameters,bounds,num_walkers=100,initial_walker_spread=0.5):
         """

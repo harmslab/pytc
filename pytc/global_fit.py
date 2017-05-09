@@ -361,16 +361,15 @@ class GlobalFit:
                 err = "Paramter type {} not recognized.\n".format(self._float_param_type[i])
                 raise ValueError(err) 
 
-    def fit(self,sampler=samplers.MLSampler,**sampler_kwargs):
+    def fit(self,fitter=fitters.MLFitter):
         """
         Public fitting function that fits the data.
         """
 
         self._prep_fit()
-        self._sampler = sampler(self._residuals,
-                                self._float_params,
-                                self._float_bounds,
-                                **sampler_kwargs)
+        self._fitter = fitter(self._residuals,
+                              self._float_params,
+                              self._float_bounds)
         self._parse_fit()
 
     def plot(self,correct_molar_ratio=False,subtract_dilution=False,

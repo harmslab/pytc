@@ -1,5 +1,5 @@
 
-class BootstrapFitter(Sampler):
+class BootstrapFitter(Fitter):
     """
     Perform the fit many times, sampling from uncertainty in each measured heat. 
     """
