@@ -10,6 +10,7 @@ __all__ = ["experiments","indiv_models","global_connectors","util"]
 from . import experiments
 from . import indiv_models
 from . import global_connectors
+from . import samplers
 from . import util
 
 # Load these defaults (which will be used for vast majority of experiments) 
