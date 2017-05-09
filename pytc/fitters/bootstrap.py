@@ -1,3 +1,4 @@
+from .base import Fitter
 
 class BootstrapFitter(Fitter):
     """

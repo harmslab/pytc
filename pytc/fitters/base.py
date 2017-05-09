@@ -1,3 +1,8 @@
+import numpy as np
+import scipy.stats
+import scipy.optimize as optimize
+
+
 
 class Fitter:
     """
@@ -15,7 +20,7 @@ class Fitter:
         self._fit_result = None
         self._success = False
 
-    def fit(self,residuals,parameters,parameter_bounds):
+    def fit(self,mapper,residuals,parameters,parameter_bounds):
         """
         Dummy fit function.
         
@@ -86,35 +91,35 @@ class Fitter:
             return None
 
     @property
-    def fit_num_param(self):
+    def num_param(self):
         """
         Return the number of parameters fit.
         """
 
         # Global parameters
         num_param = 0
-        for k in self.fit_param[0].keys():
+        for k in self._mapper.fit_param[0].keys():
 
             # Only count floating parameters
             if not self.global_param[k].fixed:
                 num_param += 1
 
         # Local parameters
-        for i in range(len(self.fit_param[1])):
+        for i in range(len(self._mapper.fit_param[1])):
 
-            expt_name = self._expt_list_stable_order[i]
-            for k in self.fit_param[1][i].keys():
+            expt_name = self._mapper.expt_names[i]
+            for k in self._mapper.fit_param[1][i].keys():
 
                 # Skip variables linked to global variables
                 try:
-                    alias = self._expt_dict[expt_name].model.parameters[k].alias
+                    alias = self._mapper.expt_dict[expt_name].model.parameters[k].alias
                     if alias != None:
                         continue
                 except AttributeError:
                     pass
             
                 # Only count floating parameters
-                if not self._expt_dict[expt_name].model.parameters[k].fixed:
+                if not self._mapper.expt_dict[expt_name].model.parameters[k].fixed:
                     num_param += 1
 
         return num_param
@@ -127,27 +132,26 @@ class Fitter:
 
         """
 
-        try:
-            self._sampler.fit_result
-        except AttributeError:
+        if not self.success:
+
             return None
 
         output = {}
      
-        output["num_obs"] = self.fit_num_obs
-        output["num_param"] = self.fit_num_param
+        output["num_obs"] = self.num_obs
+        output["num_param"] = self.num_param
  
         # Create a vector of calcluated and observed values.  
         y_obs = [] 
         y_estimate = []
-        for k in self._expt_dict:
-            y_obs.extend(self._expt_dict[k].heats)
-            y_estimate.extend(self._expt_dict[k].dQ)
+        for k in self._mapper.expt_dict:
+            y_obs.extend(self._mapper.expt_dict[k].heats)
+            y_estimate.extend(self._mapper.expt_dict[k].dQ)
         y_estimate= np.array(y_estimate)
         y_obs = np.array(y_obs)
 
-        P = self.fit_num_param
-        N = self.fit_num_obs
+        P = self.num_param
+        N = self.num_obs
  
         sse = np.sum((y_obs -          y_estimate)**2)
         sst = np.sum((y_obs -      np.mean(y_obs))**2)

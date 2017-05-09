@@ -1,4 +1,4 @@
-
+from .base import Fitter
 
 def ln_prob(param,bf):
 

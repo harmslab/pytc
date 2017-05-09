@@ -1,3 +1,8 @@
+from .base import Fitter
+
+import numpy as np
+import scipy.stats
+import scipy.optimize as optimize
 
 class MLFitter(Fitter):
     """
@@ -10,7 +15,7 @@ class MLFitter(Fitter):
     # http://stackoverflow.com/questions/14581358/getting-standard-errors-on-fitted-parameters-using-the-optimize-leastsq-method-i
     """
 
-    def fit(self,residuals,parameters,bounds):
+    def fit(self,mapper,residuals,parameters,bounds):
         """
         Perform the fit using nonlinear least-squares regression.
         
@@ -26,6 +31,8 @@ class MLFitter(Fitter):
             Lower and upper bounds on independent variables
        
         """
+
+        self._mapper = mapper
 
         # Do the actual fit
         self._fit_result = optimize.least_squares(residuals, 
@@ -46,8 +53,8 @@ class MLFitter(Fitter):
 
         # 95% confidence intervals from standard error
         z = scipy.stats.t(N-P-1).ppf(0.975)
-        c1 = fit_parameters - z*std_error
-        c2 = fit_parameters + z*std_error
+        c1 = self._estimate - z*self._stdev
+        c2 = self._estimate + z*self._stdev
 
         self._ninetyfive = (c1,c2)
 
