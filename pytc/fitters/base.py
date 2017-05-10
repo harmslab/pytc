@@ -101,7 +101,7 @@ class Fitter:
         for k in self._mapper.fit_param[0].keys():
 
             # Only count floating parameters
-            if not self.global_param[k].fixed:
+            if not self._mapper.global_params[k].fixed:
                 num_param += 1
 
         # Local parameters

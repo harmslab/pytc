@@ -141,7 +141,7 @@ class GlobalFit:
             param_type = "global"
             dh_file = "NA"
 
-            if self.global_param[k].fixed:
+            if self.global_params[k].fixed:
                 fixed = "fixed"
             else:
                 fixed = "float"
@@ -149,9 +149,9 @@ class GlobalFit:
             param_name = k
             value = self.fit_param[0][k]
             uncertainty = self.fit_stdev[0][k]
-            guess = self.global_param[k].guess
-            lower_bound = self.global_param[k].bounds[0]
-            upper_bound = self.global_param[k].bounds[1]
+            guess = self.global_params[k].guess
+            lower_bound = self.global_params[k].bounds[0]
+            upper_bound = self.global_params[k].bounds[1]
 
             out.append("{:},{:},{:},{:.5e},{:.5e},{:},{:.5e},{:.5e},{:.5e}\n".format(param_type,
                                                                                      param_name,
@@ -214,8 +214,8 @@ class GlobalFit:
 
         # Global parameters
         global_out_param = {}
-        for g in self.global_param.keys():
-            global_out_param[g] = self.global_param[g].value
+        for g in self.global_params.keys():
+            global_out_param[g] = self.global_params[g].value
 
         # Local parameters
         local_out_param = []
@@ -234,8 +234,8 @@ class GlobalFit:
 
         # Global parameters
         global_out_error = {}
-        for g in self.global_param.keys():
-            global_out_error[g] = self.global_param[g].error
+        for g in self.global_params.keys():
+            global_out_error[g] = self.global_params[g].error
 
         # Local parameters
         local_out_error = []
@@ -275,7 +275,7 @@ class GlobalFit:
                 if k in self._float_global_connectors_seen:
                     continue
 
-                enumerate_over = self._mapper.global_params[k].params
+                enumerate_over = self._mapper.global_params_internal[k].params
                 self._float_global_connectors_seen.append(k)
                 param_type = 2
 
@@ -457,7 +457,7 @@ class GlobalFit:
         parameter.
         """
 
-        self._mapper.link_to_global(expt,expt_param.global_param_name)
+        self._mapper.link_to_global(expt,expt_param,global_param_name)
 
     def unlink_from_global(self,expt,expt_param):
         """
@@ -521,5 +521,5 @@ class GlobalFit:
         self._mapper.update_value(*args,**kwargs)
 
     @property
-    def global_param(self):
-        return self._mapper.global_param
+    def global_params(self):
+        return self._mapper.global_params
