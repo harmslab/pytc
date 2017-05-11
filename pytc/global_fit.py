@@ -17,6 +17,9 @@ from matplotlib import gridspec
 import inspect
 
 class GlobalFit:
+    """
+    Main class for interating with pytc.
+    """
 
     def __init__(self):
         """
@@ -28,9 +31,20 @@ class GlobalFit:
 
     def fit(self,fitter=fitters.MLFitter):
         """
-        Public fitting function that fits the data.
+        Public function that performs the fit. 
+        
+        Parameters
+        ----------
+
+        fitter : subclass of fitters.Fitter
+            Fitter specifies how the fit should be done.  It defaults to a 
+            maximum-likelihood method.  If the subclass is passed, it is
+            initialized with default parameters.  If an instance of the 
+            subclass is passed, it will be used as-is. 
         """
 
+        # Prep the fit (creating arrays that properly map between the the
+        # Mapper instance and numpy arrays for regression).
         self._prep_fit()
        
         # If the fitter is not intialized, initialize it 
@@ -39,20 +53,41 @@ class GlobalFit:
         else:
             self._fitter = fitter
 
-        self._fitter = fitter()
-        self._fitter.fit(self._mapper,
-                         self._residuals,
+        # Perform the fit.
+        self._fitter.fit(self._y_calc,
                          self._float_param,
-                         self._float_bounds)
-        print(self._fitter.stats)
+                         self._float_bounds,
+                         self._y_obs,
+                         self._y_err)
+
+        # Take the output of the fit (numpy arrays) and map it back to specific
+        # parameters using Mapper.
         self._parse_fit()
 
     def plot(self,correct_molar_ratio=False,subtract_dilution=False,
              color_list=None,data_symbol="o",linewidth=1.5):
         """
         Plot the experimental data and fit results.
-    
-        Returns matplotlib Figure and AxesSubplot instances that can be further
+
+        Parameters
+        ----------
+
+        correct_molar_ratio : bool
+            Whether or not to correct the apparent molar ratio for the fraction
+            competent.
+        subtract_dilution: bool
+            Whether or not to subtract dilution from the plot.
+        color_list : list of obj that can be interpreted as colors by matplotlib
+            Color for each series
+        data_sumbol : string
+            Symbol to use to for plotting experimental datapoints
+        linewidth : float
+            Width of line to draw for fit model
+                 
+ 
+        Returns
+        -------
+        A matplotlib Figure and AxesSubplot instances that can be further
         manipulated by the user of the API.
         """
 
@@ -124,7 +159,7 @@ class GlobalFit:
     @property
     def fit_as_csv(self):
         """
-        Return a csv-style string of the fit.
+        A csv-style string of the fit.
         """
 
         out = ["# Fit successful? {}\n".format(self._fitter.success)]
@@ -207,15 +242,15 @@ class GlobalFit:
     @property
     def fit_param(self):
         """
-        Return the fit results as a dictionary that keys parameter name to fit
+        The fit results as a dictionary that keys parameter name to fit
         value.  This is a tuple with global parameters first, then a list of
         dictionaries for each local fit.
         """
 
         # Global parameters
         global_out_param = {}
-        for g in self.global_params.keys():
-            global_out_param[g] = self.global_params[g].value
+        for g in self._mapper.global_params.keys():
+            global_out_param[g] = self._mapper.global_params[g].value
 
         # Local parameters
         local_out_param = []
@@ -227,15 +262,15 @@ class GlobalFit:
     @property
     def fit_stdev(self):
         """
-        Return the param error as a dictionary that keys parameter name to fit
-        value.  This is a tuple with global parameters first, then a list of
-        dictionaries for each local fit.
-        """
+        The standard deviation on fit parameters as a dictionary that keys
+        parameter name to parameter standard deviation.  This is a tuple with
+        global parameters first, then a list of
+        dictionaries for each local fit.  """
 
         # Global parameters
         global_out_error = {}
-        for g in self.global_params.keys():
-            global_out_error[g] = self.global_params[g].error
+        for g in self._mapper.global_params.keys():
+            global_out_error[g] = self._mapper.global_params[g].error
 
         # Local parameters
         local_out_error = []
@@ -244,7 +279,47 @@ class GlobalFit:
 
         return global_out_error, local_out_error
 
-    
+    @property
+    def num_obs(self):
+        """
+        Return the number of observations used for the fit.
+        """
+        return len(self._y_obs)
+
+    @property
+    def num_param(self):
+        """
+        Return the number of parameters fit.
+        """
+
+        # Global parameters
+        num_param = 0
+        for k in self._mapper.fit_param[0].keys():
+
+            # Only count floating parameters
+            if not self._mapper.global_params[k].fixed:
+                num_param += 1
+
+        # Local parameters
+        for i in range(len(self._mapper.fit_param[1])):
+
+            expt_name = self._mapper.expt_names[i]
+            for k in self._mapper.fit_param[1][i].keys():
+
+                # Skip variables linked to global variables
+                try:
+                    alias = self._mapper.expt_dict[expt_name].model.parameters[k].alias
+                    if alias != None:
+                        continue
+                except AttributeError:
+                    pass
+            
+                # Only count floating parameters
+                if not self._mapper.expt_dict[expt_name].model.parameters[k].fixed:
+                    num_param += 1
+
+        return num_param
+
     def _prep_fit(self):
         """
         Prep the fit, creating all appropriate parameter mappings etc.
@@ -303,6 +378,7 @@ class GlobalFit:
                 float_param_counter += 1
 
         # Go through every experiment
+        y_obs = []
         for k in self._mapper.expt_dict.keys():                                       
 
             # Go through fit parameters within each experiment
@@ -330,16 +406,22 @@ class GlobalFit:
 
                 float_param_counter += 1
 
-        self._float_param = np.array(self._float_param,dtype=float)
+        # Create observed y and y err arrays for the likelihood function
+        y_obs = []
+        y_err = []
+        for k in self._mapper.expt_dict.keys():                                       
+            y_obs.extend(self._mapper.expt_dict[k].heats)
+            y_err.extend(self._mapper.expt_dict[k].heats_stdev)
 
-    def _residuals(self,param=None):
+        self._y_obs = np.array(y_obs)
+        self._y_err = np.array(y_obs)
+
+    def _y_calc(self,param=None):
         """
-        Calculate the residuals between the experiment and calculated model
-        heats.
+        Calculate heats using the model given parameters.
         """
-
-        all_residuals = []
-
+        
+        # Update parameters
         for i in range(len(param)):
 
             # local variable
@@ -378,12 +460,15 @@ class GlobalFit:
                     e = self._mapper.expt_dict[expt]                                                 
                     value = connector_function(e)
                     self._mapper.expt_dict[expt].model.update_values({param:value})                  
-                 
-        # Calculate residuals
-        for k in self._mapper.expt_dict.keys():                                                       
-            all_residuals.extend(self._mapper.expt_weights[k]*(self._mapper.expt_dict[k].heats - self._mapper.expt_dict[k].dQ))
+        
+        # Calculate using the model         
+        y_calc = []
+        for k in self._mapper.expt_dict.keys(): 
+            y_calc.extend(self._mapper.expt_dict[k].dQ)
 
-        return np.array(all_residuals)
+        self._y_calc = np.array(y_calc)
+
+        return np.array(y_calc)
 
         
     def _parse_fit(self):
@@ -421,13 +506,14 @@ class GlobalFit:
                 # it will break the connector.  This is because I expose the 
                 # thermodynamic-y stuff of interest via .__dict__ rather than 
                 # directly via params.  So, this has to use the .update_values
-                # method. 
+                # method.
                 connector.update_values({param_name:self._fitter.stdev[i]})
                 connector.params[param_name].error = self._fitter.stdev[i]
 
             else:
                 err = "Paramter type {} not recognized.\n".format(self._float_param_type[i])
                 raise ValueError(err) 
+
     
     # ----------------------------------------------------------------------- #
     # To keep the global_fit api clean, wrap the key self._mapper methods and #

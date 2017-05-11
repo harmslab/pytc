@@ -20,23 +20,30 @@ class Fitter:
         self._fit_result = None
         self._success = False
 
-    def fit(self,mapper,residuals,parameters,parameter_bounds):
+    def fit(self,model,parameters,bounds,y_obs,y_err=None):
         """
-        Dummy fit function.
-        
-        Parameters
-        ----------
-
-        residuals : function
-            residuals function. This should take parameters and parameter_bounds
-            as arguments.
-        parameters : np.array of floats
-            fit parameters
-        parameter_bounds : 2-tuple of array-like
-            Lower and upper bounds on independent variables
         """
 
         pass
+
+    def ln_like(self,param):
+        """
+        Log likelihood as a function of fit parameters.
+        """
+
+        y_calc = self._model(param)
+        sigma2 = self._y_err**2
+
+        return -0.5*(np.sum((self._y_obs - y_calc)**2/sigma2 + np.log(sigma2)))
+
+    def weighted_residuals(self,param):
+        """
+        """
+
+        y_calc = self._model(param)
+
+        return (self._y_obs - y_calc)/self._y_err
+
 
     @property
     def estimate(self):
@@ -77,52 +84,6 @@ class Fitter:
         """
         
         return self._success
-
-    @property
-    def num_obs(self):
-        """
-        Return the number of observations used for the fit.
-        """
-
-        try:
-            # fun is fit residuals XXX FIX SO NOT ML SPECIFIC
-            return len(self._fit_result.fun)
-        except AttributeError:
-            return None
-
-    @property
-    def num_param(self):
-        """
-        Return the number of parameters fit.
-        """
-
-        # Global parameters
-        num_param = 0
-        for k in self._mapper.fit_param[0].keys():
-
-            # Only count floating parameters
-            if not self._mapper.global_params[k].fixed:
-                num_param += 1
-
-        # Local parameters
-        for i in range(len(self._mapper.fit_param[1])):
-
-            expt_name = self._mapper.expt_names[i]
-            for k in self._mapper.fit_param[1][i].keys():
-
-                # Skip variables linked to global variables
-                try:
-                    alias = self._mapper.expt_dict[expt_name].model.parameters[k].alias
-                    if alias != None:
-                        continue
-                except AttributeError:
-                    pass
-            
-                # Only count floating parameters
-                if not self._mapper.expt_dict[expt_name].model.parameters[k].fixed:
-                    num_param += 1
-
-        return num_param
 
     @property
     def stats(self):
@@ -186,7 +147,7 @@ class Fitter:
         output["ln(L)"] = lnL
 
         # AIC and BIC
-        P_all = P + 1 # add parameter to account for implicit residual
+        P_all = P + 1 # add parameter to account for intercept
         output["AIC"] = 2*P_all  - 2*lnL
         output["BIC"] = P_all*np.log(N) - 2*lnL
         output["AICc"] = output["AIC"] + 2*(P_all + 1)*(P_all + 2)/(N - P_all - 2)

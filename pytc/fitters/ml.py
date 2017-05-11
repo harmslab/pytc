@@ -15,16 +15,13 @@ class MLFitter(Fitter):
     # http://stackoverflow.com/questions/14581358/getting-standard-errors-on-fitted-parameters-using-the-optimize-leastsq-method-i
     """
 
-    def fit(self,mapper,residuals,parameters,bounds):
+    def fit(self,model,parameters,bounds,y_obs,y_err):
         """
         Perform the fit using nonlinear least-squares regression.
         
         Parameters
         ----------
 
-        residuals : function
-            residuals function. This should take parameters and parameter_bounds
-            as arguments.
         parameters : np.array of floats
             fit parameters
         parameter_bounds : 2-tuple of array-like
@@ -32,23 +29,31 @@ class MLFitter(Fitter):
        
         """
 
-        self._mapper = mapper
+        self._model = model
+        self._bounds = list(zip(bounds[0],bounds[1]))
+        self._y_obs = y_obs
+        self._y_err = y_err
 
-        # Do the actual fit
-        self._fit_result = optimize.least_squares(residuals, 
+        # If no error is specified, assign the error as 1/N, identical for all
+        # points 
+        self._y_err = y_err
+        if y_err is None:
+            self._y_err = np.array([1/len(self._y_obs) for i in range(len(self._y_obs))])
+
+        # Do the actual fit 
+        fn = lambda *args: -self.weighted_residuals(*args)
+        self._fit_result = optimize.least_squares(fn,
                                                   x0=parameters,
                                                   bounds=bounds)
-            
         self._estimate = self._fit_result.x
 
         # Extract standard error on the fit parameter from the covariance
-        N = len(self._fit_result.fun)
+        N = len(self._y_obs)
         P = len(self._fit_result.x)
 
         s_sq = np.sum(self._fit_result.fun**2)/(N - P)
-        pcov = self._fit_result.jac*s_sq
+        pcov = self._fit_result.jac*s_sq 
         variance = np.absolute(np.diagonal(pcov))
-        
         self._stdev = np.sqrt(variance)
 
         # 95% confidence intervals from standard error
