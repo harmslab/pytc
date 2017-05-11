@@ -38,12 +38,12 @@ class Fitter:
 
     def weighted_residuals(self,param):
         """
+        Calculate weighted residuals.
         """
 
         y_calc = self._model(param)
 
         return (self._y_obs - y_calc)/self._y_err
-
 
     @property
     def estimate(self):
