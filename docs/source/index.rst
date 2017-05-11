@@ -1,6 +1,6 @@
-================================
-pytc documentation
-================================
+====
+pytc
+====
 A python software package for analyzing Isothermal Titration Calorimetry data.
 The name is a `portmanteau <https://xkcd.com/739/>`_ of Python and ITC.  
 
@@ -30,14 +30,22 @@ Features
  + Easy integration with `jupyter <https://jupyter.org/>`_ notebooks for 
    writing custom fitting scripts.
 
-Try it out!
-===========
+Documentation
+=============
 
-We have posted a `jupyter <https://jupyter.org/>`_ notebook demonstrating the
-capabilities of the API on `binder <http://mybinder.org:/repo/harmslab/pytc-binder>`_.
+ + `Installation <installation.html>`_
+ + `Fitting models using the API <https://github.com/harmslab/pytc-demos/>`_.
+ + `Fitting models using the GUI <https://pytc-gui.readthedocs.io/en/latest/>`_.
+ + `Fitting and statistics <statistics.html>`_.
+ + `Description of individual experiment models included in package <indiv_models.html>`_.
+ + `Description of global fits included in package <global_models.html>`_.
+ + `Defining new models <writing_new_models.html>`_.
 
-.. image:: http://mybinder.org/badge.svg :target: http://mybinder.org:/repo/harmslab/pytc-binder
-
+.. warning::
+    **pytc** will fit all sorts of complicated models to your data. It is up to
+    you to make sure the fit is justified by the data.  See the 
+    `Fitting and statistics <statistics.html>`_ section to see what **pytc** 
+    reports to help in this decision making.
 
 API Quick Start
 ===============
@@ -45,16 +53,16 @@ API Quick Start
 If you already have a python3-based scientific computing environment installed, 
 you can start using the API by:
 
-.. sourcecode ::
+.. sourcecode:: bash
 
     # Install pytc
-    sudo pip3 install pytc-fitter
+    pip3 install pytc-fitter
 
-    # Clone the repo (to bring in demos)
-    git clone https://github.com/harmslab/pytc
+    # Clone the demos repo
+    git clone https://github.com/harmslab/pytc-demos
 
-    # Fire up jupyter and open Demo.ipynb
-    cd pytc/demos
+    # Fire up jupyter 
+    cd pytc-demos
     jupyter notebook
 
 
@@ -80,29 +88,17 @@ Fit a :math:`Ca^{2+}/EDTA` binding experiment to a single-site binding model.
     g.plot()
     print(g.fit_as_csv)
 
-GUI Screen shots
-================
+GUI
+===
+
+The GUI is installed separately from the API. Instructions are 
+`here <https://pytc-gui.readthedocs.io/en/latest/installation.html>`_.  The GUI
+docs are `here <https://pytc-gui.readthedocs.io/en/latest/>`_.  A few 
+screenshots showing the GUI in action are below.
 
 .. image:: images/gui_01.png
 .. image:: images/gui_02.png
 
-Documentation
-=============
-
- + `Installation <installation.html>`_
- + `Fitting models using the script API <http://mybinder.org:/repo/harmslab/pytc-binder>`_.
- + `Fitting models using the GUI API <https://pytc-gui.readthedocs.io/en/latest/>`_.
- + `Fitting and statistics <statistics.html>`_.
- + `Description of individual experiment models included in package <indiv_models.html>`_.
- + `Description of global fits included in package <global_models.html>`_.
- + `Defining new models <writing_new_models.html>`_.
-
-
-.. warning::
-    **pytc** will fit all sorts of complicated models to your data. It is up to
-    you to make sure the fit is justified by the data.  See the 
-    `Fitting and statistics <statistics.html>`_ section to see what **pytc** 
-    reports to help in this decision making.
 
 .. toctree::
    :maxdepth: 2

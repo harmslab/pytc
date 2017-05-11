@@ -19,6 +19,6 @@ setup(name='pytc-fitter',
       url='https://github.com/harmslab/pytc',
       download_url='https://github.com/harmslab/pytc/tarball/1.0.0',
       zip_safe=False,
-      install_requires=["matplotlib","scipy","numpy","pandas"],
+      install_requires=["matplotlib","scipy","numpy"],
       classifiers=['Programming Language :: Python'])
 
