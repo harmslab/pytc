@@ -26,4 +26,3 @@ setup(name='pytc-fitter',
       install_requires=["matplotlib","scipy","numpy"],
       classifiers=['Programming Language :: Python'],
       ext_modules=[ext])
-
