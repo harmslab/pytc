@@ -218,6 +218,7 @@ class GlobalFit:
         self._float_bounds = [[],[]]
         self._float_param_mapping = []
         self._float_param_type = []
+        self._float_param_name = []
 
         self._float_global_connectors_seen = []
 
@@ -239,7 +240,7 @@ class GlobalFit:
                 if k in self._float_global_connectors_seen:
                     continue
 
-                enumerate_over = self._global_params_internal[k].params
+                enumerate_over = self._global_params[k].params
                 self._float_global_connectors_seen.append(k)
                 param_type = 2
 
@@ -263,6 +264,7 @@ class GlobalFit:
                 self._float_bounds[1].append(enumerate_over[e].bounds[1])
                 self._float_param_mapping.append((k,e))
                 self._float_param_type.append(param_type)
+                self._float_param_name.append("{}.{}".format(k,e))
 
                 float_param_counter += 1
 
@@ -292,6 +294,7 @@ class GlobalFit:
                 self._float_bounds[1].append(e.model.bounds[p][1])
                 self._float_param_mapping.append((k,p))
                 self._float_param_type.append(0)
+                self._float_param_name.append("{}.{}".format(e.dh_file,p))
 
                 float_param_counter += 1
 
@@ -303,7 +306,7 @@ class GlobalFit:
             y_err.extend(self._expt_dict[k].heats_stdev)
 
         self._y_obs = np.array(y_obs)
-        self._y_err = np.array(y_obs)
+        self._y_err = np.array(y_err)
 
     def _y_calc(self,param=None):
         """
@@ -355,8 +358,6 @@ class GlobalFit:
         for k in self._expt_dict.keys(): 
             y_calc.extend(self._expt_dict[k].dQ)
 
-        self._y_calc = np.array(y_calc)
-
         return np.array(y_calc)
 
     def _parse_fit(self):
@@ -395,7 +396,7 @@ class GlobalFit:
                 # thermodynamic-y stuff of interest via .__dict__ rather than 
                 # directly via params.  So, this has to use the .update_values
                 # method.
-                connector.update_values({param_name:self._fitter.stdev[i]})
+                connector.update_values({param_name:self._fitter.estimate[i]})
                 connector.params[param_name].error = self._fitter.stdev[i]
 
             else:
@@ -471,7 +472,6 @@ class GlobalFit:
                 plt.setp(ax[0].get_xticklabels(), visible=False)
         
         fig.set_tight_layout(True)
-        #plt.tight_layout()
 
         return fig, ax
 
@@ -488,11 +488,13 @@ class GlobalFit:
         
         fit_stats_keys = list(self.fit_stats.keys())
         fit_stats_keys.sort()
-    
+        fit_stats_keys.remove("Fit type")  
+ 
+        out.append("# {}: {}\n".format("Fit type",self.fit_stats["Fit type"])) 
         for k in fit_stats_keys:
             out.append("# {}: {}\n".format(k,self.fit_stats[k]))
 
-        out.append("type,name,dh_file,value,uncertainty,fixed,guess,lower_bound,upper_bound\n") 
+        out.append("type,name,dh_file,value,stdev,fixed,guess,lower_bound,upper_bound\n") 
         for k in self.fit_param[0].keys():
 
             param_type = "global"
@@ -505,7 +507,7 @@ class GlobalFit:
 
             param_name = k
             value = self.fit_param[0][k]
-            uncertainty = self.fit_std_error[0][k]
+            uncertainty = self.fit_stdev[0][k]
             guess = self.global_param[k].guess
             lower_bound = self.global_param[k].bounds[0]
             upper_bound = self.global_param[k].bounds[1]
@@ -543,7 +545,7 @@ class GlobalFit:
 
                 param_name = k 
                 value = self.fit_param[1][i][k]
-                uncertainty = self.fit_std_error[1][i][k]
+                uncertainty = self.fit_stdev[1][i][k]
                 guess = self._expt_dict[expt_name].model.parameters[k].guess
                 lower_bound = self._expt_dict[expt_name].model.parameters[k].bounds[0]
                 upper_bound = self._expt_dict[expt_name].model.parameters[k].bounds[1]
@@ -605,7 +607,7 @@ class GlobalFit:
         return global_out_param, local_out_param
 
     @property
-    def fit_std_error(self):
+    def fit_stdev(self):
         """
         Return the param error as a dictionary that keys parameter name to fit
         value.  This is a tuple with global parameters first, then a list of
@@ -625,35 +627,14 @@ class GlobalFit:
         return global_out_error, local_out_error
 
     @property
-    def fit_sum_of_squares(self):
-        """
-        Return fit sum_of_squares.
-        """
-        try:
-            return self._fit_result.cost
-        except AttributeError:
-            return None
-
-    @property
     def fit_success(self):
         """
         Return fit success.
         """
         try:
-            return self._fit_result.success
+            return self._fitter.success
         except AttributeError:
             return None
-
-    @property
-    def fit_status(self):
-        """
-        Return fit status.
-        """
-        try:
-            return self._fit_result.status
-        except AttributeError:
-            return None
-
 
     @property
     def fit_num_obs(self):
@@ -661,11 +642,8 @@ class GlobalFit:
         Return the number of observations used for the fit.
         """
 
-        try:
-            # fun is fit residuals
-            return len(self._fit_result.fun)
-        except AttributeError:
-            return None
+        return len(self._y_obs)
+
 
     @property
     def fit_num_param(self):
@@ -673,46 +651,13 @@ class GlobalFit:
         Return the number of parameters fit.
         """
 
-        # Global parameters
-        num_param = 0
-        for k in self.fit_param[0].keys():
+        return len(self._float_param)
 
-            # Only count floating parameters
-            if not self.global_param[k].fixed:
-                num_param += 1
-
-        # Local parameters
-        for i in range(len(self.fit_param[1])):
-
-            expt_name = self._expt_list_stable_order[i]
-            for k in self.fit_param[1][i].keys():
-
-                # Skip variables linked to global variables
-                try:
-                    alias = self._expt_dict[expt_name].model.parameters[k].alias
-                    if alias != None:
-                        continue
-                except AttributeError:
-                    pass
-            
-                # Only count floating parameters
-                if not self._expt_dict[expt_name].model.parameters[k].fixed:
-                    num_param += 1
-
-        return num_param
 
     @property
     def fit_stats(self):
         """
-        Assumes that all data have the same error distribution -- e.g. similar
-        noise levels etc.  Should be fine for data collected on same instrument.
-
         """
-
-        try:
-            self._fit_result
-        except AttributeError:
-            return None
 
         output = {}
      
@@ -734,6 +679,12 @@ class GlobalFit:
         sse = np.sum((y_obs -          y_estimate)**2)
         sst = np.sum((y_obs -      np.mean(y_obs))**2)
         ssm = np.sum((y_estimate - np.mean(y_obs))**2)
+
+        output["Fit type"] = self._fitter.fit_type
+        
+        fit_info = self._fitter.fit_info
+        for x in fit_info.keys():
+            output["  {}: {}".format(self._fitter.fit_type,x)] = fit_info[x]
 
         # Calcluate R**2 and adjusted R**2
         if sst == 0.0:
@@ -757,10 +708,7 @@ class GlobalFit:
             output["p"] = 1 - scipy.stats.f.cdf(output["F"],P,(N-P-1))  
 
         # Calcluate log-likelihood
-        variance = sse/N
-        L1 = (1.0/np.sqrt(2*np.pi*variance))**N
-        L2 = np.exp(-sse/(2*variance))
-        lnL = np.log(L1*L2)
+        lnL = self._fitter.ln_like(self._fitter.estimate) 
         output["ln(L)"] = lnL
 
         # AIC and BIC

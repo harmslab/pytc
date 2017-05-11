@@ -1,8 +1,14 @@
+__description__ = \
+"""
+Fitter base class allowing different classes of fits.
+"""
+__author__ = "Michael J. Harms"
+__date__ = "2017-05-10"
+
 import numpy as np
 import scipy.stats
 import scipy.optimize as optimize
-
-
+import corner
 
 class Fitter:
     """
@@ -20,11 +26,25 @@ class Fitter:
         self._fit_result = None
         self._success = False
 
-    def fit(self,model,parameters,bounds,y_obs,y_err=None):
+        self.fit_type = ""
+
+    def unweighted_residuals(self,param):
         """
+        Calculate residuals.
         """
 
-        pass
+        y_calc = self._model(param)
+
+        return self._y_obs - y_calc
+
+    def weighted_residuals(self,param):
+        """
+        Calculate weighted residuals.
+        """
+
+        y_calc = self._model(param)
+
+        return (self._y_obs - y_calc)/self._y_err
 
     def ln_like(self,param):
         """
@@ -36,14 +56,29 @@ class Fitter:
 
         return -0.5*(np.sum((self._y_obs - y_calc)**2/sigma2 + np.log(sigma2)))
 
-    def weighted_residuals(self,param):
+    def fit(self,model,parameters,bounds,y_obs,y_err=None):
         """
-        Calculate weighted residuals.
+        Fit the parameters.       
+        Should be redefined in subclasses.
+ 
+        Parameters
+        ----------
+
+        model : callable
+            model to fit.  model should take "parameters" as its only argument.
+            this should (usually) be GlobalFit._y_calc
+        parameters : array of floats
+            parameters to be optimized.  usually constructed by GlobalFit._prep_fit
+        bounds : list
+            list of two lists containing lower and upper bounds
+        y_obs : array of floats
+            observations in an concatenated array
+        y_err : array of floats or None
+            standard deviation of each observation.  if None, each observation
+            is assigned an error of 1/num_obs 
         """
 
-        y_calc = self._model(param)
-
-        return (self._y_obs - y_calc)/self._y_err
+        pass
 
     @property
     def estimate(self):
@@ -72,7 +107,7 @@ class Fitter:
     @property
     def fit_result(self):
         """
-        Full fit results. 
+        Full fit results (will depend on exact fit type what is placed here).
         """
     
         return self._fit_result
@@ -86,70 +121,44 @@ class Fitter:
         return self._success
 
     @property
-    def stats(self):
+    def fit_info(self):
         """
-        Assumes that all data have the same error distribution -- e.g. similar
-        noise levels etc.  Should be fine for data collected on same instrument.
-
+        Information about fit run.  Should be redfined in subclass.
         """
+       
+        return {} 
 
-        if not self.success:
+    def corner_plot(self,param_names=()):
+        """
+        Create a "corner plot" that shows distributions of values for each
+        parameter, as well as cross-correlations between parameters.
 
-            return None
+        Parameters
+        ----------
+        param_names : list
+            list of parameter names to include.  if (), show all with names 
+            p0,p1,... pN.
+        """
+    
+        s = self._samples
 
-        output = {}
-     
-        output["num_obs"] = self.num_obs
-        output["num_param"] = self.num_param
- 
-        # Create a vector of calcluated and observed values.  
-        y_obs = [] 
-        y_estimate = []
-        for k in self._mapper.expt_dict:
-            y_obs.extend(self._mapper.expt_dict[k].heats)
-            y_estimate.extend(self._mapper.expt_dict[k].dQ)
-        y_estimate= np.array(y_estimate)
-        y_obs = np.array(y_obs)
+        if len(param_names) == 0:
+            param_names = ["p{}".format(i) for i in range(len(s.shape[1]))]
 
-        P = self.num_param
-        N = self.num_obs
- 
-        sse = np.sum((y_obs -          y_estimate)**2)
-        sst = np.sum((y_obs -      np.mean(y_obs))**2)
-        ssm = np.sum((y_estimate - np.mean(y_obs))**2)
+        corner_range = []
+        for i in range(s.shape[1]):
+            corner_range.append(tuple([np.min(s[:,i])-0.5,np.max(s[:,i])+0.5]))
 
-        # Calcluate R**2 and adjusted R**2
-        if sst == 0.0:
-            output["Rsq"] = np.inf
-            output["Rsq_adjusted"] = np.inf
-        else:
-            Rsq = 1 - (sse/sst)
-            Rsq_adjusted = Rsq - (1 - Rsq)*P/(N - P - 1)
+        fig = corner.corner(s,labels=param_names,range=corner_range)
 
-            output["Rsq"] = Rsq
-            output["Rsq_adjusted"] = Rsq_adjusted
-        
-        # calculate F-statistic
-        msm = (1/P)*ssm
-        mse = 1/(N - P - 1)*sse
-        if mse == 0.0:
-            output["F"] = np.inf
-            output["F"] = np.inf
-        else:
-            output["F"] = msm/mse
-            output["p"] = 1 - scipy.stats.f.cdf(output["F"],P,(N-P-1))  
+    @property
+    def samples(self):
+        """
+        Samples from stochastic fits.
+        """
+   
+        try: 
+            return self._samples
+        except AttributeError:
+            return []
 
-        # Calcluate log-likelihood
-        variance = sse/N
-        L1 = (1.0/np.sqrt(2*np.pi*variance))**N
-        L2 = np.exp(-sse/(2*variance))
-        lnL = np.log(L1*L2)
-        output["ln(L)"] = lnL
-
-        # AIC and BIC
-        P_all = P + 1 # add parameter to account for intercept
-        output["AIC"] = 2*P_all  - 2*lnL
-        output["BIC"] = P_all*np.log(N) - 2*lnL
-        output["AICc"] = output["AIC"] + 2*(P_all + 1)*(P_all + 2)/(N - P_all - 2)
-
-        return output

@@ -1,3 +1,10 @@
+__description__ = \
+"""
+Fitter subclass for performing bootstrap fits.
+"""
+__author__ = "Michael J. Harms"
+__date__ = "2017-05-10"
+
 from .base import Fitter
 
 import numpy as np
@@ -14,23 +21,38 @@ class MLFitter(Fitter):
     # http://stackoverflow.com/questions/14854339/in-scipy-how-and-why-does-curve-fit-calculate-the-covariance-of-the-parameter-es
     # http://stackoverflow.com/questions/14581358/getting-standard-errors-on-fitted-parameters-using-the-optimize-leastsq-method-i
     """
+    def __init__(self):
+        """
+        Initialize the fitter.
+        """
+
+        Fitter.__init__(self)
+       
+        self.fit_type = "maximum likelihood"    
 
     def fit(self,model,parameters,bounds,y_obs,y_err):
         """
-        Perform the fit using nonlinear least-squares regression.
-        
+        Fit the parameters.       
+ 
         Parameters
         ----------
 
-        parameters : np.array of floats
-            fit parameters
-        parameter_bounds : 2-tuple of array-like
-            Lower and upper bounds on independent variables
-       
+        model : callable
+            model to fit.  model should take "parameters" as its only argument.
+            this should (usually) be GlobalFit._y_calc
+        parameters : array of floats
+            parameters to be optimized.  usually constructed by GlobalFit._prep_fit
+        bounds : list
+            list of two lists containing lower and upper bounds
+        y_obs : array of floats
+            observations in an concatenated array
+        y_err : array of floats or None
+            standard deviation of each observation.  if None, each observation
+            is assigned an error of 1/num_obs 
         """
 
         self._model = model
-        self._bounds = list(zip(bounds[0],bounds[1]))
+        self._bounds = bounds
         self._y_obs = y_obs
         self._y_err = y_err
 
@@ -44,7 +66,7 @@ class MLFitter(Fitter):
         fn = lambda *args: -self.weighted_residuals(*args)
         self._fit_result = optimize.least_squares(fn,
                                                   x0=parameters,
-                                                  bounds=bounds)
+                                                  bounds=self._bounds)
         self._estimate = self._fit_result.x
 
         # Extract standard error on the fit parameter from the covariance
@@ -63,7 +85,13 @@ class MLFitter(Fitter):
 
         self._ninetyfive = (c1,c2)
 
-    @property
-    def success(self):
+        self._sucess = self._fit_result.success
 
-        return self._fit_result.success
+    @property
+    def fit_info(self):
+        """
+        Return information about the fit.
+        """
+
+        return {}
+        

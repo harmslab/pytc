@@ -1,17 +1,23 @@
+__description__ = \
+"""
+Fitter subclass for performing bootstrap fits.
+"""
+__author__ = "Michael J. Harms"
+__date__ = "2017-05-11"
+
 from .base import Fitter
+
+import numpy as np
+import scipy.optimize
+
+import sys
 
 class BootstrapFitter(Fitter):
     """
     Perform the fit many times, sampling from uncertainty in each measured heat. 
     """
 
-    def __init__(self):
-        
-        self._success = False
-        Sampler.__init__(self)
-
-    def fit(self,residuals,parameters,bounds,num_bootstrap=100,perturb_size=1.00,
-            exp_err=False):
+    def __init__(self,num_bootstrap=100,perturb_size=1.0,exp_err=False):
         """
         Perform the fit many times, sampling from uncertainty in each measured
         heat. 
@@ -19,13 +25,6 @@ class BootstrapFitter(Fitter):
         Parameters
         ----------
 
-        residuals : function
-            residuals function. This should take parameters and parameter_bounds
-            as arguments.
-        parameters : np.array of floats
-            fit parameters
-        parameter_bounds : 2-tuple of array-like
-            Lower and upper bounds on independent variables
         num_bootstrap : int
             Number of bootstrap samples to do
         perturb_size : float
@@ -35,65 +34,99 @@ class BootstrapFitter(Fitter):
             Use experimental estimates of heat uncertainty.  If specified, overrides
             perturb_size.
         """
+        
+        Fitter.__init__(self)
+
+        self._num_bootstrap = num_bootstrap
+        self._perturb_size = perturb_size
+        self._exp_err = exp_err
+
+        self.fit_type = "bootstrap"
+
+    def fit(self,model,parameters,bounds,y_obs,y_err=None):
+        """
+        Fit the parameters.       
+ 
+        Parameters
+        ----------
+
+        model : callable
+            model to fit.  model should take "parameters" as its only argument.
+            this should (usually) be GlobalFit._y_calc
+        parameters : array of floats
+            parameters to be optimized.  usually constructed by GlobalFit._prep_fit
+        bounds : list
+            list of two lists containing lower and upper bounds
+        y_obs : array of floats
+            observations in an concatenated array
+        y_err : array of floats or None
+            standard deviation of each observation.  if None, each observation
+            is assigned an error of 1/num_obs 
+        """
+   
+        self._model = model
+        self._bounds= bounds
+        self._y_obs = y_obs
+        self._y_err = y_err
     
-        # Record actual heats before sampling
-        tmp_dict = {}
-        for k in self._expt_dict.keys():
-            tmp_dict[k] = copy.copy(self._expt_dict[k].heats)
-         
+        if y_err is None or self._exp_err == False:
+            self._y_err = np.array([self._perturb_size
+                                    for i in range(len(self._y_obs))])
+ 
         # Create array to store bootstrap replicates 
-        self._fit_result = np.zeros((num_bootstrap + 1,
-                                     len(self._float_param)),dtype=float)
+        self._samples = np.zeros((self._num_bootstrap,len(parameters)),
+                                 dtype=float)
+
+        original_y_obs = np.copy(self._y_obs)
 
         # Go through bootstrap reps
-        for i in range(num_bootstrap + 1):
+        for i in range(self._num_bootstrap):
 
             if i != 0 and i % 10 == 0:
-                print("Bootstrap {} of {}".format(i,num_bootstrap + 1))
+                print("Bootstrap {} of {}".format(i,self._num_bootstrap + 1))
                 sys.stdout.flush()
 
-            # Perturb rep heats
-            for k in self._expt_dict.keys():
-                if exp_err:
-                    self._expt_dict[k].heats = tmp_dict[k] + np.random.normal(0.0,self._expt_dict[k].heat_err)
-                else:
-                    self._expt_dict[k].heats = tmp_dict[k] + np.random.normal(0.0,perturb_size,len(tmp_dict[k]))
+            # Add random error to each sample
+            self._y_obs = original_y_obs + np.random.normal(0.0,y_err)
             
-            # Last fit should be ML to the experiments all have ML parameter
-            # by end. 
-            if i == num_bootstrap:
+            # Do the fit
+            fit = scipy.optimize.least_squares(self.unweighted_residuals,
+                                               x0=parameters,
+                                               bounds=bounds)
+    
+            # record the fit results
+            self._samples[i,:] = fit.x
 
-                # Restore heats
-                for k in self._expt_dict.keys():
-                    self._expt_dict[k].heats = tmp_dict[k]
+        self._y_obs = np.copy(original_y_obs)
 
-            # Do the actual fit
-            fit = optimize.least_squares(self._residuals, 
-                                         x0=self._float_param,
-                                         bounds=self._float_bounds)
-            self._fit_result[i,:] = fit.x
+        self._fit_result = self._samples
 
-
-        # Estimate is ML (last fit)
-        self._estimate = fit.x
+        # mean of bootstrap samples
+        self._estimate = np.mean(self._samples,axis=0)
 
         # standard deviation from bootstrap samples
-        self._stdev = np.std(self._bootstrap_params,0)
+        self._stdev = np.std(self._samples,axis=0)
 
         # 95% from bootstrap samples 
-        self._ninetyfive = np.zeros((len(self._estimate),2),dtype=np.float)
-        bottom = int(round(0.025*num_bootstrap,0))
-        top    = int(round(0.975*num_bootstrap,0))
-        for i in range(len(self._estimate)):
-            p1 = np.copy(self._bootstrap_params[:,i])
-            p1.sort()
-
-            self._ninetyfive[i,0] = p1[bottom]
-            self._ninetyfive[i,1] = p1[top]
+        self._ninetyfive = []
+        for i in range(self._samples.shape[1]):
+            lower = np.percentile(self._samples[:,i], 2.5)
+            upper = np.percentile(self._samples[:,i],97.5)
+            self._ninetyfive.append([lower,upper])
+        self._ninetyfive = np.array(self._ninetyfive)
          
         self._success = True 
 
     @property
-    def success(self):
+    def fit_info(self):
+        """
+        Return information about the fit.
+        """
 
-        return self._success  
+        output = {}
+        
+        output["Num bootstrap"] = self._num_bootstrap
+        output["Perturb size"] = self._perturb_size
+        output["Use experimental error"] = self._exp_err
+
+        return output
