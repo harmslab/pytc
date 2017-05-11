@@ -33,7 +33,7 @@ def choose_model(model1,model2):
     else:
         print("Using fit already done for model 1.")
 
-    model1.plot()
+    #model1.plot()
     print("")
     print("Model 1 fit")
     print(model1.fit_as_csv)
@@ -45,7 +45,7 @@ def choose_model(model1,model2):
     else:
         print("Using fit already done for model 2.")
 
-    model2.plot()
+    #model2.plot()
     print("")
     print("Model 2 fit")
     print(model2.fit_as_csv)
@@ -60,6 +60,6 @@ def choose_model(model1,model2):
     out["AICc"] = _simple_compare(m1_stats,m2_stats,"AICc")
     out["BIC"]  = _simple_compare(m1_stats,m2_stats,"BIC")
    
-    return out 
+    return out, model1.plot(), model2.plot()
 
 
