@@ -26,7 +26,7 @@
   xa and xb and resort to bisection.
 */
 
-double brentq(double f, double xa, double xb, double xtol, double rtol,
+double brentq(double *f, double xa, double xb, double xtol, double rtol,
        int iter, default_parameters *params) {
     double xpre = xa, xcur = xb;
     double xblk = 0., fpre, fcur, fblk = 0., spre = 0., scur = 0., sbis;

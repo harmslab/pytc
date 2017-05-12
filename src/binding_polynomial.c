@@ -1,6 +1,6 @@
 #include "binding_polynomial.h"
-#include "brentq.h"
 #include <math.h>
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 double dQdT(double T_free, double S_total, double T_total, double *fit_beta_obj, int num_beta){
     /*
