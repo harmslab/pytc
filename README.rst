@@ -26,9 +26,10 @@ and `scipy <https://www.scipy.org/>`_.   The GUI is built on `pytq5 <http://pyqt
 Features
 ========
 
+ + Rigorous fitting using least squares, bootstrap, and Bayesian approaches.
  + Clean, pythonic API
  + Simple, cross-platform GUI based on `PyQt5 <https://riverbankcomputing.com/software/pyqt/intro>`_.
- + New models can be defined using a few lines of python code.
+ + New thermodynamic models can be defined using a few lines of python code.
  + Easy integration with `jupyter <https://jupyter.org/>`_ notebooks for 
    writing custom fitting scripts.
 
@@ -44,10 +45,10 @@ you can start using the API by:
     sudo pip3 install pytc-fitter
 
     # Clone the repo (to bring in demos)
-    git clone https://github.com/harmslab/pytc
+    git clone https://github.com/harmslab/pytc-demos
 
-    # Fire up jupyter and open Demo.ipynb
-    cd pytc/demos
+    # Fire up jupyter and work through the demos
+    cd pytc-demos
     jupyter notebook
 
 
@@ -71,6 +72,7 @@ Fit a :math:`Ca^{2+}/EDTA` binding experiment to a single-site binding model.
 
     # Print the results out
     g.plot()
+    g.corner_plot()
     print(g.fit_as_csv)
 
 Documentation
@@ -83,5 +85,4 @@ Documentation
  + `Description of individual experiment models included in package <https://pytc.readthedocs.io/en/latest/indiv_models.html>`_.
  + `Description of global fits included in package <https://pytc.readthedocs.io/en/latest/global_models.html>`_.
  + `Defining new models <https://pytc.readthedocs.io/en/latest/writing_new_models.html>`_.
-
 

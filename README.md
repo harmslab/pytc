@@ -13,7 +13,8 @@ experiments.
     cd pytc
     python3 setup.py install
     ```
- + If jupyter is installed, you can clone the [pytc-demos](https://github.com/harmslba/pytc-demos) repo to see a collection of example fits.
+ + If jupyter is installed, you can clone the [pytc-demos](https://github.com/harmslba/pytc-demos)
+   repo to see a collection of example fits.
 
 ## Example script
 Fit a Ca2+/EDTA binding experiment.
@@ -31,5 +32,11 @@ g.fit()
 
 # Print the results out
 g.plot()
+g.corner_plot()
 print(g.fit_as_csv)
 ```
+
+## Release Notes
+
+### v1.0
+Initial release of pytc.  Implemented individual and global fits.   
