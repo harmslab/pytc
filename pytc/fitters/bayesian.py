@@ -119,7 +119,7 @@ class BayesianFitter(Fitter):
         # log posterior is log prior plus log likelihood 
         return ln_prior + ln_like
 
-    def fit(self,model,parameters,bounds,y_obs,y_err=None):
+    def fit(self,model,parameters,bounds,y_obs,y_err=None,param_names=None):
         """
         Fit the parameters.       
  
@@ -138,6 +138,8 @@ class BayesianFitter(Fitter):
         y_err : array of floats or None
             standard deviation of each observation.  if None, each observation
             is assigned an error of 1/num_obs 
+        param_names : array of str
+            names of parameters.  If None, parameters assigned names p0,p1,..pN
         """
 
         self._model = model
@@ -151,6 +153,11 @@ class BayesianFitter(Fitter):
         self._y_err = y_err
         if y_err is None:
             self._y_err = np.array([1/len(self._y_obs) for i in range(len(self._y_obs))])
+
+        if param_names is None:
+            self._param_names = ["p{}".format(i) for i in range(len(parameters))]
+        else:
+            self._param_names = param_names[:] 
 
         # Make initial guess (ML or just whatever the paramters sent in were)
         if self._ml_guess:

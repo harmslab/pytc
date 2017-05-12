@@ -200,10 +200,11 @@ class GlobalFit:
 
         # Perform the fit.
         self._fitter.fit(self._y_calc,
-                         self._float_param,
-                         self._float_bounds,
+                         self._flat_param,
+                         self._flat_param_bounds,
                          self._y_obs,
-                         self._y_err)
+                         self._y_err,
+                         self._flat_param_name)
 
         # Take the output of the fit (numpy arrays) and map it back to specific
         # parameters using Mapper.
@@ -214,19 +215,19 @@ class GlobalFit:
         Prep the fit, creating all appropriate parameter mappings etc.
         """
 
-        self._float_param = []
-        self._float_bounds = [[],[]]
-        self._float_param_mapping = []
-        self._float_param_type = []
-        self._float_param_name = []
+        self._flat_param = []
+        self._flat_param_bounds = [[],[]]
+        self._flat_param_mapping = []
+        self._flat_param_type = []
+        self._flat_param_name = []
 
-        self._float_global_connectors_seen = []
+        self._flat_global_connectors_seen = []
 
-        float_param_counter = 0
+        flat_param_counter = 0
 
         # Go through global variables
         for k in self._global_param_mapping.keys():
-      
+    
             # Otherwise, there is just one parameter to enumerate over.
             if type(k) == str:
                 enumerate_over = {k:self._global_params[k]}
@@ -236,12 +237,11 @@ class GlobalFit:
             # that connector 
             elif issubclass(k.__self__.__class__,GlobalConnector):
 
-                # Only load each global connector in once
-                if k in self._float_global_connectors_seen:
+                if k.__self__ in self._flat_global_connectors_seen:
                     continue
 
                 enumerate_over = self._global_params[k].params
-                self._float_global_connectors_seen.append(k)
+                self._flat_global_connectors_seen.append(k.__self__)
                 param_type = 2
 
             else:
@@ -259,14 +259,14 @@ class GlobalFit:
                         self._expt_dict[expt].model.update_fixed({expt_param:fixed_value}) 
                     continue
 
-                self._float_param.append(enumerate_over[e].guess)
-                self._float_bounds[0].append(enumerate_over[e].bounds[0])
-                self._float_bounds[1].append(enumerate_over[e].bounds[1])
-                self._float_param_mapping.append((k,e))
-                self._float_param_type.append(param_type)
-                self._float_param_name.append("{}.{}".format(k,e))
+                self._flat_param.append(enumerate_over[e].guess)
+                self._flat_param_bounds[0].append(enumerate_over[e].bounds[0])
+                self._flat_param_bounds[1].append(enumerate_over[e].bounds[1])
+                self._flat_param_mapping.append((k,e))
+                self._flat_param_type.append(param_type)
+                self._flat_param_name.append(e)
 
-                float_param_counter += 1
+                flat_param_counter += 1
 
         # Go through every experiment
         y_obs = []
@@ -289,14 +289,14 @@ class GlobalFit:
 
                 # If not fixed or global, append the parameter to the list of
                 # floating parameters
-                self._float_param.append(e.model.param_guesses[p])
-                self._float_bounds[0].append(e.model.bounds[p][0])
-                self._float_bounds[1].append(e.model.bounds[p][1])
-                self._float_param_mapping.append((k,p))
-                self._float_param_type.append(0)
-                self._float_param_name.append("{}.{}".format(e.dh_file,p))
+                self._flat_param.append(e.model.param_guesses[p])
+                self._flat_param_bounds[0].append(e.model.bounds[p][0])
+                self._flat_param_bounds[1].append(e.model.bounds[p][1])
+                self._flat_param_mapping.append((k,p))
+                self._flat_param_type.append(0)
+                self._flat_param_name.append(p)
 
-                float_param_counter += 1
+                flat_param_counter += 1
 
         # Create observed y and y err arrays for the likelihood function
         y_obs = []
@@ -317,25 +317,25 @@ class GlobalFit:
         for i in range(len(param)):
 
             # local variable
-            if self._float_param_type[i] == 0:
-                experiment = self._float_param_mapping[i][0]
-                parameter_name = self._float_param_mapping[i][1]
+            if self._flat_param_type[i] == 0:
+                experiment = self._flat_param_mapping[i][0]
+                parameter_name = self._flat_param_mapping[i][1]
                 self._expt_dict[experiment].model.update_values({parameter_name:param[i]})    
 
             # Vanilla global variable
-            elif self._float_param_type[i] == 1:
-                param_key = self._float_param_mapping[i][0]
+            elif self._flat_param_type[i] == 1:
+                param_key = self._flat_param_mapping[i][0]
                 for experiment, parameter_name in self._global_param_mapping[param_key]:
                     self._expt_dict[experiment].model.update_values({parameter_name:param[i]}) 
 
             # Global connector global variable
-            elif self._float_param_type[i] == 2:
-                connector = self._float_param_mapping[i][0].__self__
-                param_name = self._float_param_mapping[i][1]
+            elif self._flat_param_type[i] == 2:
+                connector = self._flat_param_mapping[i][0].__self__
+                param_name = self._flat_param_mapping[i][1]
                 connector.update_values({param_name:param[i]})
 
             else:
-                err = "Paramter type {} not recongized.\n".format(self._float_param_type[i])
+                err = "Paramter type {} not recongized.\n".format(self._flat_param_type[i])
                 raise ValueError(err) 
 
         # Look for connector functions
@@ -369,27 +369,27 @@ class GlobalFit:
         for i in range(len(self._fitter.estimate)):
                 
             # local variable
-            if self._float_param_type[i] == 0:
+            if self._flat_param_type[i] == 0:
 
-                experiment = self._float_param_mapping[i][0]
-                parameter_name = self._float_param_mapping[i][1]
+                experiment = self._flat_param_mapping[i][0]
+                parameter_name = self._flat_param_mapping[i][1]
 
                 self._expt_dict[experiment].model.update_values({parameter_name:self._fitter.estimate[i]})
                 self._expt_dict[experiment].model.update_errors({parameter_name:self._fitter.stdev[i]})
 
             # Vanilla global variable
-            elif self._float_param_type[i] == 1:
+            elif self._flat_param_type[i] == 1:
 
-                param_key = self._float_param_mapping[i][0]
+                param_key = self._flat_param_mapping[i][0]
                 for k, p in self._global_param_mapping[param_key]:
                     self._expt_dict[k].model.update_values({p:self._fitter.estimate[i]})
                     self._global_params[param_key].value = self._fitter.estimate[i]
                     self._global_params[param_key].error = self._fitter.stdev[i]
 
             # Global connector global variable
-            elif self._float_param_type[i] == 2:
-                connector = self._float_param_mapping[i][0].__self__
-                param_name = self._float_param_mapping[i][1]
+            elif self._flat_param_type[i] == 2:
+                connector = self._flat_param_mapping[i][0].__self__
+                param_name = self._flat_param_mapping[i][1]
 
                 # HACK: if you use the params[param_name].value setter function,
                 # it will break the connector.  This is because I expose the 
@@ -400,7 +400,7 @@ class GlobalFit:
                 connector.params[param_name].error = self._fitter.stdev[i]
 
             else:
-                err = "Paramter type {} not recognized.\n".format(self._float_param_type[i])
+                err = "Paramter type {} not recognized.\n".format(self._flat_param_type[i])
                 raise ValueError(err) 
 
 
@@ -475,6 +475,19 @@ class GlobalFit:
 
         return fig, ax
 
+    def corner_plot(self,filter_params=("competent","dilution","intercept","heat")):
+        """
+        Create a "corner plot" that shows distributions of values for each
+        parameter, as well as cross-correlations between parameters.
+
+        Parameters
+        ----------
+        param_names : list
+            list of parameter names to include.  if None all parameter names
+        """
+   
+        return self._fitter.corner_plot(filter_params)
+ 
     # -------------------------------------------------------------------------
     # Properties describing fit results
 
@@ -651,7 +664,7 @@ class GlobalFit:
         Return the number of parameters fit.
         """
 
-        return len(self._float_param)
+        return len(self._flat_param)
 
 
     @property

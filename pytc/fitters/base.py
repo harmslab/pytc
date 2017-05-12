@@ -10,6 +10,8 @@ import scipy.stats
 import scipy.optimize as optimize
 import corner
 
+import re
+
 class Fitter:
     """
     Base class for fits.
@@ -56,7 +58,7 @@ class Fitter:
 
         return -0.5*(np.sum((self._y_obs - y_calc)**2/sigma2 + np.log(sigma2)))
 
-    def fit(self,model,parameters,bounds,y_obs,y_err=None):
+    def fit(self,model,parameters,bounds,y_obs,y_err=None,param_names=None):
         """
         Fit the parameters.       
         Should be redefined in subclasses.
@@ -75,7 +77,9 @@ class Fitter:
             observations in an concatenated array
         y_err : array of floats or None
             standard deviation of each observation.  if None, each observation
-            is assigned an error of 1/num_obs 
+            is assigned an error of 1/num_obs
+        param_names : array of str
+            names of parameters.  If None, parameters assigned names p0,p1,..pN
         """
 
         pass
@@ -128,28 +132,39 @@ class Fitter:
        
         return {} 
 
-    def corner_plot(self,param_names=()):
+    def corner_plot(self,filter_params=()):
         """
         Create a "corner plot" that shows distributions of values for each
         parameter, as well as cross-correlations between parameters.
 
         Parameters
         ----------
-        param_names : list
-            list of parameter names to include.  if (), show all with names 
-            p0,p1,... pN.
+        filter_params : list-like
+            strings used to search parameter names.  if the string matches, 
+            the parameter is *excluded* from the plot.
         """
-    
+   
+        skip_pattern = re.compile("|".join(filter_params))
+ 
         s = self._samples
 
-        if len(param_names) == 0:
-            param_names = ["p{}".format(i) for i in range(len(s.shape[1]))]
-
+        to_plot = []
         corner_range = []
+        param_names = []
         for i in range(s.shape[1]):
+         
+            # look for patterns to skip 
+            if skip_pattern.search(self._param_names[i]):
+                continue
+
+            param_names.append(self._param_names[i])
+            to_plot.append(s[:,i])
             corner_range.append(tuple([np.min(s[:,i])-0.5,np.max(s[:,i])+0.5]))
 
-        fig = corner.corner(s,labels=param_names,range=corner_range)
+        to_plot = np.array(to_plot)
+        to_plot = np.swapaxes(to_plot,0,1)
+
+        fig = corner.corner(to_plot,labels=param_names,range=corner_range)
 
     @property
     def samples(self):

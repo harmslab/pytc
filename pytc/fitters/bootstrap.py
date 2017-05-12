@@ -43,7 +43,7 @@ class BootstrapFitter(Fitter):
 
         self.fit_type = "bootstrap"
 
-    def fit(self,model,parameters,bounds,y_obs,y_err=None):
+    def fit(self,model,parameters,bounds,y_obs,y_err=None,param_names=None):
         """
         Fit the parameters.       
  
@@ -62,6 +62,8 @@ class BootstrapFitter(Fitter):
         y_err : array of floats or None
             standard deviation of each observation.  if None, each observation
             is assigned an error of 1/num_obs 
+        param_names : array of str
+            names of parameters.  If None, parameters assigned names p0,p1,..pN
         """
    
         self._model = model
@@ -72,6 +74,11 @@ class BootstrapFitter(Fitter):
         if y_err is None or self._exp_err == False:
             self._y_err = np.array([self._perturb_size
                                     for i in range(len(self._y_obs))])
+
+        if param_names is None:
+            self._param_names = ["p{}".format(i) for i in range(len(parameters))]
+        else:
+            self._param_names = param_names[:] 
  
         # Create array to store bootstrap replicates 
         self._samples = np.zeros((self._num_bootstrap,len(parameters)),
@@ -82,8 +89,8 @@ class BootstrapFitter(Fitter):
         # Go through bootstrap reps
         for i in range(self._num_bootstrap):
 
-            if i != 0 and i % 10 == 0:
-                print("Bootstrap {} of {}".format(i,self._num_bootstrap + 1))
+            if i != 0 and i % 100 == 0:
+                print("Bootstrap {} of {}".format(i,self._num_bootstrap))
                 sys.stdout.flush()
 
             # Add random error to each sample

@@ -30,7 +30,7 @@ class MLFitter(Fitter):
        
         self.fit_type = "maximum likelihood"    
 
-    def fit(self,model,parameters,bounds,y_obs,y_err):
+    def fit(self,model,parameters,bounds,y_obs,y_err,param_names=None):
         """
         Fit the parameters.       
  
@@ -49,6 +49,8 @@ class MLFitter(Fitter):
         y_err : array of floats or None
             standard deviation of each observation.  if None, each observation
             is assigned an error of 1/num_obs 
+        param_names : array of str
+            names of parameters.  If None, parameters assigned names p0,p1,..pN
         """
 
         self._model = model
@@ -61,6 +63,11 @@ class MLFitter(Fitter):
         self._y_err = y_err
         if y_err is None:
             self._y_err = np.array([1/len(self._y_obs) for i in range(len(self._y_obs))])
+
+        if param_names is None:
+            self._param_names = ["p{}".format(i) for i in range(len(parameters))]
+        else:
+            self._param_names = param_names[:] 
 
         # Do the actual fit 
         fn = lambda *args: -self.weighted_residuals(*args)
@@ -94,4 +101,47 @@ class MLFitter(Fitter):
         """
 
         return {}
+
+    def corner_plot(self,filter_params=(),num_samples=100000):
+        """
+        Create a "corner plot" that shows distributions of values for each
+        parameter, as well as cross-correlations between parameters.
+
+        Parameters
+        ----------
+        filter_params : list-like
+            strings used to search parameter names.  if the string matches, 
+            the parameter is *excluded* from the plot.
+        num_samples : int
+            how many samples to generate
+
+        Wraps the Fitter.plot_corner method.  Least squares does not generate 
+        samples but corner.corner samples.  Use the Jacobian spit out by 
+        least_squares to generate a whole bunch of fake samples.  These are 
+        then deleted. 
+
+        Approximate the covariance matrix as $(2*J^{T} \dot J)^{-1}$, then perform
+        cholesky factorization on the covariance matrix.  This can then be
+        multiplied by random normal samples to create distributions that come
+        from this covariance matrix. 
+  
+        See:       
+        https://stackoverflow.com/questions/40187517/getting-covariance-matrix-of-fitted-parameters-from-scipy-optimize-least-squares
+        https://stats.stackexchange.com/questions/120179/generating-data-with-a-given-sample-covariance-matrix
+        """
+
+        J = self._fit_result.jac
+      
+        cov = np.linalg.inv(2*np.dot(J.T,J))
+        chol_cov = np.linalg.cholesky(cov).T
+
+        self._samples = np.dot(np.random.normal(size=(num_samples,chol_cov.shape[0])),chol_cov)
+        self._samples = self._samples + self.estimate       
+ 
+        fig = Fitter.corner_plot(self,filter_params)
+
+        del self._samples
+
+        return fig
+ 
         
