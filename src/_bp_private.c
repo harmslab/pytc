@@ -57,7 +57,7 @@ static PyObject *bp_private_binding_polynomial(PyObject *self, PyObject *args)
     Py_DECREF(fit_dH_array);
     Py_DECREF(T_conc_array);
     Py_DECREF(T_conc_free_array);
-    Py_DECREF(S_conc_array);
+    Py_DECREF(S_conc_corr_array);
 
     /* build output */
     PyObject *ret = Py_BuildValue("f", value);

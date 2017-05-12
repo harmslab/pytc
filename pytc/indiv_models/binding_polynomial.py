@@ -12,6 +12,8 @@ import numpy as np
 import scipy.optimize
 from .base import ITCModel
 
+from . import bp_ext
+
 class BindingPolynomial(ITCModel):
     """
     Base class for a binding polynomial fit.

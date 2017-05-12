@@ -1,5 +1,6 @@
 #include "binding_polynomial.h"
 #include "brentq.h"
+#include <math.h>
 
 double dQdT(double T_free, double S_total, double T_total, double *fit_beta_obj, int num_beta){
     /*
@@ -18,12 +19,12 @@ double dQdT(double T_free, double S_total, double T_total, double *fit_beta_obj,
     numerator = 0;
     denominator = 1;
     for (i = 0; i < num_beta; i++){
-        bt = fit_beta_obj[i]*pow(T_free,i); 
+        double bt = fit_beta_obj[i]*pow(T_free,i); 
         numerator   += (i+1)*bt;
         denominator +=       bt;
     }
 
-    P = numerator/denominator;
+    double P = numerator/denominator;
 
     return T_free + S_total*P - T_total;
 
@@ -39,7 +40,7 @@ float dQ(double *fit_beta_obj, double *fit_dH_obj, double *S_conc_corr, double *
     
     for (i = 0; i < num_shots; i++){
 
-        if (abs(T_conc[i] - DELTA) < TOLERANCE){
+        if (fabs(T_conc[i] - DELTA) < TOLERANCE){
             T_conc_free[i] = 0.0;
             continue;
         }
@@ -73,7 +74,7 @@ float dQ(double *fit_beta_obj, double *fit_dH_obj, double *S_conc_corr, double *
             continue;
         }
             
-        T = brentq(self._dQdT, 0,self._T_conc[-1], args=(S_conc_corr[i], self._T_conc[i]));
+        double T = brentq(dQdT, 0 , T_conc[-1], args=(S_conc_corr[i], T_conc[i]));
 
         // numerical problems sometimes make T slightly bigger than the total
         // concentration, so bring down to the correct value
@@ -81,22 +82,21 @@ float dQ(double *fit_beta_obj, double *fit_dH_obj, double *S_conc_corr, double *
         T_conc_free[i] = T;
 
         // calculate the average enthalpy change
-        numerator   = 0.0
-        denominator = 1.0
-        for (j = 0; j < num_sites; j++){
-
-            bt = fit_beta_obj[j]*pow(T_conc_free[i],(j+1));
+        double numerator   = 0.0;
+        double denominator = 1.0;
+        for (int j = 0; j < num_sites; j++){
+            double bt = fit_beta_obj[j]*pow(T_conc_free[i],(j+1));
             numerator   += fit_dH_obj[j]*bt;
             denominator += bt;
         }
 
-        float avg_dH = numerator/denominator;
+        double avg_dH = numerator/denominator;
 
         float X = avg_dH[1:] - avg_dH[:-1];
 
         float to_return = cell_volume*S_conc_corr[1:]*X + dilution_heats;
 
-        return to_return
+        return to_return;
 
     }
 

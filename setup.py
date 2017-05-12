@@ -10,7 +10,10 @@ from setuptools import setup, find_packages
 from setuptools.extension import Extension
 
 # set up binding polynomial C extension
-ext = Extension('pytc.indiv_models.binding_polynomial', ['binding_polynomial.c'])
+ext = Extension('pytc.indiv_models.bp_ext', 
+      ['src/binding_polynomial.c',
+       'src/_bp_private.c', 
+       'src/brentq.c'])
 
 # Need to add all dependencies to setup as we go!
 setup(name='pytc-fitter',
