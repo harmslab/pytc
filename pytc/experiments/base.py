@@ -42,8 +42,8 @@ class ITCExperiment:
                             cell_volume=self.cell_volume,
                             shot_volumes=self._shots,**model_kwargs)
 
-        self._experiment_id = "".join([random.choice(string.ascii_letters)
-                                       for i in range(20)])
+        r = "".join([random.choice(string.ascii_letters) for i in range(20)])
+        self._experiment_id = "{}_{}".format(self.dh_file,r)
 
 
     def _read_heats_file_origin(self):
@@ -72,6 +72,10 @@ class ITCExperiment:
 
         self._shots = np.array(shots)
         self._heats = np.array(heats)
+      
+        # Because there is no heat error in this file, assign a heat error of
+        # 1e-9 (basically zero).  User can load in their own uncertainty later
+        self._heats_stdev = np.array([0.1  for i in range(len(self._heats))]) 
 
     def _read_heats_file_nitpic(self):
         """
@@ -154,6 +158,22 @@ class ITCExperiment:
         return self._model
 
     @property
+    def shot_start(self):
+        """
+        Starting shot to use.
+        """
+        
+        return self._shot_start
+
+    @shot_start.setter
+    def shot_start(self,value):
+        """
+        Change starting shot.
+        """
+
+        self._shot_start = value
+
+    @property
     def heats(self):
         """
         Return experimental heats.
@@ -169,6 +189,22 @@ class ITCExperiment:
         self._heats[self._shot_start:] = heats[:]
 
     @property
+    def heats_stdev(self):
+        """
+        Standard deviation on the uncertainty of the heat.
+        """
+
+        return self._heats_stdev[self._shot_start:]
+
+    @heats_stdev.setter
+    def heats_stdev(self,heats_stdev):
+        """
+        Set the standard deviation on the uncertainty of the heat.
+        """
+
+        self._heats_stdev[self._shot_start:] = heats_stdev[:]
+
+    @property
     def mole_ratio(self):
         """
         Return the mole ratio of titrant to stationary.
@@ -182,3 +218,4 @@ class ITCExperiment:
         """
 
         return self._experiment_id
+
