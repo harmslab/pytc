@@ -80,10 +80,10 @@ class MLFitter(Fitter):
         N = len(self._y_obs)
         P = len(self._fit_result.x)
 
-        s_sq = np.sum(self._fit_result.fun**2)/(N - P)
-        pcov = self._fit_result.jac*s_sq 
-        variance = np.absolute(np.diagonal(pcov))
-        self._stdev = np.sqrt(variance)
+        J = self._fit_result.jac
+        cov = np.linalg.inv(2*np.dot(J.T,J))
+
+        self._stdev = np.sqrt(np.diagonal(cov)) #variance)
 
         # 95% confidence intervals from standard error
         z = scipy.stats.t(N-P-1).ppf(0.975)
@@ -102,7 +102,7 @@ class MLFitter(Fitter):
 
         return {}
 
-    def corner_plot(self,filter_params=(),num_samples=100000):
+    def corner_plot(self,filter_params=(),num_samples=100000,*args,**kwargs):
         """
         Create a "corner plot" that shows distributions of values for each
         parameter, as well as cross-correlations between parameters.
@@ -138,7 +138,7 @@ class MLFitter(Fitter):
         self._samples = np.dot(np.random.normal(size=(num_samples,chol_cov.shape[0])),chol_cov)
         self._samples = self._samples + self.estimate       
  
-        fig = Fitter.corner_plot(self,filter_params)
+        fig = Fitter.corner_plot(self,filter_params,*args,**kwargs)
 
         del self._samples
 

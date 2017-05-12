@@ -184,15 +184,19 @@ class BayesianFitter(Fitter):
         # Create list of samples
         to_discard = int(round(self._burn_in*self._num_steps,0))
         self._samples = self._fit_result.chain[:,to_discard:,:].reshape((-1,ndim))
-    
+   
+        # Get mean and standard deviation 
         self._estimate = np.mean(self._samples,axis=0)
         self._stdev = np.std(self._samples,axis=0)
 
+        # Calculate 95% confidence intervals
         self._ninetyfive = []
+        lower = int(round(0.025*self._samples.shape[0],0))
+        upper = int(round(0.975*self._samples.shape[0],0))
         for i in range(self._samples.shape[1]):
-            lower = np.percentile(self._samples[:,i], 2.5)
-            upper = np.percentile(self._samples[:,i],97.5)
-            self._ninetyfive.append([lower,upper])
+            nf = np.sort(self._samples[:,i])
+            self._ninetyfive.append([nf[lower],nf[upper]])
+
         self._ninetyfive = np.array(self._ninetyfive)
 
         self._success = True

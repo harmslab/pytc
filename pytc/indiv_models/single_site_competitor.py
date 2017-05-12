@@ -40,7 +40,6 @@ class SingleSiteCompetitor(ITCModel):
         C_syringe: competitor concentration syringe in M
         cell_volume: cell volume, in uL
         shot_volumes: list of shot volumes, in uL.
-        shot_start: first shot to use in fit
         """
 
         # Run standard __init__ function to create titrations, initialize params

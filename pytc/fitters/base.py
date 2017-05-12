@@ -132,7 +132,7 @@ class Fitter:
        
         return {} 
 
-    def corner_plot(self,filter_params=()):
+    def corner_plot(self,filter_params=(),*args,**kwargs):
         """
         Create a "corner plot" that shows distributions of values for each
         parameter, as well as cross-correlations between parameters.
@@ -164,7 +164,8 @@ class Fitter:
         to_plot = np.array(to_plot)
         to_plot = np.swapaxes(to_plot,0,1)
 
-        fig = corner.corner(to_plot,labels=param_names,range=corner_range)
+        fig = corner.corner(to_plot,labels=param_names,range=corner_range,
+                            *args,**kwargs)
 
     @property
     def samples(self):

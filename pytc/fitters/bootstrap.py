@@ -17,7 +17,7 @@ class BootstrapFitter(Fitter):
     Perform the fit many times, sampling from uncertainty in each measured heat. 
     """
 
-    def __init__(self,num_bootstrap=100,perturb_size=1.0,exp_err=False):
+    def __init__(self,num_bootstrap=100,perturb_size=1.0,exp_err=False,verbose=False):
         """
         Perform the fit many times, sampling from uncertainty in each measured
         heat. 
@@ -33,6 +33,8 @@ class BootstrapFitter(Fitter):
         exp_err : bool
             Use experimental estimates of heat uncertainty.  If specified, overrides
             perturb_size.
+        verbose : bool
+            Give verbose output.
         """
         
         Fitter.__init__(self)
@@ -40,6 +42,7 @@ class BootstrapFitter(Fitter):
         self._num_bootstrap = num_bootstrap
         self._perturb_size = perturb_size
         self._exp_err = exp_err
+        self._verbose = verbose
 
         self.fit_type = "bootstrap"
 
@@ -89,7 +92,7 @@ class BootstrapFitter(Fitter):
         # Go through bootstrap reps
         for i in range(self._num_bootstrap):
 
-            if i != 0 and i % 100 == 0:
+            if self._verbose and i != 0 and i % 100 == 0:
                 print("Bootstrap {} of {}".format(i,self._num_bootstrap))
                 sys.stdout.flush()
 

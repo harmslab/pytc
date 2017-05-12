@@ -117,6 +117,22 @@ class ITCExperiment:
         return self._model
 
     @property
+    def shot_start(self):
+        """
+        Starting shot to use.
+        """
+        
+        return self._shot_start
+
+    @shot_start.setter
+    def shot_start(self,value):
+        """
+        Change starting shot.
+        """
+
+        self._shot_start = value
+
+    @property
     def heats(self):
         """
         Return experimental heats.
