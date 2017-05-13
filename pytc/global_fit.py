@@ -18,6 +18,15 @@ from matplotlib import gridspec
 from . import fitters
 from . global_connectors import GlobalConnector
 
+class FitNotRunError(Exception):
+    """
+    Throw when the fit has not been run but the output only makes sense after
+    the fit has been done.
+    """
+
+    pass
+
+
 class GlobalFit:
     """
     Class for regressing models against an arbitrary number of ITC experiments.
@@ -485,8 +494,11 @@ class GlobalFit:
         param_names : list
             list of parameter names to include.  if None all parameter names
         """
-   
-        return self._fitter.corner_plot(filter_params)
+  
+        try: 
+            return self._fitter.corner_plot(filter_params)
+        except AttributeError:
+            raise FitNotRunError("Fit has not been run yet\n")
  
     # -------------------------------------------------------------------------
     # Properties describing fit results
@@ -670,7 +682,14 @@ class GlobalFit:
     @property
     def fit_stats(self):
         """
+        Stats about the fit as a dictionary.
         """
+
+        # Only return something if the fit has already been done
+        try:
+            self._fitter
+        except AttributeError:
+            return {}
 
         output = {}
      

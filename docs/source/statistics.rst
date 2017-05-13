@@ -54,8 +54,7 @@ Parameter uncertainty
 
 Each fit parameter has an associated standard error and 95% confidence interval.
 These are determined using the diagonal of the parameter Jacobian estimated
-during least-squares regression.  This is susceptible to numerical problems and
-may not always be reliable.  
+during least-squares regression.  
 
 :code:`pytc` also implements a bootstrap sampler that samples from uncertainty
 in each data point and then uses each pseudoreplicate to refit.  This analysis
@@ -71,3 +70,122 @@ Plotting the fit will automatically plot fit residuals below the main fit.
 These residuals should be randomly distributed around zero.  Non-random 
 residuals can indicate that the model does not adequately describe the data,
 despite potentially having a small residual standard error.  
+
+
+Least-squares regression
+------------------------
+
+POINTER_TO_THE_ML_METHOD
+
+Weighted least-squares regression using `scipy.optimize.least_squares`.  The 
+residuals function is:
+
+.. math::
+
+    \vec{r} = \frac{\vec{dQ}_{obs} - \vec{dQ}_{calc}(\theta)}{\vec{\sigma}_{obs}}
+
+where :math:`\vec{dQ}_{obs}` is a vector of the observed heats, 
+:math:`\vec{dQ}_{calc}(\vec{\theta})` is a vector of heats observed with fit
+paramters :math:`\vec{\theta}`, and :math:`\vec{\sigma}_{obs}` are the uncertainties
+on each fit. 
+
+This uses the very robust `'XXX'` method for the regression.
+
+Parameter estimates
+~~~~~~~~~~~~~~~~~~~
+
+The parameter estimates are the maximum-likelihood parameters returned by 
+:code:`scipy.optimize.least_squares`.
+
+Parameter uncertainty
+~~~~~~~~~~~~~~~~~~~~~
+
+We first approximate the covariance matrix :math:`\mathbf{\Sigma}` from the Jacobian
+matrix :math:`\mathbf{J}` estimated by :code:`scipy.optimize.least_squares`:
+
+.. math::
+    \Sigma \approx [2(\mathbf{J}^{T} \dot \mathbf{J})]^{-1}
+
+We can then determine the standard deviation on the parameter estimates 
+:math:`\sigma` by taking the square-root of the diagonal of :math:`\Sigma`:
+
+.. math::
+    \sigma = \sqrt(diag(\Sigma)) 
+
+Ninety-five percent confidence intervals are estimated using the Z-score assuming
+a normal parameter distribution with the mean and standard deviations determined
+above.
+
+.. warning::
+
+    Going from :math:`\mathbf{J}` to :math:`\mathbf{\Sigma}` is an approximation.
+    This is susceptible to numerical problems and may not always be reliable. 
+    Use common sense on your fit errors or, better yet, do Bayesian integration!
+
+
+Bootstrap
+---------
+
+POINTER_TO_THE_BOOTSTRAP_METHOD
+
+Samples from experimental uncertainty in each heat and then peforms unweighted
+east-squares regression on each pseudoreplicate using `scipy.optimize.least_squares`.
+The residuals function is:
+
+.. math::
+
+    \vec{r} = \vec{dQ}_{obs} - \vec{dQ}_{calc}(\theta)
+
+where :math:`\vec{dQ}_{obs}` is a vector of the observed heats, 
+:math:`\vec{dQ}_{calc}(\vec{\theta})` is a vector of heats observed with fit
+paramters :math:`\vec{\theta}`, and :math:`\vec{\sigma}_{obs}` are the uncertainties
+on each fit. 
+
+This uses the very robust `'XXX'` method for the regression.
+
+Parameter estimates
+~~~~~~~~~~~~~~~~~~~
+
+The parameter estimates are the mean of the bootstrap replicates.
+
+Parameter uncertainty
+~~~~~~~~~~~~~~~~~~~~~
+
+The parameter uncertainties are the mean and numerically estimated 95% confidence
+intervals of the bootstrap pseudoreplicates.
+
+Bayesian
+--------
+
+POINTER_TO_THE_BAYESIAN_METHOD
+
+Uses Markov-Chain Monte Carlo (MCMC) to sample from the posterior probability 
+distributions of fit parameters.   `pytc` uses the package `emcee` to do the 
+sampling.  The log likelihood function is:
+
+.. math::
+
+    ln(L) = -0.5 \sum_{i=0}^{i < N} \Big ( \frac{(dQ_{obs,i} - dQ_{calc,i}(\vec{\theta}))^{2}}{\sigma_{i}^{2}} + ln(\sigma_{i}^{2}) \Big )
+
+The prior distribution is uniform within the specified parameter bounds.  If
+any parameter is outside of its bounds, the prior is :math:`\-infty`.  
+Otherwise, the prior is 0.0 (uniform). 
+
+The posterior probability is given by the sum of the log prior and log 
+likelihood functions.  
+
+.. math::
+    ln(P) = ln(L) + ln(prior)
+
+
+Parameter estimates
+~~~~~~~~~~~~~~~~~~~
+
+Parameter estimates are the mean of posterior probability distribution after 
+sampling.
+
+Parameter uncertainty
+~~~~~~~~~~~~~~~~~~~~~
+
+The parameter uncertainties are the mean and numerically estimated 95% confidence
+intervals of the bootstrap pseudoreplicates.

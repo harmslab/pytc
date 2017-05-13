@@ -115,6 +115,8 @@ class ITCExperiment:
         self._shots = np.array(shots)
         self._heats = np.array(heats)
 
+        self._heats_stdev = np.array([0.1  for i in range(len(self._heats))]) 
+
     @property
     def dQ(self):
         """
