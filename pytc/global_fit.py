@@ -384,7 +384,8 @@ class GlobalFit:
                 parameter_name = self._flat_param_mapping[i][1]
 
                 self._expt_dict[experiment].model.update_values({parameter_name:self._fitter.estimate[i]})
-                self._expt_dict[experiment].model.update_errors({parameter_name:self._fitter.stdev[i]})
+                self._expt_dict[experiment].model.update_stdevs({parameter_name:self._fitter.stdev[i]})
+                self._expt_dict[experiment].model.update_ninetyfives({parameter_name:self._fitter.ninetyfive[i]})
 
             # Vanilla global variable
             elif self._flat_param_type[i] == 1:
@@ -393,7 +394,8 @@ class GlobalFit:
                 for k, p in self._global_param_mapping[param_key]:
                     self._expt_dict[k].model.update_values({p:self._fitter.estimate[i]})
                     self._global_params[param_key].value = self._fitter.estimate[i]
-                    self._global_params[param_key].error = self._fitter.stdev[i]
+                    self._global_params[param_key].stdev = self._fitter.stdev[i]
+                    self._global_params[param_key].ninetyfive = self._fitter.ninetyfive[i]
 
             # Global connector global variable
             elif self._flat_param_type[i] == 2:
@@ -406,7 +408,8 @@ class GlobalFit:
                 # directly via params.  So, this has to use the .update_values
                 # method.
                 connector.update_values({param_name:self._fitter.estimate[i]})
-                connector.params[param_name].error = self._fitter.stdev[i]
+                connector.params[param_name].stdev = self._fitter.stdev[i]
+                connector.params[param_name].ninetyfive = self._fitter.ninetyfive[i]
 
             else:
                 err = "Paramter type {} not recognized.\n".format(self._flat_param_type[i])
@@ -519,33 +522,33 @@ class GlobalFit:
         for k in fit_stats_keys:
             out.append("# {}: {}\n".format(k,self.fit_stats[k]))
 
-        out.append("type,name,dh_file,value,stdev,fixed,guess,lower_bound,upper_bound\n") 
+        out.append("type,name,exp_file,value,stdev,bot95,top95,fixed,guess,lower_bound,upper_bound\n") 
         for k in self.fit_param[0].keys():
 
             param_type = "global"
             dh_file = "NA"
 
-            if self.global_param[k].fixed:
-                fixed = "fixed"
-            else:
-                fixed = "float"
+            fixed = self.global_param[k].fixed
 
             param_name = k
             value = self.fit_param[0][k]
-            uncertainty = self.fit_stdev[0][k]
+            stdev = self.fit_stdev[0][k]
+            ninetyfive = self.fit_ninetyfive[0][k]
             guess = self.global_param[k].guess
             lower_bound = self.global_param[k].bounds[0]
             upper_bound = self.global_param[k].bounds[1]
 
-            out.append("{:},{:},{:},{:.5e},{:.5e},{:},{:.5e},{:.5e},{:.5e}\n".format(param_type,
-                                                                                     param_name,
-                                                                                     dh_file,
-                                                                                     value,
-                                                                                     uncertainty,
-                                                                                     fixed,
-                                                                                     guess,
-                                                                                     lower_bound,
-                                                                                     upper_bound))
+            out.append("{:},{:},{:},{:.5e},{:.5e},{:.5e},{:.5e}.{:},{:.5e},{:.5e},{:.5e}\n".format(param_type,
+                                                                                                   param_name,
+                                                                                                   dh_file,
+                                                                                                   value,
+                                                                                                   stdev,
+                                                                                                   ninetyfive[0],
+                                                                                                   ninetyfive[1],
+                                                                                                   fixed,
+                                                                                                   guess,
+                                                                                                   lower_bound,
+                                                                                                   upper_bound))
 
         for i in range(len(self.fit_param[1])):
 
@@ -563,27 +566,27 @@ class GlobalFit:
                 except AttributeError:
                     pass
 
-                if self._expt_dict[expt_name].model.parameters[k].fixed:
-                    fixed = "fixed"
-                else:
-                    fixed = "float"
+                fixed = self._expt_dict[expt_name].model.parameters[k].fixed
 
                 param_name = k 
                 value = self.fit_param[1][i][k]
-                uncertainty = self.fit_stdev[1][i][k]
+                stdev = self.fit_stdev[1][i][k]
+                ninetyfive = self.fit_ninetyfive[1][i][k]
                 guess = self._expt_dict[expt_name].model.parameters[k].guess
                 lower_bound = self._expt_dict[expt_name].model.parameters[k].bounds[0]
                 upper_bound = self._expt_dict[expt_name].model.parameters[k].bounds[1]
 
-                out.append("{:},{:},{:},{:.5e},{:.5e},{:},{:.5e},{:.5e},{:.5e}\n".format(param_type,
-                                                                                         param_name,
-                                                                                         dh_file,
-                                                                                         value,
-                                                                                         uncertainty,
-                                                                                         fixed,
-                                                                                         guess,
-                                                                                         lower_bound,
-                                                                                         upper_bound))
+                out.append("{:},{:},{:},{:.5e},{:.5e},{:.5e},{:.5e}.{:},{:.5e},{:.5e},{:.5e}\n".format(param_type,
+                                                                                                       param_name,
+                                                                                                       dh_file,
+                                                                                                       value,
+                                                                                                       stdev,
+                                                                                                       ninetyfive[0],
+                                                                                                       ninetyfive[1],
+                                                                                                       fixed,
+                                                                                                       guess,
+                                                                                                       lower_bound,
+                                                                                                       upper_bound))
 
 
         return "".join(out)
@@ -634,22 +637,42 @@ class GlobalFit:
     @property
     def fit_stdev(self):
         """
-        Return the param error as a dictionary that keys parameter name to fit
-        value.  This is a tuple with global parameters first, then a list of
+        Return the param stdev as a dictionary that keys parameter name to fit
+        stdev. This is a tuple with global parameters first, then a list of
         dictionaries for each local fit.
         """
 
         # Global parameters
-        global_out_error = {}
+        global_out_stdev = {}
         for g in self.global_param.keys():
-            global_out_error[g] = self.global_param[g].error
+            global_out_stdev[g] = self.global_param[g].stdev
 
         # Local parameters
-        local_out_error = []
+        local_out_stdev = []
         for expt_name in self._expt_list_stable_order:
-            local_out_error.append(self._expt_dict[expt_name].model.param_errors)
+            local_out_stdev.append(self._expt_dict[expt_name].model.param_stdevs)
 
-        return global_out_error, local_out_error
+        return global_out_stdev, local_out_stdev
+
+    @property
+    def fit_ninetyfive(self):
+        """
+        Return the param 95% confidence as a dictionary that keys parameter name
+        confidence. This is a tuple with global parameters first, then a list of
+        dictionaries for each local fit.
+        """
+
+        # Global parameters
+        global_out_ninetyfive = {}
+        for g in self.global_param.keys():
+            global_out_ninetyfive[g] = self.global_param[g].ninetyfive
+
+        # Local parameters
+        local_out_ninetyfive = []
+        for expt_name in self._expt_list_stable_order:
+            local_out_ninetyfive.append(self._expt_dict[expt_name].model.param_ninetyfives)
+
+        return global_out_ninetyfive, local_out_ninetyfive
 
     @property
     def fit_success(self):

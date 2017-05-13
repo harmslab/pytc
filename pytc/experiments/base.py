@@ -143,13 +143,27 @@ class ITCExperiment:
 
     @property
     def param_values(self):
+        """
+        Values of fit parameters.
+        """
 
         return self._model.param_values
 
     @property
-    def param_errors(self):
+    def param_stdevs(self):
+        """
+        Standard deviations on fit parameters.
+        """
 
-        return self._model.param_errors
+        return self._model.param_stdevs
+
+    @property
+    def param_ninetyfives(self):
+        """
+        95% confidence intervals on fit parmeters.
+        """
+
+        return self._model.param_ninetyfives
 
     @property
     def model(self):

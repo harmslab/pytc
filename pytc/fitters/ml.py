@@ -90,7 +90,10 @@ class MLFitter(Fitter):
         c1 = self._estimate - z*self._stdev
         c2 = self._estimate + z*self._stdev
 
-        self._ninetyfive = (c1,c2)
+        self._ninetyfive = []
+        for i in range(P):
+            self._ninetyfive.append([c1[i],c2[i]])
+        self._ninetyfive = np.array(self._ninetyfive)
 
         self._sucess = self._fit_result.success
 
