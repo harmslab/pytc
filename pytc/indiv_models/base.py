@@ -29,7 +29,6 @@ class ITCModel:
         T_syringe: titrant concentration syringe in M
         cell_volume: cell volume, in uL
         shot_volumes: list of shot volumes, in uL.
-        shot_start: first shot to use in fit
         """
 
         self._S_cell = S_cell
