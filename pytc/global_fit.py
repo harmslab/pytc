@@ -279,11 +279,21 @@ class GlobalFit:
                 flat_param_counter += 1
 
         # Go through every experiment
+        units = None
         y_obs = []
         for k in self._expt_dict.keys():                                       
 
-            # Go through fit parameters within each experiment
             e = self._expt_dict[k]                                             
+
+            # Sanity check: does every experiment have the same units?
+            if units is None:
+                units = e.units
+            else:
+                if units != e.units:
+                    err = "All experiments should have the same units.\n"
+                    raise ValueError(err)
+
+
             for p in e.model.param_names:
 
                 # If the parameter is fixed, ignore it.
@@ -470,12 +480,12 @@ class GlobalFit:
                     heats = heats - e.dilution_heats
                     calc = calc - e.dilution_heats
 
-            ax[0].plot(mr,heats,data_symbol,color=color_list[i])
+            ax[0].errorbar(mr,heats,e.heats_stdev,fmt=data_symbol,color=color_list[i])
 
             if len(e.dQ) > 0:
 
                 ax[0].plot(mr,calc,color=color_list[i],linewidth=linewidth)
-                ax[0].set_ylabel("heat per shot (kcal/mol)")
+                ax[0].set_ylabel("heat per shot ({}/mol)".format(e.units))
 
                 ax[1].plot([np.min(mr),np.max(mr)],[0,0],"--",linewidth=1.0,color="gray")
                 ax[1].plot(mr,(calc-heats),data_symbol,color=color_list[i])     
@@ -515,6 +525,9 @@ class GlobalFit:
 
         out = ["# Fit successful? {}\n".format(self.fit_success)]
         out.append("# {}\n".format(datetime.datetime.now()))
+       
+        u = self._expt_dict[self._expt_list_stable_order[0]].units
+        out.append("# Units: {}/mol\n".format(u))
         
         fit_stats_keys = list(self.fit_stats.keys())
         fit_stats_keys.sort()
@@ -720,7 +733,7 @@ class GlobalFit:
      
         output["num_obs"] = self.fit_num_obs
         output["num_param"] = self.fit_num_param
-        output["df"] = self.fit_num_obs - self._fit_num_param
+        output["df"] = self.fit_num_obs - self.fit_num_param
  
         # Create a vector of calcluated and observed values.  
         y_obs = [] 

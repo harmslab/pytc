@@ -1,4 +1,4 @@
-__description__ = 
+__description__ = \
 """
 Basic functions for manipulating fits.
 """
@@ -12,8 +12,11 @@ def weight_stat(test_stats):
     Return weights for test statistics. 
     """  
 
-    test_stats = np.arrary(test_stats)
+    test_stats = np.array(test_stats)
+    test_stats = test_stats - np.min(test_stats)
+
     w = np.exp(-test_stats/2)
+
     weights = w/np.sum(w)
 
     best_value = np.amax(weights)
@@ -37,8 +40,17 @@ def compare_models(*models):
     aic_c = []
     bic = []
 
+    num_obs = None
     for i, m in enumerate(models):
-        if not m.success:
+
+        if num_obs is None:
+            num_obs = m.fit_num_obs 
+
+        if num_obs != m.fit_num_obs:
+            err = "All fits must have same observations to do tests!\n"
+            raise ValueError(err)
+
+        if not m.fit_success:
             print("Fitting model {}".format(i))
             m.fit()
         
