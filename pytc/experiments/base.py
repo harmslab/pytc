@@ -22,7 +22,7 @@ AVAIL_UNITS = {"cal":1.9872036,
                "J":8.3144598,
                "kJ":0.0083144598}
 
-class ITCExperiment:
+class BaseITCExperiment:
     """
     Class that holds an experimental ITC measurement and a model that describes it.
     """
@@ -74,10 +74,7 @@ class ITCExperiment:
 
         # Load in heats
         extension = self.dh_file.split(".")[-1]
-        if extension == "DH":
-            self._read_heats_file_origin()
-        elif extension == "sedphat":
-            self._read_heats_file_nitpic()
+        self._read_heats_file()
 
         # Initialize model using information read from heats file
         self._model = model(S_cell=self.stationary_cell_conc,
@@ -89,76 +86,12 @@ class ITCExperiment:
         self._experiment_id = "{}_{}".format(self.dh_file,r)
 
 
-    def _read_heats_file_origin(self):
+    def _read_heats_file(self):
         """
-        Read the heats file written out by the MicroCal/Origin ITC analysis
-        package.
+        Dummy heat reading file.
         """
 
-        f = open(self.dh_file,'r')
-        lines = f.readlines()
-        f.close()
-
-        meta = lines[2].split(",")
-
-        self.temperature = float(meta[0])
-        self.stationary_cell_conc = float(meta[1])*1e-3
-        self.titrant_syringe_conc = float(meta[2])*1e-3
-        self.cell_volume = float(meta[3])*1e3
-
-        shots = []
-        heats = []
-        for l in lines[5:]:
-            col = l.split(",")
-            shots.append(float(col[0]))
-            heats.append(float(col[1]))
-
-        self._shots = np.array(shots)
-        self._heats = np.array(heats)
-      
-        # Because there is no heat error in this file, assign the heat error
-        # specified by the user. 
-        self._heats_stdev = np.array([self._uncertainty  for i in range(len(self._heats))]) 
-
-    def _read_heats_file_nitpic(self):
-        """
-        Read data files from NITPIC ITC package. Takes the X.sedphat folder output.
-        """
-        read_files = []
-        for path, subdirs, files in os.walk(self.dh_file):
-            for name in files:
-                if name.endswith((".xp", ".nitpic")):
-                    read_files.append(os.path.join(path, name))
-
-        heat_data = next(f for f in read_files if ".nitpic" in f)
-        exp_data = next(f for f in read_files if ".xp" in f)
-
-        f = open(exp_data, 'r')
-        meta = f.readlines()
-        f.close()
-
-        self.temperature = float(next(t for t in meta if "Temperature" in t).split()[0])
-        self.stationary_cell_conc = float(next(t for t in meta if "cellconc" in t).split()[0])/1e6
-        self.titrant_syringe_conc = float(next(t for t in meta if "syringconc" in t).split()[0])*1e-6
-        self.cell_volume = float(next(t for t in meta if "cellvolume" in t).split()[0])
-
-        f = open(heat_data, 'r')
-        lines = f.readlines()
-        f.close()
-
-        shots = []
-        heats = []
-        for l in lines[1:]:
-            if "--" in l:
-                break
-            col = l.split()
-            heats.append(float(col[0]))
-            shots.append(float(col[1]))
-
-        self._shots = np.array(shots)
-        self._heats = np.array(heats)
-
-        self._heats_stdev = np.array([0.1  for i in range(len(self._heats))]) 
+        pass
 
     @property
     def dQ(self):
