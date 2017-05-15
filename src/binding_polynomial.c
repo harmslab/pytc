@@ -2,7 +2,7 @@
 #include <math.h>
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
-double dQdT(double T_free, double S_total, double T_total, double *fit_beta_obj, int num_beta){
+double dQdT(double *T_free, double *S_total, double *T_total, double *fit_beta_obj, int num_beta){
     /*
     T_total = T_free + S_total*(dln(P)/dln(T_free)), so:
         0 = T_free + S_total*(dln(P)/dln(T_free)) - T_total
@@ -73,8 +73,9 @@ float dQ(double *fit_beta_obj, double *fit_dH_obj, double *S_conc_corr, double *
             }
             continue;
         }
-            
-        double T = brentq(dQdT, 0 , T_conc[-1], args=(S_conc_corr[i], T_conc[i]));
+        
+        double args[2] = {S_conc_corr[i], T_conc[i]};
+        double T = brentq(dQdT, 0 , T_conc[-1], args);
 
         // numerical problems sometimes make T slightly bigger than the total
         // concentration, so bring down to the correct value

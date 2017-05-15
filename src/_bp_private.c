@@ -16,8 +16,8 @@ static PyObject *bp_private_binding_polynomial(PyObject *self, PyObject *args)
     double fx_competent, cell_volume, dilution_heats;
     PyObject *fit_beta_obj, *fit_dH_obj, *S_conc_corr, *T_conc, *T_conc_free;
 
-    if (!PyArg_ParseTuple(args, "ddi00", &fx_competent, &num_sites, 
-                                        &fit_beta_obj, &fit_dH_obj))
+    if (!PyArg_ParseTuple(args, "dddi00000", &fx_competent, &cell_volume, &dilution_heats, &num_sites, 
+                                        &fit_beta_obj, &fit_dH_obj, &S_conc_corr, &T_conc, &T_conc_free))
         return NULL;
 
     /* PyObjects to numpy arrays */

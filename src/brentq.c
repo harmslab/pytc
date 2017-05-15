@@ -27,7 +27,7 @@
 */
 
 double brentq(double *f, double xa, double xb, double xtol, double rtol,
-       int iter, default_parameters *params) {
+       int iter, double *params) {
     double xpre = xa, xcur = xb;
     double xblk = 0., fpre, fcur, fblk = 0., spre = 0., scur = 0., sbis;
     /* the tolerance is 2*delta */
@@ -37,9 +37,8 @@ double brentq(double *f, double xa, double xb, double xtol, double rtol,
 
     fpre = (*f)(xpre, params);
     fcur = (*f)(xcur, params);
-    params->funcalls = 2;
+    //params->funcalls = 2;
     if (fpre*fcur > 0) {
-        params->error_num = SIGNERR;
         return 0.;
     }
     if (fpre == 0) {
@@ -49,9 +48,9 @@ double brentq(double *f, double xa, double xb, double xtol, double rtol,
         return xcur;
     }
 
-    params->iterations = 0;
+    //params->iterations = 0;
     for (i = 0; i < iter; i++) {
-        params->iterations++;
+        //params->iterations++;
         if (fpre*fcur < 0) {
             xblk = xpre;
             fblk = fpre;
@@ -110,8 +109,6 @@ double brentq(double *f, double xa, double xb, double xtol, double rtol,
         }
 
         fcur = (*f)(xcur, params);
-        params->funcalls++;
     }
-    params->error_num = CONVERR;
     return xcur;
 }

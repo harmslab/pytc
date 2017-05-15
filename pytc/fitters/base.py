@@ -167,6 +167,8 @@ class Fitter:
         fig = corner.corner(to_plot,labels=param_names,range=corner_range,
                             *args,**kwargs)
 
+        return fig
+
     @property
     def samples(self):
         """
