@@ -12,7 +12,7 @@ import numpy as np
 import scipy.optimize
 from .base import ITCModel
 
-#from . import bp_ext
+from . import bp_ext
 
 class BindingPolynomial(ITCModel):
     """
@@ -108,6 +108,10 @@ class BindingPolynomial(ITCModel):
 
         S_conc_corr = self._S_conc*self.param_values["fx_competent"]
 
+
+        bp_ext.dQ(self._cell_volume, self._num_sites, len(self._S_conc), self.dilution_heats, 
+            self._fit_beta_array, self._fit_dH_array, S_conc_corr, self._T_conc, self._T_conc_free)
+
         # Find the root of the derivative of the binding polynomial, giving the
         # free titrant concentration
         for i in range(len(S_conc_corr)):
@@ -162,6 +166,8 @@ class BindingPolynomial(ITCModel):
         for i in range(len(self._fit_beta_array)):
             self._numerator   += self._fit_dH_array[i]*self._fit_beta_array[i]*(self._T_conc_free**(i+1))
             self._denominator +=                       self._fit_beta_array[i]*(self._T_conc_free**(i+1))
+
+            #print(self._fit_beta_array[i]*(self._T_conc_free**(i+1)))
 
         avg_dH = self._numerator/self._denominator
 
