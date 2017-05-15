@@ -1,4 +1,5 @@
 :orphan:
+
 ============
 Installation
 ============
@@ -9,6 +10,7 @@ Dependencies
  + `numpy <http://www.numpy.org/>`_
  + `scipy <https://www.scipy.org/>`_
  + `matplotlib <http://matplotlib.org/>`_
+ + `emcee <http://dan.iel.fm/emcee/current/>`_
  + `jupyter <https://jupyter.org/>`_ (useful for fit scripting)
 
 Mac
@@ -21,12 +23,16 @@ Mac
     python3.x `directly <https://www.python.org/downloads/release/python-3>`_. 
 
  2. Install :code:`pip3`.  Open a terminal and type:
-    ::
-    sudo easy_install pip3
+
+    .. sourcecode:: bash
+    
+        sudo easy_install pip3
 
  3. Once this has run, type:
-    ::
-    sudo pip3 install pytc-fitter
+
+    .. sourcecode:: bash
+
+        sudo pip3 install pytc-fitter
 
 Linux
 -----
@@ -38,12 +44,16 @@ Linux
     python3.x `directly <https://www.python.org/downloads/release/python-3>`_,
     or obtain it via your package manner.  On Ubuntu and other Debian-like
     systems, this would be:
-    :: 
-    sudo apt-get install python3 python3-pip
+
+    .. sourcecode:: bash
+
+        sudo apt-get install python3 python3-pip
 
  2. Once this has run, type:
-    ::
-    sudo pip3 install pytc-fitter
+
+    .. sourcecode:: bash
+    
+        sudo pip3 install pytc-fitter
 
 
 Windows
@@ -52,5 +62,8 @@ Windows
  1. Install python3 either via `anaconda <https://www.continuum.io/downloads>`_ or
     `winpython <https://winpython.github.io/>`_.  
  2. In an anaconda or winpython terminal, type:
-    ::
-    pip install pytc-fitter
+
+    .. sourcecode:: bash
+
+        pip install pytc-fitter
+

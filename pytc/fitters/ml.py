@@ -95,7 +95,7 @@ class MLFitter(Fitter):
             self._ninetyfive.append([c1[i],c2[i]])
         self._ninetyfive = np.array(self._ninetyfive)
 
-        self._sucess = self._fit_result.success
+        self._success = self._fit_result.success
 
     @property
     def fit_info(self):

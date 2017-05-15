@@ -8,15 +8,16 @@ experiments.
 __author__ = "Michael J. Harms"
 __date__ = "2016-06-22"
 
-import copy, inspect, warnings, sys
+from . import fitters
+from . global_connectors import GlobalConnector
+
 import numpy as np
 import scipy
 import scipy.optimize as optimize
 from matplotlib import pyplot as plt
 from matplotlib import gridspec
 
-from . import fitters
-from . global_connectors import GlobalConnector
+import copy, inspect, warnings, sys, datetime
 
 class FitNotRunError(Exception):
     """
@@ -513,6 +514,7 @@ class GlobalFit:
         """
 
         out = ["# Fit successful? {}\n".format(self.fit_success)]
+        out.append("# {}\n".format(datetime.datetime.now()))
         
         fit_stats_keys = list(self.fit_stats.keys())
         fit_stats_keys.sort()
@@ -538,7 +540,7 @@ class GlobalFit:
             lower_bound = self.global_param[k].bounds[0]
             upper_bound = self.global_param[k].bounds[1]
 
-            out.append("{:},{:},{:},{:.5e},{:.5e},{:.5e},{:.5e}.{:},{:.5e},{:.5e},{:.5e}\n".format(param_type,
+            out.append("{:},{:},{:},{:.5e},{:.5e},{:.5e},{:.5e},{:},{:.5e},{:.5e},{:.5e}\n".format(param_type,
                                                                                                    param_name,
                                                                                                    dh_file,
                                                                                                    value,
@@ -576,7 +578,7 @@ class GlobalFit:
                 lower_bound = self._expt_dict[expt_name].model.parameters[k].bounds[0]
                 upper_bound = self._expt_dict[expt_name].model.parameters[k].bounds[1]
 
-                out.append("{:},{:},{:},{:.5e},{:.5e},{:.5e},{:.5e}.{:},{:.5e},{:.5e},{:.5e}\n".format(param_type,
+                out.append("{:},{:},{:},{:.5e},{:.5e},{:.5e},{:.5e},{:},{:.5e},{:.5e},{:.5e}\n".format(param_type,
                                                                                                        param_name,
                                                                                                        dh_file,
                                                                                                        value,
@@ -718,6 +720,7 @@ class GlobalFit:
      
         output["num_obs"] = self.fit_num_obs
         output["num_param"] = self.fit_num_param
+        output["df"] = self.fit_num_obs - self._fit_num_param
  
         # Create a vector of calcluated and observed values.  
         y_obs = [] 
@@ -757,10 +760,8 @@ class GlobalFit:
         mse = 1/(N - P - 1)*sse
         if mse == 0.0:
             output["F"] = np.inf
-            output["F"] = np.inf
         else:
             output["F"] = msm/mse
-            output["p"] = 1 - scipy.stats.f.cdf(output["F"],P,(N-P-1))  
 
         # Calcluate log-likelihood
         lnL = self._fitter.ln_like(self._fitter.estimate) 
