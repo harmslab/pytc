@@ -13,7 +13,7 @@ class NumProtons(GlobalConnector):
     enthalpy and number of protons released/taken up.  Requires experiment 
     instances have .ionization_enthalpy attribute.
     """
-   
+
     param_guesses = {"num_H":0.0, "dH_intrinsic":0.0}
     required_data = ["ionization_enthalpy"]
 

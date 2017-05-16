@@ -115,7 +115,7 @@ class BayesianFitter(Fitter):
         ln_like = self.ln_like(param)
         if not np.isfinite(ln_like):
             return -np.inf
- 
+
         # log posterior is log prior plus log likelihood 
         return ln_prior + ln_like
 
@@ -184,7 +184,8 @@ class BayesianFitter(Fitter):
         # Create list of samples
         to_discard = int(round(self._burn_in*self._num_steps,0))
         self._samples = self._fit_result.chain[:,to_discard:,:].reshape((-1,ndim))
-   
+        self._lnprob = self._fit_result.lnprobability[:,:].reshape(-1)
+
         # Get mean and standard deviation 
         self._estimate = np.mean(self._samples,axis=0)
         self._stdev = np.std(self._samples,axis=0)
@@ -217,4 +218,12 @@ class BayesianFitter(Fitter):
         output["Num threads"] = self._num_threads
         
         return output
+
+    @property
+    def samples(self):
+        """
+        Bayesian samples.
+        """
+        
+        return self._samples
 

@@ -6,4 +6,4 @@ __author__ = "Michael J. Harms"
 __date__ = "2017-01-06"
 __all__ = ["util"]
 
-from .util import choose_model
+from .util import compare_models

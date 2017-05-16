@@ -190,7 +190,7 @@ float dQ(double *fit_beta_obj, double *fit_dH_obj, double *S_conc_corr, double *
             denominator += bt;
         }
 
-        int size_num_den = sizeof(numerator)/sizeof(int);
+        int size_num_den = num_shots;
         double *avg_dH = (double *) malloc(size_num_den*sizeof(int));
         for (int j = 0; j < size_num_den; j++){
             avg_dH[j] = num[j]/den[j];
@@ -199,32 +199,36 @@ float dQ(double *fit_beta_obj, double *fit_dH_obj, double *S_conc_corr, double *
 
         int size_avg_dH = sizeof(avg_dH)/sizeof(int);
 
-        double *subset_first_dH = (double *) malloc((size_avg_dH - 1)*sizeof(int));
+        double *subset_first_dH = (double *) malloc((size_avg_dH - 1)*sizeof(double));
         for(int j = 1; j < size_avg_dH; j++){
             subset_first_dH[j] = avg_dH[j];
         }
 
-        double *subset_last_dH = (double *) malloc((size_avg_dH - 1)*sizeof(int));
+        double *subset_last_dH = (double *) malloc((size_avg_dH - 1)*sizeof(double));
         for(int j = 0; j < size_avg_dH; j++){
             subset_last_dH[j] = avg_dH[j];
         }
 
         int size_x = size_avg_dH - 1;
-        double *X = (double *) malloc(size_x*sizeof(int));
+        double *X = (double *) malloc(size_x*sizeof(double));
+        if (X == NULL){
+            return -1;
+        }
         for (int j = 0; j < size_x; j++){
             X[j] = subset_first_dH[j] - subset_last_dH[j];
         }
         // = subset_first_dH - subset_last_dH;
 
-        double *subset_s_conc = (double *) malloc((num_shots - 1)*sizeof(int));
+        double *subset_s_conc = (double *) malloc((num_shots - 1)*sizeof(double));
         for(int j = 1; j < num_shots; j++){
             subset_s_conc[j] = S_conc_corr[j];
         }
 
         float to_return = cell_volume**subset_s_conc**X + *dilution_heats;
 
+        // clean up
+        // free memory
         return to_return;
-
     }
 
 }

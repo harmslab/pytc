@@ -140,3 +140,11 @@ class BootstrapFitter(Fitter):
         output["Use experimental error"] = self._exp_err
 
         return output
+
+    @property
+    def samples(self):
+        """
+        Bootstrap samples.
+        """
+
+        return self._samples
