@@ -41,7 +41,10 @@ class FitParameter:
         self.alias = alias
         
         self.value = self.guess
-        self.error = 0.0
+
+        # These will be filled in by the fitter
+        self._stdev = np.inf
+        self._ninetyfive = [-np.inf,np.inf]
 
     #--------------------------------------------------------------------------
     # parameter name
@@ -82,23 +85,47 @@ class FitParameter:
             self._value = self.guess
 
     #--------------------------------------------------------------------------
-    # parameter value
+    # parameter stdev
 
     @property
-    def error(self):
+    def stdev(self):
         """
-        Error of the parameter.
-        """
-
-        return self._error
-
-    @error.setter
-    def error(self,e):
-        """
-        Set the error of the parameter.
+        Standard deviation on the parameter.
         """
 
-        self._error = e
+        return self._stdev
+
+    @stdev.setter
+    def stdev(self,s):
+        """
+        Set the standard deviation of the parameter.
+        """
+
+        self._stdev = s
+
+    #--------------------------------------------------------------------------
+    # parameter 95% confidence
+
+    @property
+    def ninetyfive(self):
+        """
+        95% confidence interval on the parameter.
+        """
+
+        return self._ninetyfive
+
+    @ninetyfive.setter
+    def ninetyfive(self,value):
+        """
+        Set the 95% confidence interval on the parameter.
+        """
+
+        if len(value) != 2:
+            err = "ninetyfive requires a list-like with length 2.\n"
+            raise ValueError(err)
+
+        self._ninetyfive[0] = value[0]
+        self._ninetyfive[1] = value[1]
 
     #--------------------------------------------------------------------------
     # parameter guess

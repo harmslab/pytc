@@ -1,6 +1,6 @@
 __description__ = \
 """
-fitting.py
+global_fit.py
 
 Classes for doing nonlinear regression of global models against multiple ITC
 experiments.
@@ -8,15 +8,25 @@ experiments.
 __author__ = "Michael J. Harms"
 __date__ = "2016-06-22"
 
-import copy, inspect, warnings, sys
+from . import fitters
+from . global_connectors import GlobalConnector
+
 import numpy as np
 import scipy
 import scipy.optimize as optimize
 from matplotlib import pyplot as plt
 from matplotlib import gridspec
 
-from . import fitters
-from . global_connectors import GlobalConnector
+import copy, inspect, warnings, sys, datetime
+
+class FitNotRunError(Exception):
+    """
+    Throw when the fit has not been run but the output only makes sense after
+    the fit has been done.
+    """
+
+    pass
+
 
 class GlobalFit:
     """
@@ -33,17 +43,18 @@ class GlobalFit:
         self._global_params = {}
         self._global_param_mapping = {}
 
-        # List of experiments and the weight to apply for each experiment
+        # List of experiments 
         self._expt_dict = {}
-        self._expt_weights = {}
         self._expt_list_stable_order = []
 
-    def add_experiment(self,experiment,weight=1.0):
+    def add_experiment(self,experiment):
         """
-        experiment: an initialized ITCExperiment instance
-        weight: how much to weight this experiment in the regression relative to other
-                experiments.  Values <1.0 weight this experiment less than others;
-                values >1.0 weight this more than others.
+        Add an experiment to the fit
+
+        Parameters
+        ----------
+
+        experiment: an ITCExperiment instance
         """
 
         name = experiment.experiment_id
@@ -51,11 +62,15 @@ class GlobalFit:
         # Record the experiment
         self._expt_dict[name] = experiment
         self._expt_list_stable_order.append(name)
-        self._expt_weights[name] = weight
 
     def remove_experiment(self,experiment):
         """
         Remove an experiment from the analysis.
+
+        Parameters
+        ----------
+        
+        experiment: an ITCExperiment instance
         """
 
         expt_name = experiment.experiment_id
@@ -78,6 +93,15 @@ class GlobalFit:
         """
         Link a local experimental fitting parameter to a global fitting
         parameter.
+
+        Parameters
+        ----------
+
+        expt : an ITCExperiment instance
+        expt_param : string
+            key pointing to experimental parameter
+        global_param_name : string OR global_connector method
+            the global parameter this individual parameter should point to
         """
 
         expt_name = expt.experiment_id
@@ -128,6 +152,13 @@ class GlobalFit:
         """
         Remove the link between a local fitting parameter and a global
         fitting parameter.
+
+        Parameters
+        ----------
+
+        expt : ITCExperiment instance
+        expt_param : string
+            experimental parameter to unlink from global
         """
 
         expt_name = expt.experiment_id
@@ -150,6 +181,9 @@ class GlobalFit:
     def remove_global(self,global_param_name):
         """
         Remove a global parameter, unlinking all local parameters.
+
+        global_param_name: string
+            global parameter name
         """
 
         if global_param_name not in self._global_param_keys:
@@ -269,11 +303,21 @@ class GlobalFit:
                 flat_param_counter += 1
 
         # Go through every experiment
+        units = None
         y_obs = []
         for k in self._expt_dict.keys():                                       
 
-            # Go through fit parameters within each experiment
             e = self._expt_dict[k]                                             
+
+            # Sanity check: does every experiment have the same units?
+            if units is None:
+                units = e.units
+            else:
+                if units != e.units:
+                    err = "All experiments should have the same units.\n"
+                    raise ValueError(err)
+
+
             for p in e.model.param_names:
 
                 # If the parameter is fixed, ignore it.
@@ -375,7 +419,8 @@ class GlobalFit:
                 parameter_name = self._flat_param_mapping[i][1]
 
                 self._expt_dict[experiment].model.update_values({parameter_name:self._fitter.estimate[i]})
-                self._expt_dict[experiment].model.update_errors({parameter_name:self._fitter.stdev[i]})
+                self._expt_dict[experiment].model.update_stdevs({parameter_name:self._fitter.stdev[i]})
+                self._expt_dict[experiment].model.update_ninetyfives({parameter_name:self._fitter.ninetyfive[i]})
 
             # Vanilla global variable
             elif self._flat_param_type[i] == 1:
@@ -384,7 +429,8 @@ class GlobalFit:
                 for k, p in self._global_param_mapping[param_key]:
                     self._expt_dict[k].model.update_values({p:self._fitter.estimate[i]})
                     self._global_params[param_key].value = self._fitter.estimate[i]
-                    self._global_params[param_key].error = self._fitter.stdev[i]
+                    self._global_params[param_key].stdev = self._fitter.stdev[i]
+                    self._global_params[param_key].ninetyfive = self._fitter.ninetyfive[i]
 
             # Global connector global variable
             elif self._flat_param_type[i] == 2:
@@ -397,7 +443,8 @@ class GlobalFit:
                 # directly via params.  So, this has to use the .update_values
                 # method.
                 connector.update_values({param_name:self._fitter.estimate[i]})
-                connector.params[param_name].error = self._fitter.stdev[i]
+                connector.params[param_name].stdev = self._fitter.stdev[i]
+                connector.params[param_name].ninetyfive = self._fitter.ninetyfive[i]
 
             else:
                 err = "Paramter type {} not recognized.\n".format(self._flat_param_type[i])
@@ -405,21 +452,40 @@ class GlobalFit:
 
 
     def plot(self,correct_molar_ratio=False,subtract_dilution=False,
-             color_list=None,data_symbol="o",linewidth=1.5):
+             color_list=None,data_symbol="o",linewidth=1.5,num_samples=100):
         """
         Plot the experimental data and fit results.
-    
+
+        Parameters
+        ----------
+        correct_molar_ratio : bool
+            correct the molar ratio using fx_competent
+        subtract_dilution : bool
+            subtract the heat of dilution
+        color_list : list of things matplotlib can interpret as colors
+            color of each series
+        data_symol : character
+            symbol to use to plot data
+        linewidth : float
+            width of line for fits
+        num_samples : int 
+            number of samples to draw when drawing fits like Bayesian fits with
+            multiple fits. 
+
         Returns matplotlib Figure and AxesSubplot instances that can be further
         manipulated by the user of the API.
         """
 
+        # Make graph of appropraite size
         fig = plt.figure(figsize=(5.5,6)) 
 
+        # Create two panel graph
         gs = gridspec.GridSpec(2, 1, height_ratios=[4, 1]) 
         ax = []
         ax.append(fig.add_subplot(gs[0]))
         ax.append(fig.add_subplot(gs[1],sharex=ax[0]))
 
+        # Clean up graphs
         for i in range(2):
             ax[i].spines['top'].set_visible(False)
             ax[i].spines['right'].set_visible(False)
@@ -427,49 +493,80 @@ class GlobalFit:
             ax[i].yaxis.set_ticks_position('left')
             ax[i].xaxis.set_ticks_position('bottom')
 
+        # Add labels to top plot and remove x-axis
+        u = self._expt_dict[self._expt_list_stable_order[0]].units
+        ax[0].set_ylabel("heat per shot ({}/mol)".format(u))
+        plt.setp(ax[0].get_xticklabels(), visible=False)
 
+        # Add labels to the residuals plot
+        m = self._expt_dict[self._expt_list_stable_order[0]].mole_ratio
+        ax[1].plot([np.min(m),np.max(m)],[0,0],"--",linewidth=1.0,color="gray")
+        ax[1].set_xlabel("molar ratio (titrant/stationary)")
+        ax[1].set_ylabel("residual")
+
+        # Make list of colors
         if color_list == None:
             N = len(self._expt_list_stable_order)
             color_list = [plt.cm.brg(i/N) for i in range(N)]
 
+        # Sanity check on colors
         if len(color_list) < len(self._expt_list_stable_order):
             err = "Number of specified colors is less than number of experiments.\n"
             raise ValueError(err)
 
-        for i, expt_name in enumerate(self._expt_list_stable_order):
+        try:
+            # If there are samples:
+            if len(self._fitter.samples) > 0:
+                s = self._fitter.samples
+                these_samples = s[np.random.randint(len(s),size=num_samples)]
+            else:
+                these_samples = [self._fitter.estimate]
+        except AttributeError:
 
-            e = self._expt_dict[expt_name]
+            # If fit has not been done, create dummy version
+            self._prep_fit()
+            these_samples = [np.array(self._flat_param)]
 
-            mr = e.mole_ratio
-            heats = e.heats
-            calc = self._expt_dict[expt_name].dQ
+        # If there are multiple samples, assign them partial transparency
+        if len(these_samples) == 1:
+            alpha = 1.0
+        else:
+            alpha = 0.1
 
-            if len(calc) > 0:
+        for i, s in enumerate(these_samples):
 
-                # Try to correct molar ratio for competent fraction
-                if correct_molar_ratio:
-                    try:
-                        mr = mr/e.param_values["fx_competent"]
-                    except KeyError:
-                        pass
+            # Update calculation for this sample
+            self._y_calc(s)
+            for j, expt_name in enumerate(self._expt_list_stable_order):
 
-                if subtract_dilution:
-                    heats = heats - e.dilution_heats
-                    calc = calc - e.dilution_heats
+                # Extract fit info for this experiment
+                e = self._expt_dict[expt_name]
+                mr = e.mole_ratio
+                heats = e.heats
+                calc = self._expt_dict[expt_name].dQ
 
-            ax[0].plot(mr,heats,data_symbol,color=color_list[i])
+                if len(calc) > 0:
 
-            if len(e.dQ) > 0:
+                    # Try to correct molar ratio for competent fraction
+                    if correct_molar_ratio:
+                        try:
+                            mr = mr/e.param_values["fx_competent"]
+                        except KeyError:
+                            pass
 
-                ax[0].plot(mr,calc,color=color_list[i],linewidth=linewidth)
-                ax[0].set_ylabel("heat per shot (kcal/mol)")
+                    # Subtract dilution is requested
+                    if subtract_dilution:
+                        heats = heats - e.dilution_heats
+                        calc = calc - e.dilution_heats
 
-                ax[1].plot([np.min(mr),np.max(mr)],[0,0],"--",linewidth=1.0,color="gray")
-                ax[1].plot(mr,(calc-heats),data_symbol,color=color_list[i])     
-                ax[1].set_xlabel("molar ratio (titrant/stationary)")
-                ax[1].set_ylabel("residual")
+                # Draw fit lines and residuals
+                if len(e.dQ) > 0:
+                    ax[0].plot(mr,calc,color=color_list[j],linewidth=linewidth,alpha=alpha)
+                    ax[1].plot(mr,(calc-heats),data_symbol,color=color_list[j],alpha=alpha,markersize=8)     
 
-                plt.setp(ax[0].get_xticklabels(), visible=False)
+                # If this is the last sample, plot the experimental data
+                if i == len(these_samples) - 1:
+                    ax[0].errorbar(mr,heats,e.heats_stdev,fmt=data_symbol,color=color_list[j],markersize=8)
         
         fig.set_tight_layout(True)
 
@@ -485,8 +582,11 @@ class GlobalFit:
         param_names : list
             list of parameter names to include.  if None all parameter names
         """
-   
-        return self._fitter.corner_plot(filter_params)
+  
+        try: 
+            return self._fitter.corner_plot(filter_params)
+        except AttributeError:
+            raise FitNotRunError("Fit has not been run yet\n")
  
     # -------------------------------------------------------------------------
     # Properties describing fit results
@@ -498,6 +598,10 @@ class GlobalFit:
         """
 
         out = ["# Fit successful? {}\n".format(self.fit_success)]
+        out.append("# {}\n".format(datetime.datetime.now()))
+       
+        u = self._expt_dict[self._expt_list_stable_order[0]].units
+        out.append("# Units: {}/mol\n".format(u))
         
         fit_stats_keys = list(self.fit_stats.keys())
         fit_stats_keys.sort()
@@ -507,33 +611,33 @@ class GlobalFit:
         for k in fit_stats_keys:
             out.append("# {}: {}\n".format(k,self.fit_stats[k]))
 
-        out.append("type,name,dh_file,value,stdev,fixed,guess,lower_bound,upper_bound\n") 
+        out.append("type,name,exp_file,value,stdev,bot95,top95,fixed,guess,lower_bound,upper_bound\n") 
         for k in self.fit_param[0].keys():
 
             param_type = "global"
             dh_file = "NA"
 
-            if self.global_param[k].fixed:
-                fixed = "fixed"
-            else:
-                fixed = "float"
+            fixed = self.global_param[k].fixed
 
             param_name = k
             value = self.fit_param[0][k]
-            uncertainty = self.fit_stdev[0][k]
+            stdev = self.fit_stdev[0][k]
+            ninetyfive = self.fit_ninetyfive[0][k]
             guess = self.global_param[k].guess
             lower_bound = self.global_param[k].bounds[0]
             upper_bound = self.global_param[k].bounds[1]
 
-            out.append("{:},{:},{:},{:.5e},{:.5e},{:},{:.5e},{:.5e},{:.5e}\n".format(param_type,
-                                                                                     param_name,
-                                                                                     dh_file,
-                                                                                     value,
-                                                                                     uncertainty,
-                                                                                     fixed,
-                                                                                     guess,
-                                                                                     lower_bound,
-                                                                                     upper_bound))
+            out.append("{:},{:},{:},{:.5e},{:.5e},{:.5e},{:.5e},{:},{:.5e},{:.5e},{:.5e}\n".format(param_type,
+                                                                                                   param_name,
+                                                                                                   dh_file,
+                                                                                                   value,
+                                                                                                   stdev,
+                                                                                                   ninetyfive[0],
+                                                                                                   ninetyfive[1],
+                                                                                                   fixed,
+                                                                                                   guess,
+                                                                                                   lower_bound,
+                                                                                                   upper_bound))
 
         for i in range(len(self.fit_param[1])):
 
@@ -551,27 +655,27 @@ class GlobalFit:
                 except AttributeError:
                     pass
 
-                if self._expt_dict[expt_name].model.parameters[k].fixed:
-                    fixed = "fixed"
-                else:
-                    fixed = "float"
+                fixed = self._expt_dict[expt_name].model.parameters[k].fixed
 
                 param_name = k 
                 value = self.fit_param[1][i][k]
-                uncertainty = self.fit_stdev[1][i][k]
+                stdev = self.fit_stdev[1][i][k]
+                ninetyfive = self.fit_ninetyfive[1][i][k]
                 guess = self._expt_dict[expt_name].model.parameters[k].guess
                 lower_bound = self._expt_dict[expt_name].model.parameters[k].bounds[0]
                 upper_bound = self._expt_dict[expt_name].model.parameters[k].bounds[1]
 
-                out.append("{:},{:},{:},{:.5e},{:.5e},{:},{:.5e},{:.5e},{:.5e}\n".format(param_type,
-                                                                                         param_name,
-                                                                                         dh_file,
-                                                                                         value,
-                                                                                         uncertainty,
-                                                                                         fixed,
-                                                                                         guess,
-                                                                                         lower_bound,
-                                                                                         upper_bound))
+                out.append("{:},{:},{:},{:.5e},{:.5e},{:.5e},{:.5e},{:},{:.5e},{:.5e},{:.5e}\n".format(param_type,
+                                                                                                       param_name,
+                                                                                                       dh_file,
+                                                                                                       value,
+                                                                                                       stdev,
+                                                                                                       ninetyfive[0],
+                                                                                                       ninetyfive[1],
+                                                                                                       fixed,
+                                                                                                       guess,
+                                                                                                       lower_bound,
+                                                                                                       upper_bound))
 
 
         return "".join(out)
@@ -622,22 +726,42 @@ class GlobalFit:
     @property
     def fit_stdev(self):
         """
-        Return the param error as a dictionary that keys parameter name to fit
-        value.  This is a tuple with global parameters first, then a list of
+        Return the param stdev as a dictionary that keys parameter name to fit
+        stdev. This is a tuple with global parameters first, then a list of
         dictionaries for each local fit.
         """
 
         # Global parameters
-        global_out_error = {}
+        global_out_stdev = {}
         for g in self.global_param.keys():
-            global_out_error[g] = self.global_param[g].error
+            global_out_stdev[g] = self.global_param[g].stdev
 
         # Local parameters
-        local_out_error = []
+        local_out_stdev = []
         for expt_name in self._expt_list_stable_order:
-            local_out_error.append(self._expt_dict[expt_name].model.param_errors)
+            local_out_stdev.append(self._expt_dict[expt_name].model.param_stdevs)
 
-        return global_out_error, local_out_error
+        return global_out_stdev, local_out_stdev
+
+    @property
+    def fit_ninetyfive(self):
+        """
+        Return the param 95% confidence as a dictionary that keys parameter name
+        confidence. This is a tuple with global parameters first, then a list of
+        dictionaries for each local fit.
+        """
+
+        # Global parameters
+        global_out_ninetyfive = {}
+        for g in self.global_param.keys():
+            global_out_ninetyfive[g] = self.global_param[g].ninetyfive
+
+        # Local parameters
+        local_out_ninetyfive = []
+        for expt_name in self._expt_list_stable_order:
+            local_out_ninetyfive.append(self._expt_dict[expt_name].model.param_ninetyfives)
+
+        return global_out_ninetyfive, local_out_ninetyfive
 
     @property
     def fit_success(self):
@@ -670,12 +794,20 @@ class GlobalFit:
     @property
     def fit_stats(self):
         """
+        Stats about the fit as a dictionary.
         """
+
+        # Only return something if the fit has already been done
+        try:
+            self._fitter
+        except AttributeError:
+            return {}
 
         output = {}
      
         output["num_obs"] = self.fit_num_obs
         output["num_param"] = self.fit_num_param
+        output["df"] = self.fit_num_obs - self.fit_num_param
  
         # Create a vector of calcluated and observed values.  
         y_obs = [] 
@@ -715,10 +847,8 @@ class GlobalFit:
         mse = 1/(N - P - 1)*sse
         if mse == 0.0:
             output["F"] = np.inf
-            output["F"] = np.inf
         else:
             output["F"] = msm/mse
-            output["p"] = 1 - scipy.stats.f.cdf(output["F"],P,(N-P-1))  
 
         # Calcluate log-likelihood
         lnL = self._fitter.ln_like(self._fitter.estimate) 
@@ -824,9 +954,15 @@ class GlobalFit:
         Update the one of the guesses for this fit.  If the experiment is None,
         set a global parameter.  Otherwise, set the specified experiment.
 
-            param_name: name of parameter to set
-            param_guess: value to set parameter to
-            expt_name: name of experiment
+        Parameters
+        ----------
+
+        param_name: string 
+            name of parameter to set
+        param_guess: float
+            value to set parameter to
+        expt_name: ITCExperiment instance OR None
+            experiment to update guess of
         """
 
         if expt == None:
@@ -870,9 +1006,15 @@ class GlobalFit:
         Update the range of a parameter for this fit.  If the experiment is None,
         set a global parameter.  Otherwise, set the specified experiment.
 
-            param_name: name of parameter to set
-            param_guess: value to set parameter to
-            expt_name: name of experiment
+        Parameters
+        ----------
+
+        param_name: string 
+            name of parameter to set
+        param_guess: float
+            value to set parameter to
+        expt_name: ITCExperiment instance OR None
+            experiment to update guess of
         """
 
         try:
@@ -925,13 +1067,18 @@ class GlobalFit:
     def update_fixed(self,param_name,param_value,expt=None):
         """
         Fix fit parameters.  If expt is None, set a global parameter. Otherwise,
-        fix individual experiment parameters.  
-            param_name: name of parameter to set
-            param_guess: value to set parameter to
-            expt_name: name of experiment
+        fix individual experiment parameters.  if param_value is set to None,
+        fixed value is removed.
 
-            if param_value is set to None, fixed value is removed.
+        Parameters
+        ----------
 
+        param_name: string 
+            name of parameter to set
+        param_guess: float
+            value to set parameter to
+        expt_name: ITCExperiment instance OR None
+            experiment to update guess of
         """
 
         if expt == None:
@@ -981,9 +1128,15 @@ class GlobalFit:
         Update the bounds of a parameter for this fit.  If the experiment is None,
         set a global parameter.  Otherwise, set the specified experiment.
 
-            param_name: name of parameter to set
-            param_bounds value to set parameter to
-            expt_name: name of experiment
+        Parameters
+        ----------
+
+        param_name: string 
+            name of parameter to set
+        param_guess: float
+            value to set parameter to
+        expt_name: ITCExperiment instance OR None
+            experiment to update guess of
         """
 
         try:
@@ -1022,9 +1175,15 @@ class GlobalFit:
         Update the one of the values for this fit.  If the experiment is None,
         set a global parameter.  Otherwise, set the specified experiment.
 
-            param_name: name of parameter to set
-            param_value: value to set parameter to
-            expt_name: name of experiment
+        Parameters
+        ----------
+
+        param_name: string 
+            name of parameter to set
+        param_guess: float
+            value to set parameter to
+        expt_name: ITCExperiment instance OR None
+            experiment to update guess of
         """
 
         if expt == None:

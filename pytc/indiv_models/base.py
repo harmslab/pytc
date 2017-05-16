@@ -193,25 +193,46 @@ class ITCModel:
             self._params[p].value = param_values[p]
 
     # -------------------------------------------------------------------------
-    # parameter errors
+    # parameter stdev
 
     @property
-    def param_errors(self):
+    def param_stdevs(self):
         """
-        Errors for each parameter in the model.
+        Standard deviation for each parameter in the model.
         """
 
-        return dict([(p,self._params[p].error) for p in self._param_names])  
+        return dict([(p,self._params[p].stdev) for p in self._param_names])  
  
 
-    def update_errors(self,param_errors):
+    def update_stdevs(self,param_stdevs):
         """
-        Update parameter error for fit. param_errors is a dictionary with
+        Update parameter stdev for fit. param_stdevs is a dictionary with
         with some number of parameter names.
         """
 
-        for p in param_errors.keys():
-            self._params[p].error = param_errors[p]
+        for p in param_stdevs.keys():
+            self._params[p].stdev = param_stdevs[p]
+
+    # -------------------------------------------------------------------------
+    # parameter ninetyfive
+
+    @property
+    def param_ninetyfives(self):
+        """
+        95% confidence intervals for each parameter in the model.
+        """
+
+        return dict([(p,self._params[p].ninetyfive) for p in self._param_names])  
+ 
+
+    def update_ninetyfives(self,param_ninetyfives):
+        """
+        Update parameter 95% for fit. param_ninetyfives is a dictionary with
+        with some number of parameter names.
+        """
+
+        for p in param_ninetyfives.keys():
+            self._params[p].ninetyfive = param_ninetyfives[p]
 
     # -------------------------------------------------------------------------
     # parameter guesses

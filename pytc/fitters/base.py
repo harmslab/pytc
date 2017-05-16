@@ -151,6 +151,7 @@ class Fitter:
         to_plot = []
         corner_range = []
         param_names = []
+        est_values = []
         for i in range(s.shape[1]):
          
             # look for patterns to skip 
@@ -161,11 +162,15 @@ class Fitter:
             to_plot.append(s[:,i])
             corner_range.append(tuple([np.min(s[:,i])-0.5,np.max(s[:,i])+0.5]))
 
+            est_values.append(self.estimate[i])
+
         to_plot = np.array(to_plot)
         to_plot = np.swapaxes(to_plot,0,1)
 
         fig = corner.corner(to_plot,labels=param_names,range=corner_range,
-                            *args,**kwargs)
+                            truths=est_values,*args,**kwargs)
+
+        return fig
 
     @property
     def samples(self):

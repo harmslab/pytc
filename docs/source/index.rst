@@ -18,8 +18,10 @@ experiments simultaneously.  We built it with three design principles:
  + **Accessible for users and programmers**.  It should have both a GUI and a 
    well-documented API. 
 
-Our implementation is built on `python3 <https://www.python.org/>`_ extended with  `numpy <http://www.numpy.org/>`_ 
-and `scipy <https://www.scipy.org/>`_.   The GUI is built on `pytq5 <http://pyqt.sourceforge.net/Docs/PyQt5/installation.html>`_.
+Our implementation is built on `python3 <https://www.python.org/>`_ extended with  `numpy <http://www.numpy.org/>`_,
+`scipy <https://www.scipy.org/>`_, `matplotlib <http://matplotlib.org/>`_ and
+`emcee <http://dan.iel.fm/emcee/current/>`_.  The GUI is built on
+`pytq5 <http://pyqt.sourceforge.net/Docs/PyQt5/installation.html>`_.
 
 Features
 ========

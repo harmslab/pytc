@@ -1,64 +1,68 @@
-import scipy
-from scipy import stats
+__description__ = \
+"""
+Basic functions for manipulating fits.
+"""
+__author__ = "Michael J. Harms"
+__date__ = "2017-01-28"
+
 import numpy as np
 
-def _simple_compare(m1,m2,key):
+def weight_stat(test_stats):
     """
-    Likelihood tests.
+    Return weights for test statistics. 
     """  
- 
-    m1_w = np.exp(-m1[key]/2)
-    m2_w = np.exp(-m2[key]/2)
 
-    weight = m1_w/(m1_w + m2_w)
- 
-    if m1[key] < m2[key]:
-        status = True
-        print("{}: model 1 one favored over model 2 (weight = {:.3e})".format(key,weight))
-    else:
-        status = False
-        print("{}: model 2 one favored over model 1 (weight = {:.3e})".format(key,1-weight))
+    test_stats = np.array(test_stats)
+    test_stats = test_stats - np.min(test_stats)
 
-    return status, weight
+    w = np.exp(-test_stats/2)
 
-def choose_model(model1,model2):
+    weights = w/np.sum(w)
+
+    best_value = np.amax(weights)
+    best_index = np.argmax(weights)
+
+    return best_index, weights
+
+def compare_models(*models):
     """
-    Compare two models and test which is better supported using an AIC, AICc,
-    and BIC test.
+    Weight GlobalFits relative to each other using their AIC, AICc, and BIC
+    values.
+
+    Parameters:
+        *models : one more more GlobalFit instances
+
+    **NOTE**: This comparison is only valid if the models all fit the  same
+    set of observations.  The models do not need to be nested.
     """
 
-    if model1.fit_sum_of_squares == None:
-        print("Fitting model 1.")
-        model1.fit()
-    else:
-        print("Using fit already done for model 1.")
+    aic = []
+    aic_c = []
+    bic = []
 
-    model1.plot()
-    print("")
-    print("Model 1 fit")
-    print(model1.fit_as_csv)
-    print("")
+    num_obs = None
+    for i, m in enumerate(models):
 
-    if model2.fit_sum_of_squares == None:
-        print("Fitting model 2.")
-        model2.fit()
-    else:
-        print("Using fit already done for model 2.")
+        if num_obs is None:
+            num_obs = m.fit_num_obs 
 
-    model2.plot()
-    print("")
-    print("Model 2 fit")
-    print(model2.fit_as_csv)
-    print("")
+        if num_obs != m.fit_num_obs:
+            err = "All fits must have same observations to do tests!\n"
+            raise ValueError(err)
 
-    m1_stats = model1.fit_stats
-    m2_stats = model2.fit_stats
+        if not m.fit_success:
+            print("Fitting model {}".format(i))
+            m.fit()
+        
+        aic.append(m.fit_stats["AIC"])       
+        aic_c.append(m.fit_stats["AICc"])       
+        bic.append(m.fit_stats["BIC"])       
 
     out = {}
     
-    out["AIC"]  = _simple_compare(m1_stats,m2_stats,"AIC")
-    out["AICc"] = _simple_compare(m1_stats,m2_stats,"AICc")
-    out["BIC"]  = _simple_compare(m1_stats,m2_stats,"BIC")
+    out["AIC"]  = weight_stat(aic)
+    out["AICc"] = weight_stat(aic_c)
+    out["BIC"]  = weight_stat(bic)
    
     return out 
 

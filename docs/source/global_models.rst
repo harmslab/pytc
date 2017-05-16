@@ -45,15 +45,17 @@ The new global parameters are simply assigned a name (:code:`global_K` and
 rest. The output of this fit will look like the following.  The 
 global parameters appear as :code:`global_K` and :code:`global_dH`.
 
-| # Fit successful? True
-| # Fit sum of square residuals: 0.634237669456395
-| # Fit num param: 8
-| # Fit num observations: 108
-| # Fit num degrees freedom: 100
-| type,name,dh_file,value,uncertainty,fixed,guess,lower_bound,upper_bound
-| global,global_K,NA,3.84168e+07,1.40582e-06,float,1.00000e+06,-inf,inf
-| global,global_dH,NA,-4.64104e+03,7.96280e-03,float,-4.00000e+03,-inf,inf
-| ...
+.. code:: 
+
+    # Fit successful? True
+    # Fit sum of square residuals: 0.634237669456395
+    # Fit num param: 8
+    # Fit num observations: 108
+    # Fit num degrees freedom: 100
+    type,name,dh_file,value,uncertainty,fixed,guess,lower_bound,upper_bound
+    global,global_K,NA,3.84168e+07,1.40582e-06,float,1.00000e+06,-inf,inf
+    global,global_dH,NA,-4.64104e+03,7.96280e-03,float,-4.00000e+03,-inf,inf
+    ...
 
 Proton linked
 --------------

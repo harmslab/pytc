@@ -20,13 +20,12 @@ class VantHoffExtended(GlobalConnector):
     param_guesses = {"K_ref":1.0,"dH_ref":0.0,"dCp":0.0}
     required_data = ["temperature"]
     
-    def __init__(self,name,reference_temp=298.15,R=1.9872036):
+    def __init__(self,name,reference_temp=298.15):
         """
         Initialize the VantHoffExtended class, defining the fitting parameters.
         """
 
         self.reference_temp = reference_temp
-        self.R = R
 
         super().__init__(name)
 
@@ -40,8 +39,8 @@ class VantHoffExtended(GlobalConnector):
         T = experiment.temperature + 273.15
         T_ref = self.reference_temp
 
-        a = -(self.dH_ref/self.R)*(1/T - 1/T_ref)
-        b = (self.dCp/self.R)*(np.log(T/T_ref) + T_ref/T - 1)
+        a = -(self.dH_ref/experiment.R)*(1/T - 1/T_ref)
+        b = (self.dCp/experiment.R)*(np.log(T/T_ref) + T_ref/T - 1)
 
         return self.K_ref*np.exp(a + b)
 
