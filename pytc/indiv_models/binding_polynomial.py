@@ -94,4 +94,3 @@ class BindingPolynomial(ITCModel):
             final_array)
 
         return final_array
-        

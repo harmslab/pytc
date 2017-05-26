@@ -154,6 +154,7 @@ void *dQ(double *fit_beta_obj, double *fit_dH_obj, double *S_conc_corr, double *
     if (denominator == NULL){
         return NULL;
     }
+
     for (i = 0; i < num_shots; i++){
         denominator[i] = 1.0;
     }
@@ -217,6 +218,7 @@ void *dQ(double *fit_beta_obj, double *fit_dH_obj, double *S_conc_corr, double *
     if (avg_dH == NULL){
         return NULL;
     }
+
     for (i = 0; i < num_shots; i++){
         avg_dH[i] = numerator[i]/denominator[i];
     }

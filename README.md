@@ -1,6 +1,8 @@
 # pytc
 A python software package for analyzing Isothermal Titration Calorimetry
-experiments.
+experiments.  Does Bayesian and ML fitting.  Performs global fits to 
+multiple experiments.  Has a clean Python API. Designed for easy extension
+with new models.
 
  + [Full documentation](https://pytc.readthedocs.io/en/latest/)
  + [Graphical User Interface](https://github.com/harmslab/pytc-gui)
@@ -13,7 +15,7 @@ experiments.
     cd pytc
     python3 setup.py install
     ```
- + If jupyter is installed, you can clone the [pytc-demos](https://github.com/harmslba/pytc-demos)
+ + If jupyter is installed, you can clone the [pytc-demos](https://github.com/harmslab/pytc-demos)
    repo to see a collection of example fits.
 
 ## Example script
