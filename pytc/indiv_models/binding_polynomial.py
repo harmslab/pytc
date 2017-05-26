@@ -12,6 +12,8 @@ import numpy as np
 import scipy.optimize
 from .base import ITCModel
 
+from . import bp_ext
+
 class BindingPolynomial(ITCModel):
     """
     Base class for a binding polynomial fit.
@@ -67,26 +69,6 @@ class BindingPolynomial(ITCModel):
         self._fit_dH_list    = ["dH{}".format(i+1) for i in range(self._num_sites)]
 
         self._T_conc_free = np.zeros(len(self._S_conc),dtype=float)
-        self._numerator = np.zeros(len(self._S_conc),dtype=float)
-        self._denominator = np.ones(len(self._S_conc),dtype=float)
-        self._i_array = np.arange(len(self._fit_beta_list),dtype=float) + 1
-
-    def _dQdT(self,T_free,S_total,T_total):
-        """
-        T_total = T_free + S_total*(dln(P)/dln(T_free)), so:
-        0 = T_free + S_total*(dln(P)/dln(T_free)) - T_total
-
-        Solve this for T_free to find free titrant.
-
-        dln(P)/dln(T_free)
-
-        P = (beta1*T_free**1) *  b2*T**2
-        """
-
-        numerator =       np.sum(self._i_array*self._fit_beta_array*(T_free**self._i_array))
-        denominator = 1 + np.sum(              self._fit_beta_array*(T_free**self._i_array))
-
-        return T_free + S_total*(numerator/denominator) - T_total
 
     @property
     def dQ(self):
@@ -102,66 +84,13 @@ class BindingPolynomial(ITCModel):
             self._fit_dH_array[i] = self.param_values[self._fit_dH_list[i]]
 
         S_conc_corr = self._S_conc*self.param_values["fx_competent"]
+        num_shots = len(S_conc_corr)
+        size_T = self._T_conc.size
 
-        # Find the root of the derivative of the binding polynomial, giving the
-        # free titrant concentration
-        for i in range(len(S_conc_corr)):
+        final_array = np.zeros((num_shots-1),dtype=float)
 
-            # If there's no titrant, nothing is free.  (avoid numerical problems)
-            if self._T_conc[i] == 0:
-                self._T_conc_free[i] = 0.0
-                continue
+        bp_ext.dQ(self._cell_volume, num_shots, size_T, self._num_sites, self.dilution_heats, 
+            self._fit_beta_array, self._fit_dH_array, S_conc_corr, self._T_conc, self._T_conc_free, 
+            final_array)
 
-            # Manually check that bounds for root calculation have opposite signs
-            min_value = self._dQdT(            0.0,S_conc_corr[i],self._T_conc[i])
-            max_value = self._dQdT(self._T_conc[i],S_conc_corr[i],self._T_conc[i])
-
-            # Uh oh, they have same sign (root optimizer will choke)
-            if min_value*max_value > 0:
-
-                if max_value < 0:
-                    # root is closest to min --> set to that
-                    if (max_value < min_value):
-                        self._T_conc_free[i] = 0.0
-
-                    # root is closest to max --> set to that
-                    else:
-                        self._T_conc_free[i] = self._T_conc[i]
-                else:
-                    # root is closest to max --> set to that
-                    if (max_value < min_value):
-                        self._T_conc_free[i] = self._T_conc[i]
-
-                    # root is closest to min --> set to that
-                    else:
-                        self._T_conc_free[i] = 0.0
-
-                continue
-
-            T = scipy.optimize.brentq(self._dQdT,
-                                      0,self._T_conc[-1],
-                                      args=(S_conc_corr[i],
-                                           self._T_conc[i]))
-
-            # numerical problems sometimes make T slightly bigger than the total
-            # concentration, so bring down to the correct value
-            if (T > self._T_conc[i]):
-                T = self._T_conc[i]
-
-            self._T_conc_free[i] = T
-
-
-        # calculate the average enthalpy change
-        self._numerator   = 0.0
-        self._denominator = 1.0
-        for i in range(len(self._fit_beta_array)):
-            self._numerator   += self._fit_dH_array[i]*self._fit_beta_array[i]*(self._T_conc_free**(i+1))
-            self._denominator +=                       self._fit_beta_array[i]*(self._T_conc_free**(i+1))
-
-        avg_dH = self._numerator/self._denominator
-
-        X = avg_dH[1:] - avg_dH[:-1]
-
-        to_return = self._cell_volume*S_conc_corr[1:]*X + self.dilution_heats
-
-        return to_return
+        return final_array

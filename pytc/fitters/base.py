@@ -172,6 +172,8 @@ class Fitter:
 
         return fig
 
+        return fig
+
     @property
     def samples(self):
         """

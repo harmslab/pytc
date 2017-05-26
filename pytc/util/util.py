@@ -35,10 +35,11 @@ def compare_models(*models):
     **NOTE**: This comparison is only valid if the models all fit the  same
     set of observations.  The models do not need to be nested.
     """
-
     aic = []
     aic_c = []
     bic = []
+
+    plots = []
 
     num_obs = None
     for i, m in enumerate(models):
@@ -56,7 +57,9 @@ def compare_models(*models):
         
         aic.append(m.fit_stats["AIC"])       
         aic_c.append(m.fit_stats["AICc"])       
-        bic.append(m.fit_stats["BIC"])       
+        bic.append(m.fit_stats["BIC"])
+
+        plots.append([m.plot(), i])       
 
     out = {}
     
@@ -64,6 +67,6 @@ def compare_models(*models):
     out["AICc"] = weight_stat(aic_c)
     out["BIC"]  = weight_stat(bic)
    
-    return out 
+    return out, plots
 
 

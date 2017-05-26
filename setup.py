@@ -7,6 +7,13 @@ if sys.version_info[0] < 3:
 
 # Try using setuptools first, if it's installed
 from setuptools import setup, find_packages
+from setuptools.extension import Extension
+import numpy.distutils.misc_util
+
+# set up binding polynomial C extension
+ext = Extension('pytc.indiv_models.bp_ext', 
+      ['src/binding_polynomial.c',
+       'src/_bp_ext.c'])
 
 # Need to add all dependencies to setup as we go!
 setup(name='pytc-fitter',
@@ -20,5 +27,6 @@ setup(name='pytc-fitter',
       download_url='https://github.com/harmslab/pytc/tarball/1.1.0',
       zip_safe=False,
       install_requires=["matplotlib","scipy","numpy","emcee","corner"],
-      classifiers=['Programming Language :: Python'])
-
+      classifiers=['Programming Language :: Python'],
+      ext_modules=[ext],
+      include_dirs=numpy.distutils.misc_util.get_numpy_include_dirs())
