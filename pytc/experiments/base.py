@@ -17,15 +17,15 @@ __date__ = "2016-06-22"
 import random, string, os
 import numpy as np
 
-AVAIL_UNITS = {"cal":1.9872036,
-               "kcal":0.0019872036,
-               "J":8.3144598,
-               "kJ":0.0083144598}
-
 class BaseITCExperiment:
     """
     Class that holds an experimental ITC measurement and a model that describes it.
     """
+
+    AVAIL_UNITS = {"cal":1.9872036,
+               "kcal":0.0019872036,
+               "J":8.3144598,
+               "kJ":0.0083144598}
 
     def __init__(self,dh_file,model,shot_start=1,units="cal",uncertainty=0.1,
                  **model_kwargs):
@@ -58,10 +58,10 @@ class BaseITCExperiment:
         # Deal with units
         self._units = units
         try:
-            self._R = AVAIL_UNITS[self._units]
+            self._R = self.AVAIL_UNITS[self._units]
         except KeyError:
             err = "units must be one of:\n"
-            for k in AVAIL_UNITS.keys():
+            for k in self.AVAIL_UNITS.keys():
                 err += "    {}\n".format(k)
             err += "\n"
 
