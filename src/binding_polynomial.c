@@ -144,10 +144,17 @@ void *dQ(double *fit_beta_obj, double *fit_dH_obj, double *S_conc_corr, double *
 
     // num and denom arrays
     numerator = (double *)malloc(num_shots*sizeof(double));
+    if (numerator== NULL){
+        return NULL;
+    }
     for (i = 0; i < num_shots; i++){
         numerator[i] = 0.0;
     }
     denominator = (double *)malloc(num_shots*sizeof(double));
+    if (denominator == NULL){
+        return NULL;
+    }
+
     for (i = 0; i < num_shots; i++){
         denominator[i] = 1.0;
     }
@@ -211,16 +218,17 @@ void *dQ(double *fit_beta_obj, double *fit_dH_obj, double *S_conc_corr, double *
     if (avg_dH == NULL){
         return NULL;
     }
-    for (j = 0; j < num_shots; j++){
-        avg_dH[j] = numerator[j]/denominator[j];
+
+    for (i = 0; i < num_shots; i++){
+        avg_dH[i] = numerator[i]/denominator[i];
     }
     // avg_dh[1:]
     subset_first_dH = (double *)malloc(num_shots_reduced*sizeof(double));
     if (subset_first_dH == NULL){
         return NULL;
     }
-    for(j = 0; j < num_shots_reduced; j++){
-        subset_first_dH[j] = avg_dH[j+1];
+    for(i = 0; i < num_shots_reduced; i++){
+        subset_first_dH[i] = avg_dH[i+1];
     }
 
     // avg_dh[:-1]
@@ -228,8 +236,8 @@ void *dQ(double *fit_beta_obj, double *fit_dH_obj, double *S_conc_corr, double *
     if (subset_last_dH == NULL){
         return NULL;
     }
-    for(j = 0; j < num_shots_reduced; j++){
-        subset_last_dH[j] = avg_dH[j];
+    for(i = 0; i < num_shots_reduced; i++){
+        subset_last_dH[i] = avg_dH[i];
     }
 
     // avg_dh[1:]-avg_dh[:-1];
@@ -237,8 +245,8 @@ void *dQ(double *fit_beta_obj, double *fit_dH_obj, double *S_conc_corr, double *
     if (X == NULL){
         return NULL;
     }
-    for (j = 0; j < num_shots_reduced; j++){
-        X[j] = subset_first_dH[j] - subset_last_dH[j];
+    for (i = 0; i < num_shots_reduced; i++){
+        X[i] = subset_first_dH[i] - subset_last_dH[i];
     }
 
     // S_conc_corr[1:]
@@ -246,12 +254,12 @@ void *dQ(double *fit_beta_obj, double *fit_dH_obj, double *S_conc_corr, double *
     if (subset_s_conc == NULL){
         return NULL;
     }
-    for(j = 0; j < num_shots_reduced; j++){
-        subset_s_conc[j] = S_conc_corr[j+1];
+    for(i = 0; i < num_shots_reduced; i++){
+        subset_s_conc[i] = S_conc_corr[i+1];
     }
 
-    for(j = 0; j < num_shots_reduced; j++){
-        final_array[j] = cell_volume*subset_s_conc[j]*X[j] + dilution_heats[j];
+    for(i = 0; i < num_shots_reduced; i++){
+        final_array[i] = cell_volume*subset_s_conc[i]*X[i] + dilution_heats[i];
     }
 
     // clean up
