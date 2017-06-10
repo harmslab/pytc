@@ -39,10 +39,15 @@ class FitParameter:
         self.fixed = fixed
         self.bounds = bounds        
         self.alias = alias
-        
-        self.value = self.guess
+       
+        self._initialize_fit_results() 
 
-        # These will be filled in by the fitter
+    def _initialize_fit_results(self):
+        """
+        Set fit results to start (stdev, ninetyfive, value to guess).
+        """
+    
+        self.value = self.guess
         self._stdev = np.inf
         self._ninetyfive = [-np.inf,np.inf]
 
@@ -158,6 +163,7 @@ class FitParameter:
                 self._guess = 1.0
 
         self._value = self._guess
+        self._initialize_fit_results()
 
     #--------------------------------------------------------------------------
     # parameter guess_range
@@ -196,6 +202,8 @@ class FitParameter:
             else:
                 self._guess_range = [-10000.0,10000.0]
 
+        self._initialize_fit_results()
+
     #--------------------------------------------------------------------------
     # parameter fixed-ness. 
 
@@ -214,6 +222,7 @@ class FitParameter:
         """
         
         self._fixed = bool(bool_value)
+        self._initialize_fit_results()
 
     #--------------------------------------------------------------------------
     # bounds for fit.
@@ -245,6 +254,8 @@ class FitParameter:
         else:
             self._bounds = (-np.inf,np.inf)
 
+        self._initialize_fit_results()
+
     #--------------------------------------------------------------------------
     # parameter alias
    
@@ -270,3 +281,5 @@ class FitParameter:
             pass
 
         self._alias = a
+
+        self._initialize_fit_results()

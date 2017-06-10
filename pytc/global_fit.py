@@ -63,6 +63,10 @@ class GlobalFit:
         self._expt_dict[name] = experiment
         self._expt_list_stable_order.append(name)
 
+        # Delete the fitter if we remove an experiment.  It is no longer valid
+        self.delete_current_fit()
+
+
     def remove_experiment(self,experiment):
         """
         Remove an experiment from the analysis.
@@ -88,6 +92,9 @@ class GlobalFit:
 
         self._expt_dict.pop(expt_name)
         self._expt_list_stable_order.remove(expt_name)
+
+        # Delete the fitter if we remove an experiment.  It is no longer valid
+        self.delete_current_fit()
 
     def link_to_global(self,expt,expt_param,global_param_name):
         """
@@ -450,6 +457,15 @@ class GlobalFit:
                 err = "Paramter type {} not recognized.\n".format(self._flat_param_type[i])
                 raise ValueError(err) 
 
+    def delete_current_fit(self):
+        """
+        Delete the current experiment (if it exists).
+        """
+
+        try:
+            del self._fitter
+        except AttributeError:
+            pass
 
     def plot(self,correct_molar_ratio=False,subtract_dilution=False,
              color_list=None,data_symbol="o",linewidth=1.5,num_samples=100):
@@ -493,9 +509,13 @@ class GlobalFit:
             ax[i].yaxis.set_ticks_position('left')
             ax[i].xaxis.set_ticks_position('bottom')
 
+        # Nothing to plot
+        if len(self._expt_list_stable_order) < 1:
+            return fig, ax
+
         # Add labels to top plot and remove x-axis
         u = self._expt_dict[self._expt_list_stable_order[0]].units
-        ax[0].set_ylabel("heat per shot ({}/mol)".format(u))
+        ax[0].set_ylabel("heat per shot ({})".format(u))
         plt.setp(ax[0].get_xticklabels(), visible=False)
 
         # Add labels to the residuals plot
@@ -586,7 +606,9 @@ class GlobalFit:
         try: 
             return self._fitter.corner_plot(filter_params)
         except AttributeError:
-            raise FitNotRunError("Fit has not been run yet\n")
+            # If the fit has not been done, return an empty plot
+            dummy_fig = plt.figure(figsize=(5.5,6))
+            return dummy_fig
  
     # -------------------------------------------------------------------------
     # Properties describing fit results
@@ -597,11 +619,14 @@ class GlobalFit:
         Return a csv-style string of the fit.
         """
 
+        if len(self._expt_list_stable_order) < 1:
+            return "# No experiments loaded."
+
         out = ["# Fit successful? {}\n".format(self.fit_success)]
         out.append("# {}\n".format(datetime.datetime.now()))
-       
+
         u = self._expt_dict[self._expt_list_stable_order[0]].units
-        out.append("# Units: {}/mol\n".format(u))
+        out.append("# Units: {}\n".format(u))
         
         fit_stats_keys = list(self.fit_stats.keys())
         fit_stats_keys.sort()

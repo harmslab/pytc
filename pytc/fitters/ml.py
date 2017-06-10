@@ -58,6 +58,8 @@ class MLFitter(Fitter):
         self._y_obs = y_obs
         self._y_err = y_err
 
+        self._success = None
+
         # If no error is specified, assign the error as 1/N, identical for all
         # points 
         self._y_err = y_err

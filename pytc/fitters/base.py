@@ -172,8 +172,6 @@ class Fitter:
 
         return fig
 
-        return fig
-
     @property
     def samples(self):
         """
@@ -184,4 +182,3 @@ class Fitter:
             return self._samples
         except AttributeError:
             return []
-
