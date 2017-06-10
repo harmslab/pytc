@@ -12,8 +12,9 @@ import numpy.distutils.misc_util
 
 # set up binding polynomial C extension
 ext = Extension('pytc.indiv_models.bp_ext', 
-      ['src/binding_polynomial.c',
-       'src/_bp_ext.c'],include_dirs=["src"])
+                ['src/binding_polynomial.c','src/_bp_ext.c'],
+                include_dirs=['src/'],
+                depends=["src/binding_polynomial.h"])
 
 # Need to add all dependencies to setup as we go!
 setup(name='pytc-fitter',
