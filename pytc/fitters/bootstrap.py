@@ -73,6 +73,8 @@ class BootstrapFitter(Fitter):
         self._bounds= bounds
         self._y_obs = y_obs
         self._y_err = y_err
+
+        self._success = None 
     
         if y_err is None or self._exp_err == False:
             self._y_err = np.array([self._perturb_size

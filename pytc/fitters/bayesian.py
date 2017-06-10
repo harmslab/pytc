@@ -62,6 +62,8 @@ class BayesianFitter(Fitter):
             err = "multithreading has not yet been (fully) implemented.\n"
             raise NotImplementedError(err)
 
+        self._success = None
+
         self.fit_type = "bayesian"
 
     def ln_prior(self,param):

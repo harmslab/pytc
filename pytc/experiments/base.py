@@ -22,13 +22,13 @@ class BaseITCExperiment:
     Class that holds an experimental ITC measurement and a model that describes it.
     """
 
-    AVAIL_UNITS = {"cal":1.9872036,
-               "kcal":0.0019872036,
-               "J":8.3144598,
-               "kJ":0.0083144598}
+    AVAIL_UNITS = {"cal/mol":1.9872036,
+                   "kcal/mol":0.0019872036,
+                   "J/mol":8.3144598,
+                   "kJ/mol":0.0083144598}
 
-    def __init__(self,dh_file,model,shot_start=1,units="cal",uncertainty=0.1,
-                 **model_kwargs):
+    def __init__(self,dh_file,model,shot_start=1,units="cal/mol",
+                 uncertainty=0.1,**model_kwargs):
         """
 
         Parameters
@@ -42,7 +42,7 @@ class BaseITCExperiment:
             what shot to use as the first real point.  Shots start at 0, so
             default=1 discards first point.
         units : string
-            file units ("cal","kcal","J","kJ") 
+            file units ("cal/mol","kcal/mol","J/mol","kJ/mol") 
         uncertainty : float > 0.0
             uncertainty in integrated heats (set to same for all shots, unless
             specified in something like NITPIC output file). 
@@ -218,6 +218,24 @@ class BaseITCExperiment:
         """
 
         return self._units
+
+    @units.setter
+    def units(self,units):
+        """
+        Change the units.
+        """
+
+        # Deal with units
+        self._units = units
+        try:
+            self._R = self.AVAIL_UNITS[self._units]
+        except KeyError:
+            err = "units must be one of:\n"
+            for k in self.AVAIL_UNITS.keys():
+                err += "    {}\n".format(k)
+            err += "\n"
+
+            raise ValueError(err)
 
     @property
     def R(self):

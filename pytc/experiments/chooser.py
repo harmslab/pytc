@@ -1,7 +1,7 @@
 
 from . import OriginExperiment, NitpicExperiment
 
-def ITCExperiment(dh_file,model,shot_start=1,units="cal",uncertainty=0.1,
+def ITCExperiment(dh_file,model,shot_start=1,units="cal/mol",uncertainty=0.1,
                   **model_kwargs):
     """
     Wrapper that creates a BaseITCExperiment instance that that holds an ITC
@@ -19,7 +19,7 @@ def ITCExperiment(dh_file,model,shot_start=1,units="cal",uncertainty=0.1,
         what shot to use as the first real point.  Shots start at 0, so
         default=1 discards first point.
     units : string
-        file units ("cal","kcal","J","kJ") 
+        file units ("cal/mol","kcal/mol","J/mol","kJ/mol") 
     uncertainty : float > 0.0
         uncertainty in integrated heats (set to same for all shots, unless
         specified in something like NITPIC output file). 
