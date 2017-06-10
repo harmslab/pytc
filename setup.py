@@ -13,18 +13,18 @@ import numpy.distutils.misc_util
 # set up binding polynomial C extension
 ext = Extension('pytc.indiv_models.bp_ext', 
       ['src/binding_polynomial.c',
-       'src/_bp_ext.c'])
+       'src/_bp_ext.c'],include_dirs=["src"])
 
 # Need to add all dependencies to setup as we go!
 setup(name='pytc-fitter',
       packages=find_packages(),
-      version='1.1.0',
+      version='1.1.2',
       description="Python software package for analyzing Isothermal Titration Calorimetry data",
       long_description=open("README.rst").read(),
       author='Michael J. Harms',
       author_email='harmsm@gmail.com',
       url='https://github.com/harmslab/pytc',
-      download_url='https://github.com/harmslab/pytc/tarball/1.1.0',
+      download_url='https://github.com/harmslab/pytc/tarball/1.1.2',
       zip_safe=False,
       install_requires=["matplotlib","scipy","numpy","emcee","corner"],
       classifiers=['Programming Language :: Python'],
