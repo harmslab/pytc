@@ -80,7 +80,8 @@ class GlobalFit:
         expt_name = experiment.experiment_id
 
         # Go through all global parameters
-        for k in self._global_param_mapping.keys():
+        global_param_map = list(self._global_param_mapping.keys())
+        for k in global_param_map:
 
             # If the experiment links to that
             for expt in self._global_param_mapping[k]:
@@ -155,6 +156,8 @@ class GlobalFit:
             if expt_name not in [m[0] for m in self._global_param_mapping[global_param_name]]:
                 self._global_param_mapping[global_param_name].append((expt_name,expt_param))
 
+        self.delete_current_fit()
+
     def unlink_from_global(self,expt,expt_param):
         """
         Remove the link between a local fitting parameter and a global
@@ -185,6 +188,8 @@ class GlobalFit:
         # remove expt --> global link
         self._expt_dict[expt_name].model.update_aliases({expt_param:None})
 
+        self.delete_current_fit()
+
     def remove_global(self,global_param_name):
         """
         Remove a global parameter, unlinking all local parameters.
@@ -214,6 +219,7 @@ class GlobalFit:
         self._global_param_mapping.pop(global_param_name)
         self._global_params.pop(global_param_name)
 
+        self.delete_current_fit()
 
     def fit(self,fitter=fitters.MLFitter):
         """
@@ -466,6 +472,8 @@ class GlobalFit:
             del self._fitter
         except AttributeError:
             pass
+
+        self._prep_fit()
 
     def plot(self,correct_molar_ratio=False,subtract_dilution=False,
              color_list=None,data_symbol="o",linewidth=1.5,num_samples=100):
@@ -946,8 +954,6 @@ class GlobalFit:
 
         return self._global_param_mapping, expt_to_global
 
-
-
     #--------------------------------------------------------------------------
     # parameter guesses
 
@@ -998,6 +1004,8 @@ class GlobalFit:
                 raise KeyError(err)
         else:
             self._expt_dict[expt.experiment_id].model.update_guesses({param_name:param_guess})
+
+        self.delete_current_fit()
 
     #--------------------------------------------------------------------------
     # parameter ranges
@@ -1057,6 +1065,8 @@ class GlobalFit:
                 raise KeyError(err)
         else:
             self._expt_dict[expt.experiment_id].model.update_guess_ranges({param_name:param_range})
+
+        self.delete_current_fit()
 
     #--------------------------------------------------------------------------
     # fixed parameters
@@ -1120,6 +1130,7 @@ class GlobalFit:
         else:
             self._expt_dict[expt.experiment_id].model.update_fixed({param_name:param_value})
 
+        self.delete_current_fit()
 
     #--------------------------------------------------------------------------
     # parameter bounds
@@ -1179,6 +1190,8 @@ class GlobalFit:
                 raise KeyError(err)
         else:
             self._expt_dict[expt.experiment_id].model.update_bounds({param_name:param_bounds})
+
+        self.delete_current_fit()
 
     #--------------------------------------------------------------------------
     # Functions for updating values directly (used in gui)
