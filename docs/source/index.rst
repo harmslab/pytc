@@ -27,21 +27,22 @@ Features
 ========
 
  + Clean, pythonic API
- + Simple, cross-platform GUI based on `PyQt5 <https://riverbankcomputing.com/software/pyqt/intro>`_.
- + New models can be defined using a few lines of python code.
+ + Simple, cross-platform GUI based on `PyQt5 <https://riverbankcomputing.com/software/pyqt/intro>`_
+ + New models can be defined using a few lines of python code
  + Easy integration with `jupyter <https://jupyter.org/>`_ notebooks for 
-   writing custom fitting scripts.
+   writing custom fitting scripts
 
 Documentation
 =============
 
  + `Installation <installation.html>`_
- + `Fitting models using the API <https://github.com/harmslab/pytc-demos/>`_.
- + `Fitting models using the GUI <https://pytc-gui.readthedocs.io/en/latest/>`_.
- + `Fitting and statistics <statistics.html>`_.
- + `Description of individual experiment models included in package <indiv_models.html>`_.
- + `Description of global fits included in package <global_models.html>`_.
- + `Defining new models <writing_new_models.html>`_.
+ + `Fitting models using the API <https://github.com/harmslab/pytc-demos/>`_
+ + `Fit statistics <statistics.html>`_
+ + `Fit strategies <fitters.html>`_
+ + `Individual experiment models included in package <indiv_models.html>`_
+ + `Global fit models included in package <global_models.html>`_
+ + `Defining new models <writing_new_models.html>`_
+ + `Fitting models using the GUI <https://pytc-gui.readthedocs.io/en/latest/>`_
 
 .. warning::
     **pytc** will fit all sorts of complicated models to your data. It is up to
@@ -95,11 +96,10 @@ GUI
 
 The GUI is installed separately from the API. Instructions are 
 `here <https://pytc-gui.readthedocs.io/en/latest/installation.html>`_.  The GUI
-docs are `here <https://pytc-gui.readthedocs.io/en/latest/>`_.  A few 
-screenshots showing the GUI in action are below.
+docs are `here <https://pytc-gui.readthedocs.io/en/latest/>`_.  An animated gif
+showing the GUI in action is below.
 
-.. image:: images/gui_01.png
-.. image:: images/gui_02.png
+.. image:: images/pytc-gui-animation.gif
 
 
 .. toctree::
