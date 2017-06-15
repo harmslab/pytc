@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
+import numpy
 
 if sys.version_info[0] < 3:
     sys.exit('Sorry, Python < 3.x is not supported')
@@ -8,10 +9,9 @@ if sys.version_info[0] < 3:
 # Try using setuptools first, if it's installed
 from setuptools import setup, find_packages
 from setuptools.extension import Extension
-import numpy.distutils.misc_util
 
 # set up binding polynomial C extension
-ext = Extension('pytc.indiv_models.bp_ext',['src/_bp_ext.c'])
+ext = Extension('pytc.indiv_models.bp_ext',['src/_bp_ext.c'], include_dirs=[numpy.get_include()])
 
 # Need to add all dependencies to setup as we go!
 setup(name='pytc-fitter',
@@ -27,5 +27,4 @@ setup(name='pytc-fitter',
       install_requires=["matplotlib","scipy","numpy","emcee","corner"],
       package_data={"":["*.h","src/*.h"]},
       classifiers=['Programming Language :: Python'],
-      ext_modules=[ext],
-      include_dirs=numpy.distutils.misc_util.get_numpy_include_dirs())
+      ext_modules=[ext])
