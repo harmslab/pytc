@@ -37,8 +37,3 @@ g.plot()
 g.corner_plot()
 print(g.fit_as_csv)
 ```
-
-## Release Notes
-
-### v1.0
-Initial release of pytc.  Implemented individual and global fits.   
