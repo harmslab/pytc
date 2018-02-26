@@ -8,17 +8,29 @@ with new models.
  + [Graphical User Interface](https://github.com/harmslab/pytc-gui)
 
 ## Quick Start
- + Install via pip `sudo pip3 install pytc-fitter` (Mac/Linux), `python3 -m pip install pytc-fitter` (Windows)
- + Alternatively, clone from github and install 
-    ```
-    git clone https://github.com/harmslab/pytc.git
-    cd pytc
-    python3 setup.py install
-    ```
+
+### Graphical user interface (most users)
+ + [Windows](https://github.com/harmslab/pytc-gui/releases/download/1.2.2/pytc-gui_v1.2.2_setup.exe)
+ + [Mac](https://github.com/harmslab/pytc-gui/releases/download/1.2.2/pytc-gui_v1.2.2.dmg)
+ + [Linux instructions](https://pytc-gui.readthedocs.io/en/latest/installation.html)
+
+### Install API via pip (for Jupyter users)
+ + Mac/Linux: `sudo pip3 install pytc-fitter`
+ + Windows: `python3 -m pip install pytc-fitter`
+
+### Clone API from github (for developers, Jupyter users)
+
+```
+git clone https://github.com/harmslab/pytc.git
+cd pytc
+python3 setup.py install
+```
+
+## API demos
  + If jupyter is installed, you can clone the [pytc-demos](https://github.com/harmslab/pytc-demos)
    repo to see a collection of example fits.
 
-## Example script
+### Example script
 Fit a Ca2+/EDTA binding experiment.
 
 ```Python

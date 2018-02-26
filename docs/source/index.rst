@@ -4,6 +4,21 @@ pytc
 A python software package for analyzing Isothermal Titration Calorimetry data.
 The name is a `portmanteau <https://xkcd.com/739/>`_ of Python and ITC.  
 
+Download
+========
+
+Install graphical user interface (most users)
+---------------------------------------------
+
++ `windows <https://github.com/harmslab/pytc-gui/releases/download/1.2.2/pytc-gui_v1.2.2_setup.exe>`_
++ `apple <https://github.com/harmslab/pytc-gui/releases/download/1.2.2/pytc-gui_v1.2.2.dmg>`_
++ `linux (instructions) <https://pytc-gui.readthedocs.io/en/latest/installation.html>`_
+
+Install API (developers)
+------------------------
+
++ `instructions here <https://pytc.readthedocs.io/en/latest/installation.html>`_
+
 Introduction
 ============
 `pytc <https://github.com/harmslab/pytc>`_ is python software used to extract
