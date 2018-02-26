@@ -9,7 +9,7 @@ with new models.
 
 ## Quick Start
 
-### Graphical user interface (most users)
+### Install graphical user interface (most users)
  + [Windows](https://github.com/harmslab/pytc-gui/releases/download/1.2.2/pytc-gui_v1.2.2_setup.exe)
  + [Mac](https://github.com/harmslab/pytc-gui/releases/download/1.2.2/pytc-gui_v1.2.2.dmg)
  + [Linux instructions](https://pytc-gui.readthedocs.io/en/latest/installation.html)
