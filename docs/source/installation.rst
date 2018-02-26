@@ -4,6 +4,9 @@
 Installation
 ============
 
+These instructions are for installing the API.  If you want to install the GUI,
+please follow the instructions `here <https://pytc-gui.readthedocs.io/en/latest/installation.html>`_. 
+
 Dependencies
 ------------
  + `python3 <https://www.python.org/downloads/release/python-3>`_
@@ -59,11 +62,18 @@ Linux
 Windows
 -------
 
- 1. Install python3 either via `anaconda <https://www.continuum.io/downloads>`_ or
-    `winpython <https://winpython.github.io/>`_.  
- 2. In an anaconda or winpython terminal, type:
+These instructions assume that you do not already have anaconda installed. 
+
+ 1. Install the python 3.x version of anaconda `anaconda <https://www.anaconda.com/downloads>`_
+ 2. Open the :code:`Anaconda prompt` program.
+ 3. In the prompt, type:
 
     .. sourcecode:: bash
 
-        pip install pytc-fitter
+        python -m pip install pytc-fitter
+
+ 4. Open the :code:`Anaconda navigator` program.
+ 5. Start up a :code:`Jupyter notebook` instance.  
+ 6. Open a new notebook and type :code:`import pytc` into a cell.  If the cell
+    runs, you have successfully installed the pytc api.
 
