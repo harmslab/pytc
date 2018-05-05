@@ -11,3 +11,4 @@ from .single_site import SingleSite
 from .single_site_competitor import SingleSiteCompetitor
 from .blank import Blank
 from .binding_polynomial import BindingPolynomial
+from .assembly_auto_inhibition import AssemblyAutoInhibition
