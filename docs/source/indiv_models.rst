@@ -9,29 +9,29 @@ Basic model pipeline
 Under the hood, individual models do the following:
 
 1. Guess model parameters.
-2. Calculate the concentrations of all molecular species using guessed binding 
+2. Calculate the concentrations of all molecular species using guessed binding
    constants (as well as the titration shot sizes and initial concentrations
    in the cell and syringe).
 3. Calculate the heat change per shot using the guess reaction enthalpies and
-   species concentrations from (2). 
-4. Compare the calculated and measured heat changes at each shot.  
-5. Iterate through steps 2-4 using nonlinear regression to find maximum likelihood parameter estimates. 
+   species concentrations from (2).
+4. Compare the calculated and measured heat changes at each shot.
+5. Iterate through steps 2-4 using nonlinear regression to find maximum likelihood parameter estimates.
 
 Differences from other modeling approaches
 ==========================================
 
 1. In **pytc**, the heat of dilution is a fittable parameter within each model.
-   It is described as a linear function of titrant concentration.  This means 
-   that a blank titration should **not** be subtracted from the heats before 
+   It is described as a linear function of titrant concentration.  This means
+   that a blank titration should **not** be subtracted from the heats before
    fitting.  To incorporate a blank titration, globally fit the dilution for the
-   blank and production experiments (see the `demo <XX>`_ for an example). 
+   blank and production experiments (see the `demo <XX>`_ for an example).
 2. The stoichiometry of each model is fixed (rather than fittable). Instead,
    of a fractional stoichiometry, there is a fraction competent (:code:`fx_competent`)
    parameter that floats to account for the fact that not all molecules may
    be competent to bind in either the titrant or cell. This follows the approach
    used by `sedphat <http://www.analyticalultracentrifugation.com/sedphat/sedphat.htm>`_.
    If this value is very different than one, it may indicate a problem with the
-   experiment.  
+   experiment.
 
 Specific Models
 ===============
@@ -39,8 +39,8 @@ Specific Models
 Blank
 -----
 
-Titration of titrant into a cell without a stationary component. 
- 
+Titration of titrant into a cell without a stationary component.
+
 `indiv_models\.Blank <https://github.com/harmslab/pytc/blob/master/pytc/indiv_models/blank.py>`_
 
 
@@ -63,7 +63,7 @@ The change in heat for each shot :math:`i` (:math:`\Delta Q_{i}`) is:
 
     \Delta Q_{i} = q_{dilution,i},
 
-where :math:`[T]_{i}` is the concentration of titrant at shot :math:`i`, :math:`q_{slope}` is the slope of the heat of dilution (:code:`dilution_heat`) and :math:`q_{intercept}` is the intercept of the heat of dilution (:code:`dilution_intercept`).  
+where :math:`[T]_{i}` is the concentration of titrant at shot :math:`i`, :math:`q_{slope}` is the slope of the heat of dilution (:code:`dilution_heat`) and :math:`q_{intercept}` is the intercept of the heat of dilution (:code:`dilution_intercept`).
 
 Single-Site Binding
 -------------------
@@ -102,13 +102,13 @@ To describe this, we use the following equilibrium constant:
 
 Determine the relative populations of species in solution
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-We can only manipulate :math:`[T]_{total}` and :math:`[S]_{total}` experimentally, so our first goal is to determine the concentration of :math:`[ST]`, which we cannot manipulate or directly observe.  
+We can only manipulate :math:`[T]_{total}` and :math:`[S]_{total}` experimentally, so our first goal is to determine the concentration of :math:`[ST]`, which we cannot manipulate or directly observe.
 
 .. math::
     K = \frac{[ST]}{([S]_{total} - [ST])([T]_{total}-[ST])},
 .. math::
     K \Big ([S]_{total}[T]_{total} - [ST]([S]_{total} + [T]_{total}) + [ST]^2 \Big ) = [ST],
-.. math::    
+.. math::
     [S]_{total}[T]_{total} - [ST](S_{total} + T_{total}) + [ST]^{2} - [ST]/K = 0,
 .. math::
     [S]_{total}[T]_{total} - [ST]([S]_{total} + [T]_{total} + 1/K) + [ST]^2 = 0.
@@ -131,7 +131,7 @@ The change in heat for each shot :math:`i` (:math:`\Delta Q_{i}`) is:
 .. math::
     \Delta Q_{i} = V_{0}[S]_{total,i}(\Delta H(x_{ST,i} - x_{ST,i-1})) + q_{dilution,i},
 
-where :math:`V_{0}` is the volume of the cell (fixed) and :math:`\Delta H` is the enthalpy of binding. Note that we do not deal with dilution here, as **pytc** calculates :math:`x_{ST,i}` for the entire titration, accouting for dilution at each step.  :math:`V_{0}` is held constant as the total cell volume (not the volume of solution including the neck) as only the cell, not the neck, is detected in the signal.  
+where :math:`V_{0}` is the volume of the cell (fixed) and :math:`\Delta H` is the enthalpy of binding. Note that we do not deal with dilution here, as **pytc** calculates :math:`x_{ST,i}` for the entire titration, accouting for dilution at each step.  :math:`V_{0}` is held constant as the total cell volume (not the volume of solution including the neck) as only the cell, not the neck, is detected in the signal.
 
 
 Competitive ligand binding
@@ -222,7 +222,7 @@ The value of :math:`x_{P}` is given by:
     \gamma = -\frac{1}{c_{A}c_{B}}
 
 .. math::
-    \theta = arccos \Big ( \frac{-2\alpha^{3} + 9\alpha \beta -27\gamma}{2\sqrt{(\alpha^2 - 3 \beta)^3}} \Big) 
+    \theta = arccos \Big ( \frac{-2\alpha^{3} + 9\alpha \beta -27\gamma}{2\sqrt{(\alpha^2 - 3 \beta)^3}} \Big)
 
 .. math::
     x_{P} = \frac{2\sqrt{\alpha^2 - 3 \beta}\ cos(\theta/3) - \alpha}{3}
@@ -242,8 +242,8 @@ The change in heat for each shot :math:`i` (:math:`\Delta Q_{i}`) is:
 .. math::
     \Delta Q_{i} = V_{0}P_{total}(\Delta H_{A}(x_{PA,i} - f_{i}x_{PA,i-1}) + \Delta H_{B}(x_{PB,i} - f_{i}x_{PB,i-1})) + q_{dilution},
 
-where :math:`V_{0}` is the volume of the cell, :math:`\Delta H_{A}` is the enthalpy for binding ligand :math:`A`, :math:`\Delta H_{B}` is the enthalpy for binding ligand :math:`B`. :math:`f_{i}` is the dilution factor for each injection: 
- 
+where :math:`V_{0}` is the volume of the cell, :math:`\Delta H_{A}` is the enthalpy for binding ligand :math:`A`, :math:`\Delta H_{B}` is the enthalpy for binding ligand :math:`B`. :math:`f_{i}` is the dilution factor for each injection:
+
 .. math::
     f_{i} = exp(-V_{i}/V_{0}),
 
@@ -274,6 +274,112 @@ Model parameters
 |binding enthalpy for site 1     | :math:`\Delta H_{1}`   | :code:`dH1`                | thermodynamic |
 +--------------------------------+------------------------+----------------------------+---------------+
 | This will have as many :math:`\beta` and :math:`\Delta H` terms as sites defined in the model.       |
++--------------------------------+------------------------+----------------------------+---------------+
+|fraction competent              | ---                    | :code:`fx_competent`       | nuisance      |
++--------------------------------+------------------------+----------------------------+---------------+
+|slope of heat of dilution       | ---                    | :code:`dilution_heat`      | nuisance      |
++--------------------------------+------------------------+----------------------------+---------------+
+|intercept of heat of dilution   | ---                    | :code:`dilution_intercept` | nuisance      |
++--------------------------------+------------------------+----------------------------+---------------+
+
+Model Scheme
+~~~~~~~~~~~~
+The scheme is:
+
+.. image:: images/assembly-auto-inhibition_scheme.png
+
+blah
+
+
+Determine the relative populations of species in solution
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The first thing to note is that the binding polynomial :math:`P` is a partition function:
+
+.. math::
+    P = \sum_{i=0}^{n}\frac{[ST_{i}]}{[S]} = \sum_{i=0}^{n} \beta_{i}[T]^{i}
+
+This allows us to write equations for the average enthalphy and number of ligand molecules bound:
+
+.. math::
+    \langle \Delta H \rangle = \frac{\sum_{i=0}^{n} \Delta H_{i} \beta_{i}[T]^{i}} {\sum_{i=0}^{n} \beta_{i}[T]^{i}}
+
+and
+
+.. math::
+    \langle n \rangle = \frac{\sum_{i=0}^{n} i \beta_{i}[T]^{i}} {\sum_{i=0}^{n} \beta_{i}[T]^{i}}
+
+This means that obtaining the relative populations of species in solution is (relatively) simple:
+
+.. math::
+    [T]_{total} = [T]_{bound} + [T]_{free}
+
+.. math::
+    [T]_{total} = \langle n \rangle[S]_{total} + [T]_{free}
+
+.. math::
+    0 = \langle n \rangle[S]_{total} + [T]_{free} - [T]_{total}
+
+.. math::
+    0 = \frac{\sum_{i=0}^{n} i \beta_{i}[T]_{free}^{i}} {\sum_{i=0}^{n} \beta_{i}[T]_{free}^{i}}[S]_{total} + [T]_{free} - [T]_{total}
+
+This can then be solved numerically for a value of :math:`[T]_{free}`.
+
+Calculate heat changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+We can relate the heat at shot to the average enthalpies calculated using the value of :math:`T_{free}` over the titration.  Recalling:
+
+.. math::
+    \langle \Delta H \rangle = \frac{\sum_{i=0}^{n} \Delta H_{i} \beta_{i}[T]_{free}^{i}} {\sum_{i=0}^{n} \beta_{i}[T]_{free}^{i}}
+
+we can calculate the change in heat for shot :math:`j` as:
+
+.. math::
+    \Delta Q_{j} = V_{0} S_{total,j} (\langle \Delta H \rangle_{j} - \langle \Delta H \rangle_{j-1}) + q_{dilution,i}.
+
+
+Assembly Auto Inhibition
+------------------------
+This model was described by XXX.
+
+`indiv_models\.AssemblyAutoInhibition <https://github.com/harmslab/pytc/blob/master/pytc/indiv_models/assembly_auto_inhibition.py>`_
+
+
+Model parameters
+~~~~~~~~~~~~~~~~
++--------------------------------+------------------------+----------------------------+---------------+
+|parameter                       | variable               | parameter name             | class         |
++================================+========================+============================+===============+
+|association constant for        |                        |                            |               |
+|binding of the first ligand to  |                        |                            |               |
+|the protein (M)                 | :math:`K_{1}`          | :code:`Klig1`              | thermodynamic |
++--------------------------------+------------------------+----------------------------+---------------+
+|association constant for        |                        |                            |               |
+|binding of the second ligand to |                        |                            |               |
+|the protein (M)                 | :math:`K_{2}`          | :code:`Klig2`              | thermodynamic |
++--------------------------------+------------------------+----------------------------+---------------+
+|"united normalized" association |                        |                            |               |
+|constant for formation of the   |                        |                            |               |
+|protein oligomer (M)            | :math:`K_{olig}`       | :code:`Kolig`              | thermodynamic |
++--------------------------------+------------------------+----------------------------+---------------+
+|enthalpy change for             |                        |                            |               |
+|binding of the first ligand to  |                        |                            |               |
+|the protein                     | :math:`\Delta H_{1}`   | :code:`dHlig1`             | thermodynamic |
++--------------------------------+------------------------+----------------------------+---------------+
+|enthalpy change for             |                        |                            |               |
+|binding of the second ligand to |                        |                            |               |
+|the protein                     | :math:`\Delta H_{2}`   | :code:`dHlig2`             | thermodynamic |
++--------------------------------+------------------------+----------------------------+---------------+
+|enthalpy change for formation   |                        |                            |               |
+|of the protein oligomer         |                        |                            |               |
+|                                | :math:`\Delta H_{olig}`| :code:`dHolig`             | thermodynamic |
++--------------------------------+------------------------+----------------------------+---------------+
+| stoichiometry of ligands in    | :math:`n_{lig}`        | :code:`n_lig`              | thermodynamic |
+| the protein oligomer           |                        |                            |               |
++--------------------------------+------------------------+----------------------------+---------------+
+| stoichiometry of proteins in   | :math:`n_{prot}`       | :code:`n_prot`             | thermodynamic |
+| the protein oligomer           |                        |                            |               |
 +--------------------------------+------------------------+----------------------------+---------------+
 |fraction competent              | ---                    | :code:`fx_competent`       | nuisance      |
 +--------------------------------+------------------------+----------------------------+---------------+
@@ -320,7 +426,7 @@ This allows us to write equations for the average enthalphy and number of ligand
 .. math::
     \langle \Delta H \rangle = \frac{\sum_{i=0}^{n} \Delta H_{i} \beta_{i}[T]^{i}} {\sum_{i=0}^{n} \beta_{i}[T]^{i}}
 
-and 
+and
 
 .. math::
     \langle n \rangle = \frac{\sum_{i=0}^{n} i \beta_{i}[T]^{i}} {\sum_{i=0}^{n} \beta_{i}[T]^{i}}
@@ -339,7 +445,7 @@ This means that obtaining the relative populations of species in solution is (re
 .. math::
     0 = \frac{\sum_{i=0}^{n} i \beta_{i}[T]_{free}^{i}} {\sum_{i=0}^{n} \beta_{i}[T]_{free}^{i}}[S]_{total} + [T]_{free} - [T]_{total}
 
-This can then be solved numerically for a value of :math:`[T]_{free}`.  
+This can then be solved numerically for a value of :math:`[T]_{free}`.
 
 Calculate heat changes
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -353,4 +459,3 @@ we can calculate the change in heat for shot :math:`j` as:
 
 .. math::
     \Delta Q_{j} = V_{0} S_{total,j} (\langle \Delta H \rangle_{j} - \langle \Delta H \rangle_{j-1}) + q_{dilution,i}.
-
