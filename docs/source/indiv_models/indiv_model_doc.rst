@@ -10,7 +10,7 @@ The Name of the Model
 Scheme
 ~~~~~~
 DIRECTIONS: Put a png image describing the scheme in the "images" folder and link to it here.
-.. image:: images/assembly-auto-inhibition_scheme.png
+.. image:: assembly-auto-inhibition_scheme.png
     :scale: 25%
     :alt: model scheme
     :align: center
