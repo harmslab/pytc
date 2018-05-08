@@ -1,8 +1,8 @@
 :orphan:
 
-=================
-Global ITC Models
-=================
+==============
+Global Fitting
+==============
 
 Simple global parameters
 ------------------------
@@ -13,7 +13,7 @@ following code takes two experimental replicates and fits them to a single
 :math:`K` and :math:`\Delta H`.  The code that actually does the linking is
 highlighted with :code:`***`
 
-.. sourcecode:: python
+.. code:: python
 
     import pytc
 
@@ -35,155 +35,149 @@ highlighted with :code:`***`
     g.link_to_global(a,"dH","global_dH")
     g.link_to_global(b,"dH","global_dH")
     # **********************************
-     
+
     # Fit and show results
     g.fit()
     print(g.fit_as_csv)
 
-The new global parameters are simply assigned a name (:code:`global_K` and 
+The new global parameters are simply assigned a name (:code:`global_K` and
 :code:`global_dH`) that are individually fit.  The fitter takes care of the
-rest. The output of this fit will look like the following.  The 
+rest. The output of this fit will look something like the following.  The
 global parameters appear as :code:`global_K` and :code:`global_dH`.
 
-.. code:: 
+|   type,name,dh_file,value,uncertainty,fixed,guess,lower_bound,upper_bound
+|   global,global_K,NA,3.84168e+07,1.40582e-06,float,1.00000e+06,-inf,inf
+|   global,global_dH,NA,-4.64104e+03,7.96280e-03,float,-4.00000e+03,-inf,inf
+|   ...
 
-    # Fit successful? True
-    # Fit sum of square residuals: 0.634237669456395
-    # Fit num param: 8
-    # Fit num observations: 108
-    # Fit num degrees freedom: 100
-    type,name,dh_file,value,uncertainty,fixed,guess,lower_bound,upper_bound
-    global,global_K,NA,3.84168e+07,1.40582e-06,float,1.00000e+06,-inf,inf
-    global,global_dH,NA,-4.64104e+03,7.96280e-03,float,-4.00000e+03,-inf,inf
-    ...
+Global connectors
+-----------------
 
-Proton linked
---------------
+**pytc** also defines global connectors that link titrations to one
+another.  For example, one might perform the same binding experiment at different
+temperatures and use that information to perform a Van 't Hoff analysis.
 
-This fits a global model to a collection of ITC experiments collected in buffers
-of the same pH, but different ionization enthalpies. 
+Implemented connectors
+~~~~~~~~~~~~~~~~~~~~~~
 
-`global_connectors\.NumProtons <https://github.com/harmslab/pytc/blob/master/pytc/global_connectors/num_protons.py>`_
++ `Proton-linked <global_models/proton-linked.html>`_
++ `Van 't Hoff <global_models/vant-hoff.html>`_
++ `Extended Van 't Hoff <global_models/vant-hoff-extended.html>`_
 
-This is useful for analyzing a binding reaction that involves the gain or loss of
-a proton.  The measured enthalpy will have a binding component and an ionization
-component.  These can be separated by performing ITC experiments using buffers
-with different ionization enthalpies. 
+Example 1: van 't Hoff fit
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Model parameters
-~~~~~~~~~~~~~~~~
-+---------------------------------+------------------------------+----------------------------+---------------+
-|parameter                        | variable                     | parameter name             | class         |
-+=================================+==============================+============================+===============+
-|association constant             | :math:`\Delta H_{intrinsic}` | :code:`dH_intrinsic`       | thermodynamic |
-+---------------------------------+------------------------------+----------------------------+---------------+
-|binding enthalpy                 | :math:`n_{proton}`           | :code:`num_protons`        | thermodynamic |
-+---------------------------------+------------------------------+----------------------------+---------------+
+The following code takes two experiments, done at :math:`5\ ^{\circ}C` and
+:math:`10\ ^{\circ}C` and then uses them to extract the van't Hoff enthalpy.
+(In practice, this would require more than two temperatures, but it illustrates
+the approach).  The code that actually does the linking is highlighted with
+:code:`***`
 
-Required data for each experiment
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-+---------------------------------+--------------------------------------+----------------------------+
-|data                             | variable                             | data                       |
-+=================================+======================================+============================+
-|ioinzation enthalpy              | :math:`\Delta H_{ionization,buffer}` | :code:`ionization_enthalpy`|      
-+---------------------------------+--------------------------------------+----------------------------+
+.. code:: python
 
-Model Scheme
-~~~~~~~~~~~~
+    import pytc
+    from pytc import global_connectors
 
-.. math::
-    \Delta H_{obs,buffer} = \Delta H_{intrinsic} + \Delta H_{ionization,buffer} \times n_{proton},
+    # Create fitter
+    g = pytc.GlobalFit()
 
-where :math:`\Delta H_{intrinsic}` is the buffer-independent binding enthalpy, 
-:math:`\Delta H_{ionization,buffer}` is the buffer ionization enthalpy, and 
-:math:`n_{proton}` is the number of protons gained or lost.  
+    # Load experiments
+    t5 = pytc.ITCExperiment("temp-dependence/5C.DH",
+                            pytc.indiv_models.SingleSite,
+                            shot_start=1)
+    g.add_experiment(t5)
 
+    t10 = pytc.ITCExperiment("temp-dependence/10C.DH",
+                             pytc.indiv_models.SingleSite,
+                             shot_start=1)
+    g.add_experiment(t10)
 
-Van't Hoff
-----------
+    # **********************************
+    # Create a van't hoff GlobalConnector, assigning the prefix "vh" to each parameter
+    vh_conn = pytc.global_connectors.VantHoff("vh")
 
-A standard Van't Hoff analysis assuming a constant enthalpy.
+    # Link 5 C experiment into connector
+    g.link_to_global(t5,"dH",vh_conn.dH)
+    g.link_to_global(t5,"K",vh_conn.K)
 
-`global_connectors\.VantHoff <https://github.com/harmslab/pytc/blob/master/pytc/global_connectors/vant_hoff.py>`_
+    # Link 10 C experiment into connector
+    g.link_to_global(t10,"dH",vh_conn.dH)
+    g.link_to_global(t10,"K",vh_conn.K)
+    # **********************************
 
-Fits a collection of ITC experiments collected in identical buffer conditions, but
-at different temperatures.  The temperature of each experiment is taken from the
-heats file.  Allows extraction of the Van't Hoff enthalpy and binding constant 
-for the reaction at a defined reference temperature.
+    # Fit and show results
+    g.fit()
+    print(g.fit_as_csv)
 
-Model parameters
-~~~~~~~~~~~~~~~~
-+---------------------------------+------------------------------+----------------------------+---------------+
-|parameter                        | variable                     | parameter name             | class         |
-+=================================+==============================+============================+===============+
-|association constant             | :math:`K_{ref}`              | :code:`K`                  | thermodynamic |
-+---------------------------------+------------------------------+----------------------------+---------------+
-|binding enthalpy                 | :math:`\Delta H_{vh}`        | :code:`dH`                 | thermodynamic |
-+---------------------------------+------------------------------+----------------------------+---------------+
+The new global parameters are assigned the name "vh_K_ref" and
+"vh_dH_vanthoff".  The output of this fit will look something like the following.
 
-Required data for each experiment
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-+---------------------------------+--------------------------------------+----------------------------+
-|data                             | variable                             | data                       |
-+=================================+======================================+============================+
-|temperature (K)                  | :math:`T`                            | :code:`temperature`        |      
-+---------------------------------+--------------------------------------+----------------------------+
+|    type,name,exp_file,value,stdev,bot95,top95,fixed,guess,lower_bound,upper_bound
+|    global,vh_K_ref,NA,9.06284e+03,2.66839e+02,8.53780e+03,9.64146e+03,False,1.00000e+00,-inf,inf
+|    global,vh_dH_vanthoff,NA,-6.23127e+03,1.15980e+02,-6.46163e+03,-5.96134e+03,False,0.00000e+00,-inf,inf
+|    ...
 
-Model Scheme
-~~~~~~~~~~~~
+Note the similarity to the simple global fit.  The main difference is that we have
+defined a connector (:code:`vh_conn`) that we link variables to as opposed to a
+name: for example, :code:`vh_conn.K` rather than :code:`"K_global"`.
 
-.. math::
-    \Delta H = \Delta H_{vh}
-.. math::
-    K = K(T_{ref})exp \Big ( \frac{-\Delta H_{vh}}{R} \Big (\frac{1}{T} - \frac{1}{T_{ref}} \Big ) \Big )
+Example 2:
+~~~~~~~~~~
 
-By performing experiments at a minimum of two temperatures, one can extract the
-Van't Hoff enthalpy :math:`\Delta H_{vh}` and binding constant at the reference 
-temperature :math:`K(T_{ref})`.
+The following code takes two experiments, one in Tris and another in Imidazole,
+and uses them to extract the buffer-independent binding enthalpy and number of
+protons released (or taken up) upon binding.  The code that actually does the
+linking is highlighted with :code:`***`
 
+.. code:: python
 
-Extended Van't Hoff
--------------------
+    import pytc
+    from pytc import global_connectors
 
-An extended Van't Hoff analysis that assumes constant heat capacity.
+    # define buffer ionization enthalpies.
+    # goldberg et al (2002) Journal of Physical and Chemical Reference Data 31 231,  doi: 10.1063/1.1416902
+    TRIS_IONIZATION_DH = 47.45/4.184*1000
+    IMID_IONIZATION_DH = 36.64/4.184*1000
 
-`global_connectors\.VantHoff <https://github.com/harmslab/pytc/blob/master/pytc/global_connectors/vant_hoff_extended.py>`_
+    # Create fitter
+    g = pytc.GlobalFit()
 
-Fits a collection of ITC experiments collected in identical buffer conditions, but
-at different temperatures.  The temperature of each experiment is taken from the
-heats file.  Allows extraction of the heat capacity, as well as the enthalpy and 
-binding constant at a reference temperature. 
+    # Load in an experiment done in tris buffer
+    tris = pytc.ITCExperiment("demos/ca-edta/tris-01.DH",
+                              pytc.indiv_models.SingleSite,
+                              shot_start=2)
+    tris.ionization_enthalpy = TRIS_IONIZATION_DH
+    g.add_experiment(tris)
 
-Model parameters
-~~~~~~~~~~~~~~~~
-+---------------------------------+------------------------------+----------------------------+---------------+
-|parameter                        | variable                     | parameter name             | class         |
-+=================================+==============================+============================+===============+
-|association constant             | :math:`K_{ref}`              | :code:`K`                  | thermodynamic |
-+---------------------------------+------------------------------+----------------------------+---------------+
-|binding enthalpy                 | :math:`\Delta H_{ref}`       | :code:`dH`                 | thermodynamic |
-+---------------------------------+------------------------------+----------------------------+---------------+
-|heat capacity                    | :math:`\Delta C_{p}`         | :code:`dCp`                | thermodynamic |
-+---------------------------------+------------------------------+----------------------------+---------------+
+    # Imidazole buffer experiment
+    imid = pytc.ITCExperiment("demos/ca-edta/imid-01.DH",
+                              pytc.indiv_models.SingleSite,
+                              shot_start=2)
+    imid.ionization_enthalpy = IMID_IONIZATION_DH
+    g.add_experiment(imid)
 
-Required data for each experiment
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-+---------------------------------+--------------------------------------+----------------------------+
-|data                             | variable                             | data                       |
-+=================================+======================================+============================+
-|temperature (K)                  | :math:`T`                            | :code:`temperature`        |      
-+---------------------------------+--------------------------------------+----------------------------+
+    # **********************************
+    # Create a NumProtons GlobalConnector, assigning the prefix "np" to each parameter
+    num_protons = global_connectors.NumProtons("np")
+    g.link_to_global(tris,"dH",num_protons.dH)
+    g.link_to_global(imid,"dH",num_protons.dH)
+    # **********************************
 
-Model Scheme
-~~~~~~~~~~~~
+    # Fit and show results
+    g.fit()
+    print(g.fit_as_csv)
 
-.. math::
-    \Delta H(T) = \Delta H_{ref} + \Delta C_{p}(T - T_{ref})
+This will spit out:
 
-.. math::
-    K = K(T_{ref})exp \Big ( \frac{-\Delta H_{ref}}{R} \Big (\frac{1}{T} - \frac{1}{T_{ref}} \Big ) + \frac{\Delta C_{p}}{R} \Big ( ln(T/T_{re}) + T/T_{ref} - 1 \Big ) \Big )
+|   type,name,dh_file,value,uncertainty,fixed,guess,lower_bound,upper_bound
+|   global,np_num_H,NA,-9.79065e-01,1.15256e+00,float,1.00000e-01,-inf,inf
+|   global,np_dH_intrinsic,NA,-4.63537e+02,1.08227e-02,float,0.00000e+00,-inf,inf
+|   ...
 
-By performing experiments at a minimum of two temperatures, one can extract the
-heat capacity :math:`\Delta C_{p}`, the enthalpy at a reference temperture 
-:math:`\Delta H_{ref}` and the binding constant at a reference temperature 
-:math:`K_{ref}`.
+The major difference between this code and the van't Hoff analysis is the
+line in which we assign the ionization enthalpy for each experiment (for example,
+:code:`tris.ionization_enthalpy = TRIS_IONIZATION_DH`). This provides the
+information required by the :code:`NumProtons` class do perform the fit.  If you
+are using a different global connector, you could set different properties in
+this way (pH, competitor concentration, etc.). Note: :code:`experiment.temperature`
+is always defined in ITC output, so it should never have to be set manually.
