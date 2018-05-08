@@ -4,18 +4,16 @@
 Writing New ITC Models
 ======================
 
-There are two types of models in **pytc**: individual models and global models.
+There are two types of models in **pytc**: individual models and global connectors.
 Individual models describe a single ITC experiment under a single set of
-conditions.  Global models describe relationships between individual ITC
-experiments. Individual models and global models are both appended to
+conditions.  Global connectors describe relationships between individual ITC
+experiments. Individual models and global connectors are both appended to
 instances of :code:`pytc.GlobalFit`, which then simultaneously fits parameters
-from all models.
+from all models.  See the `individual models <indiv_models.html>`_ and
+`global connectors <global_models.html>`_ pages for more details.
 
-See `here <indiv_models.html>`_ for descriptions of the individual models
-already implemented. See `here <global_models.html>`_ for the global models
-already implemented.
-
-The following sections describe how to write new individual and global models.
+The following sections describe how to write new individual models and global
+connectors.
 
 Individual models
 =================
@@ -25,10 +23,10 @@ These models describe a single ITC experiment.  They are passed to
 individual experiment.
 
 To define a new fitting model, create a new subcass of
-:code:`pytc.indiv_models.ITCModel`.  Here is an implementation of a single-site
-binding model. A full description of the model is `here <indiv_models.html>`_.
+:code:`pytc.indiv_models.ITCModel`.  Here is an implementation of a
+`single-site binding model <indiv_models/single-site.html>`_
 
-.. sourcecode:: python
+.. code:: python
 
     import pytc
 
@@ -56,7 +54,7 @@ binding model. A full description of the model is `here <indiv_models.html>`_.
 
             return self._cell_volume*S_conc_corr[1:]*X + self.dilution_heats
 
-The new class does two things.
+The new class does two things:
  + It defines a method called :code:`param_defintion` that defines the
    fittable parameters and reasonable guesses for those parameters as arguments
    to the method.
@@ -71,7 +69,7 @@ The requirements for an individual model are:
    guess for that parameter.
  + Expose a :code:`dQ` property that gives the heat change per shot.
 
-More complex models might require a few additional pieces of code.
+More complex models might require a few additional pieces of code:
  + To pass information to the model that is not present in a .DH file,
    define a new :code:`__init__` function that has new arguments.  For example,
    one might define an :code:`__init__` function that takes the pH of the
@@ -79,7 +77,7 @@ More complex models might require a few additional pieces of code.
    function, it should then call :code:`super().__init__(...)`, where
    :code:`...` contains the normal arguments to :code:`ITCModel.__init__`.
    See `pytc\/indiv_models\/single_site_competitor.py <https://github.com/harmslab/pytc/blob/master/pytc/indiv_models/single_site_competitor.py>`_ as an example.
- + To keep track of the concentration of something else in the cell besides theax
+ + To keep track of the concentration of something else in the cell besides the
    titrant and stationary species, define a new :code:`__init__` function that
    titrates this species.  See the :code:`__init__` function defined for
    `pytc\/indiv_models\/single_site_competitor.py <https://github.com/harmslab/pytc/blob/master/pytc/indiv_models/single_site_competitor.py>`_ as an example.
@@ -89,10 +87,10 @@ More complex models might require a few additional pieces of code.
    `pytc\/indiv_models\/binding_polynomial.py <https://github.com/harmslab/pytc/blob/master/pytc/indiv_models/binding_polynomial.py>`_ as an example.
 
 
-Global models
-=============
+Global connectors
+=================
 
-Global models describe how binding thermodynamics should change between
+Global connectors describe how binding thermodynamics should change between
 experiments.
 
 A good example of this is a binding reaction that involves the gain or loss of
@@ -110,21 +108,13 @@ where :math:`\Delta H_{intrinsic}` is the buffer-independent binding enthalpy,
 
 One can encode this relationship using a subclass of
 :code:`pytc.global_models.GlobalConnector`.  We will illustrate this by
-implementing the relationship between buffer ionization enthalpy and observed
-enthalpy from above.
+implementing the relationship between buffer ionization enthalpy and observed enthalpy.
 
-Define the :code:`GlobalConnector` object
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-First, we'll define :code:`NumProtons`, the subclass of :code:`GlobalConnector`
-that encodes the relationship.
-
-.. sourcecode:: python
+.. code:: python
 
     import pytc
-    from pytc import global_models
 
-    class NumProtons(global_models.GlobalConnector):
+    class NumProtons(pytc.global_models.GlobalConnector):
 
         param_guesses = {"dH_intrinsic":0.1,"num_H",0.1}
         required_data = ["ionization_enthalpy"]
@@ -161,92 +151,7 @@ The general requirements for these :code:`GlobalConnector` requirements are:
  + There is no limit to the number of parameters, required data, or output
    methods.
 
-
-Link fit parameters to the object
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Once the :code:`GlobalConnector` object is defined, it can then be linked to
-individual experimental model parameters in a way directly analagous to simple
-global fit parameters.  As before, we'll show an example and then describe it.
-
-.. sourcecode:: python
-
-    # --------------------------------------------------------------------
-    # define buffer ionization enthalpies.
-    # goldberg et al (2002) Journal of Physical and Chemical Reference Data 31 231,  doi: 10.1063/1.1416902
-    TRIS_IONIZATION_DH = 47.45/4.184*1000
-    IMID_IONIZATION_DH = 36.64/4.184*1000
-
-    # --------------------------------------------------------------------
-    # Create a global fitting instance
-    g = pytc.GlobalFit()
-
-    # ----------------------------------------------------
-    # Create an instance of the connector we defined above
-    num_protons = NumProtons("np")
-
-    # ------------------------------------------------------------------------------------
-    # Load in an experiment done in tris buffer experiment
-    tris = pytc.ITCExperiment("demos/ca-edta/tris-01.DH",pytc.indiv_models.SingleSite,shot_start=2)
-
-    # Assign ionization enthalpy of experiment
-    tris.ionization_enthalpy = TRIS_IONIZATION_DH
-
-    # Add the experiment to the fitter
-    g.add_experiment(tris)
-
-    # Assign the local variable "dH" to the global connector method
-    g.link_to_global(tris,"dH",num_protons.dH)
-
-    # ------------------------------------------------------------------------------------
-    # Imidazole buffer experiment
-    imid = pytc.ITCExperiment("demos/ca-edta/imid-01.DH",pytc.indiv_models.SingleSite,shot_start=2)
-
-    # Assign ionization enthalpy of experiment
-    imid.ionization_enthalpy = IMID_IONIZATION_DH
-
-    # Add the experiment to the fitter
-    g.add_experiment(imid)
-
-    # Assign the local variable "dH" to the global connector method
-    g.link_to_global(imid,"dH",num_protons.dH)
-
-    # --------------------------------------------------------------------
-    # Do a global fit and show results
-    g.fit()
-    print(g.fit_as_csv)
-
-This will spit out:
-
-|   # Fit successful? True
-|   # Fit sum of square residuals: 1.1482376047181797
-|   # Fit num param: 10
-|   # Fit num observations: 108
-|   # Fit num degrees freedom: 98
-|   type,name,dh_file,value,uncertainty,fixed,guess,lower_bound,upper_bound
-|   global,np_num_H,NA,-9.79065e-01,1.15256e+00,float,1.00000e-01,-inf,inf
-|   global,np_dH_intrinsic,NA,-4.63537e+02,1.08227e-02,float,0.00000e+00,-inf,inf
-|   ...
-
-The lines containing :code:`np_num_H` and :code:`np_dH_intrinsic` are the
-outputs from the new global fit.
-
-There are three key things in this code:
- + It creates an instance of :code:`NumProtons`.  This takes a required argument
-   called :code:`name` that is used to identify which :code:`GlobalConnector`
-   each parameter is associated with. In this case, :code:`name="np"`, so the
-   string :code:`"np_"` is appended to the parameters when they are output.
- + It assigns :code:`.ionization_enthalpy` to each experiment.  This is how
-   :code:`experiment.ionization_enthalpy` is accessed in the :code:`NumProtons.dH`
-   function.  If you were implementing a different model, you could send different
-   properties here (pH, competitor concentration, etc.).  NOTE:
-   :code:`experiment.temperature` is already defined and does not need to be set
-   manually.
- + It links the :code:`"dH"` parameter from each experiment to
-   :code:`num_protons.dH`.  The linking uses the *name* of the output function,
-   but does not call it (e.g. it is :code:`num_protons.dH` **NOT**
-   :code:`num_protons.dH()`)
-
-More complex models might require a few additional pieces.
+More complex models might require a few additional pieces of code:
  + To pass information to the model that does not vary across experiments,
    define a new :code:`__init__` function that has new arguments.  For example,
    one might define an :code:`__init__` function that takes the reference
