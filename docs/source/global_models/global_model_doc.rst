@@ -7,8 +7,8 @@ An extended Van't Hoff analysis that assumes constant heat capacity.
 
 Fits a collection of ITC experiments collected in identical buffer conditions, but
 at different temperatures.  The temperature of each experiment is taken from the
-heats file.  Allows extraction of the heat capacity, as well as the enthalpy and 
-binding constant at a reference temperature. 
+heats file.  Allows extraction of the heat capacity, as well as the enthalpy and
+binding constant at a reference temperature.
 
 Model parameters
 ~~~~~~~~~~~~~~~~
@@ -27,7 +27,7 @@ Required data for each experiment
 +---------------------------------+--------------------------------------+----------------------------+
 |data                             | variable                             | data                       |
 +=================================+======================================+============================+
-|temperature (K)                  | :math:`T`                            | :code:`temperature`        |      
+|temperature (K)                  | :math:`T`                            | :code:`temperature`        |
 +---------------------------------+--------------------------------------+----------------------------+
 
 Model Scheme
@@ -40,6 +40,6 @@ Model Scheme
     K = K(T_{ref})exp \Big ( \frac{-\Delta H_{ref}}{R} \Big (\frac{1}{T} - \frac{1}{T_{ref}} \Big ) + \frac{\Delta C_{p}}{R} \Big ( ln(T/T_{re}) + T/T_{ref} - 1 \Big ) \Big )
 
 By performing experiments at a minimum of two temperatures, one can extract the
-heat capacity :math:`\Delta C_{p}`, the enthalpy at a reference temperture 
-:math:`\Delta H_{ref}` and the binding constant at a reference temperature 
+heat capacity :math:`\Delta C_{p}`, the enthalpy at a reference temperture
+:math:`\Delta H_{ref}` and the binding constant at a reference temperature
 :math:`K_{ref}`.
