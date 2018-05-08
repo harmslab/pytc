@@ -10,7 +10,7 @@ Assembly Auto Inhibition
 Scheme
 ~~~~~~
 
-.. image:: images/assembly-auto-inhibition_scheme.png
+.. image:: assembly-auto-inhibition_scheme.png
     :scale: 25%
     :alt: model scheme
     :align: center

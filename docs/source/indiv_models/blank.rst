@@ -18,11 +18,11 @@ Parameters
 
 Heat
 ~~~~
-The change in heat for each shot :math:`i` (:math:`\Delta Q_{i}`) is:
+The heat for each shot :math:`i` (:math:`q_{i}`) is:
 
 .. math::
     q_{dilution,i} = [T]_{i} \times q_{slope} + q_{intercept},
 
-    \Delta Q_{i} = q_{dilution,i},
+    q_{i} = q_{dilution,i},
 
 where :math:`[T]_{i}` is the concentration of titrant at shot :math:`i`, :math:`q_{slope}` is the slope of the heat of dilution (:code:`dilution_heat`) and :math:`q_{intercept}` is the intercept of the heat of dilution (:code:`dilution_intercept`).

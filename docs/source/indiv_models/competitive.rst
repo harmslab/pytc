@@ -101,7 +101,7 @@ Once this is known :math:`x_{PA}` and :math:`x_{PB}` are uniquely determined by:
 
 Heat
 ~~~~
-The change in heat for each shot :math:`i` (:math:`q_{i}`) is:
+The heat for each shot :math:`i` (:math:`q_{i}`) is:
 
 .. math::
     q_{i} = V_{0}P_{total}(\Delta H_{A}(x_{PA,i} - f_{i}x_{PA,i-1}) + \Delta H_{B}(x_{PB,i} - f_{i}x_{PB,i-1})) + q_{dilution},
@@ -119,4 +119,3 @@ where :math:`V_{0}` is the volume of the cell and :math:`V_{i}` is the volume of
     q_{i} = V_{0}P_{total,i}(\Delta H_{A}(x_{PA,i} - x_{PA,i-1}) + \Delta H_{B}(x_{PB,i} - x_{PB,i-1})) + q_{dilution}.
 
 Note that :math:`V_{0}` is held constant (it is the cell volume) as only that volume is detected, not the neck of the cell.
-

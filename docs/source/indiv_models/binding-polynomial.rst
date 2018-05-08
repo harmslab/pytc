@@ -94,6 +94,4 @@ We can relate the heat at shot to the average enthalpies calculated using the va
 we can calculate the change in heat for shot :math:`j` as:
 
 .. math::
-    \q_{j} = V_{0} S_{total,j} (\langle \Delta H \rangle_{j} - \langle \Delta H \rangle_{j-1}) + q_{dilution,i}.
-
-
+    q_{j} = V_{0} S_{total,j} (\langle \Delta H \rangle_{j} - \langle \Delta H \rangle_{j-1}) + q_{dilution,i}.
