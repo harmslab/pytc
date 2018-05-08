@@ -36,6 +36,7 @@ Installation from source (for developers)
 -----------------------------------------
 
 .. sourcecode:: bash
+
     git clone https://github.com/harmslab/pytc.git
     cd pytc
     python3 setup.py develop

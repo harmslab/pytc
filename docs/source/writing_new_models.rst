@@ -23,8 +23,16 @@ These models describe a single ITC experiment.  They are passed to
 individual experiment.
 
 To define a new fitting model, create a new subcass of
-:code:`pytc.indiv_models.ITCModel`.  Here is an implementation of a
-`single-site binding model <indiv_models/single-site.html>`_
+:code:`pytc.indiv_models.ITCModel`.  Place the class (and any accessory code) in
+a single file in the :code:`pytc/indiv_models/` directory.  Then modify the
+file :code:`pytc/indiv_models/__init__.py` to import the new class.
+
+.. code:: python
+
+    from .new_model_file import NewModelClass
+
+Here is a complete implementation of a
+`single-site binding model <indiv_models/single-site.html>`_.
 
 .. code:: python
 
@@ -87,6 +95,10 @@ More complex models might require a few additional pieces of code:
    `pytc\/indiv_models\/binding_polynomial.py <https://github.com/harmslab/pytc/blob/master/pytc/indiv_models/binding_polynomial.py>`_ as an example.
 
 
+
+
+
+
 Global connectors
 =================
 
@@ -107,8 +119,17 @@ where :math:`\Delta H_{intrinsic}` is the buffer-independent binding enthalpy,
 :math:`n_{proton}` is the number of protons gained or lost.
 
 One can encode this relationship using a subclass of
-:code:`pytc.global_models.GlobalConnector`.  We will illustrate this by
-implementing the relationship between buffer ionization enthalpy and observed enthalpy.
+:code:`pytc.global_models.GlobalConnector`.  Place the new class (and any
+accessory code) in a single file in the :code:`pytc/global_connectors/``
+directory.  Then modify the file :code:`pytc/global_connectors/__init__.py` to
+import the new class.
+
+.. code:: python
+
+    from .new_model_file import NewModelClass
+
+The following class implements a :code:`GlobalConnector` that describes the
+relationship between buffer ionization enthalpy and observed enthalpy.
 
 .. code:: python
 
@@ -161,17 +182,3 @@ More complex models might require a few additional pieces of code:
  + Models can implement multiple output functions.  For example
    `pytc.global_connectors.VantHoff <https://github.com/harmslab/pytc/blob/master/pytc/global_connectors/vant_hoff.py>`_
    has both a :code:`dH` and :code:`K` output function.
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
-
-   _api/pytc.rst
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
