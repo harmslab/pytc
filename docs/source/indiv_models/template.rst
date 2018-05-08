@@ -1,6 +1,7 @@
 The Name of the Model
 ---------------------
-DIRECTIONS: Update the name of the model and change the following four lines
+
+DIRECTIONS: Update the name of the model and change the following.
 
 + A one sentence description of the model.
 + Contributed by: Jane Doe, [email, url, other info you wish to provide]
@@ -11,15 +12,32 @@ A longer description of the model, if desired/needed.
 
 Scheme
 ~~~~~~
-DIRECTIONS: Put a png image describing the scheme in the "images" folder and link to it here. Alternatively, write up your scheme in text/LaTex.
+
+DIRECTIONS: Put a png image describing the scheme in the "docs/source/indiv_models" folder and link to it here.
+
 .. image:: assembly-auto-inhibition_scheme.png
     :scale: 25%
     :alt: model scheme
     :align: center
 
+DIRECTIONS: Alternatively, write up your scheme in text/LaTeX.
+
+Scheme is for binding of titrant :math:`T` to a stationary species :math:`S`:
+
+.. math::
+    S + T \rightleftharpoons TS
+
+To describe this, we use the following equilibrium constant:
+
+.. math::
+    K = \frac{[ST]}{[S]_{free}[T]_{free}}
+
+
 Parameters
 ~~~~~~~~~~
-DIRECTIONS: Update the table, following the description in the first data row.
+
+DIRECTIONS: Update the table, using the description in the first data row.
+
 +--------------------------------+------------------------+----------------------------+---------------+
 |parameter                       | variable               | parameter name             | class         |
 +================================+========================+============================+===============+
@@ -41,6 +59,7 @@ DIRECTIONS: Update the table, following the description in the first data row.
 
 Species
 ~~~~~~~
+
 DIRECTIONS: Write mathematical description of the species in solution at shot "i".  Use standard LaTeX for formatting.
 
 .. math::

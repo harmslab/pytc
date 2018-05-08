@@ -5,10 +5,10 @@ Installation
 ============
 
 These instructions are for installing the API.  If you want to install the GUI,
-please follow the instructions `here <https://pytc-gui.readthedocs.io/en/latest/installation.html>`_.
+please follow the `instructions <https://pytc-gui.readthedocs.io/en/latest/installation.html>`_.
 
 If you do not already have a Python scientific computing environment set up, we recommend
-you follow the steps given `here <https://python-for-scientists.readthedocs.io/en/latest/_pages/install_python.html>`_.
+you follow `these steps <https://python-for-scientists.readthedocs.io/en/latest/_pages/install_python.html>`_.
 
 Dependencies
 ------------

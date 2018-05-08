@@ -12,6 +12,7 @@ A longer description of the model, if desired/needed.
 Scheme
 ~~~~~~
 DIRECTIONS: Put a png image describing the scheme in the "docs/source/global_models" folder and link to it here.
+
 .. image:: assembly-auto-inhibition_scheme.png
     :scale: 25%
     :alt: model scheme
@@ -35,6 +36,7 @@ Parameters
 ~~~~~~~~~~
 
 DIRECTIONS: Update the table, using the description in the first data row.
+
 +---------------------------------+------------------------------+----------------------------+---------------+
 |parameter                        | variable                     | parameter name             | class         |
 +=================================+==============================+============================+===============+
@@ -54,6 +56,7 @@ Required data for each experiment
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 DIRECTIONS: Update the table, using the description in the first data row.
+
 +---------------------------------+--------------------------------------+----------------------------+
 |data                             | variable                             | parameter name             |
 +=================================+======================================+============================+
