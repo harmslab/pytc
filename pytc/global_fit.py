@@ -597,7 +597,6 @@ class GlobalFit:
                         calc = calc - e.dilution_heats
 
                     if normalize_heat_to_shot:
-                        print(e.mol_injected)
                         heats = heats/e.mol_injected
                         calc = calc/e.mol_injected
 
