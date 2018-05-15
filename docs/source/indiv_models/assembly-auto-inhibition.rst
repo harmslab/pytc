@@ -20,13 +20,13 @@ Parameters
 +--------------------------------+------------------------+----------------------------+---------------+
 |parameter                       | variable               | parameter name             | class         |
 +================================+========================+============================+===============+
-|association constant for        |                        |                            |               |
-|binding of the first ligand to  |                        |                            |               |
-|the protein (M)                 | :math:`K_{1}`          | :code:`Klig1`              | thermodynamic |
+|macroscopic association constant|                        |                            |               |
+|for binding of the first ligand |                        |                            |               |
+|to the protein (M)              | :math:`K_{1}`          | :code:`Klig1`              | thermodynamic |
 +--------------------------------+------------------------+----------------------------+---------------+
-|association constant for        |                        |                            |               |
-|binding of the second ligand to |                        |                            |               |
-|the protein (M)                 | :math:`K_{2}`          | :code:`Klig2`              | thermodynamic |
+|macroscopic association constant|                        |                            |               |
+|for binding of the second ligand|                        |                            |               |
+|to the protein (M)              | :math:`K_{2}`          | :code:`Klig2`              | thermodynamic |
 +--------------------------------+------------------------+----------------------------+---------------+
 |"united normalized" association |                        |                            |               |
 |constant for formation of the   |                        |                            |               |
@@ -50,7 +50,9 @@ Parameters
 | stoichiometry of proteins in   | :math:`n_{P}`          | :code:`n_prot`             | thermodynamic |
 | the protein oligomer           |                        |                            |               |
 +--------------------------------+------------------------+----------------------------+---------------+
-|fraction competent              | ---                    | :code:`fx_competent`       | nuisance      |
+|fraction competent protein      | ---                    | :code:`fx_prot_competent`  | nuisance      |
++--------------------------------+------------------------+----------------------------+---------------+
+|fraction competent ligand       | ---                    | :code:`fx_lig_competent`   | nuisance      |
 +--------------------------------+------------------------+----------------------------+---------------+
 |slope of heat of dilution       | ---                    | :code:`dilution_heat`      | nuisance      |
 +--------------------------------+------------------------+----------------------------+---------------+
@@ -61,7 +63,7 @@ Species
 ~~~~~~~
 
 .. math::
-    [P_{T}]_{i} =   [P]_{i} + [PL]_{i} + [PL_{2}]_{i} + 4[P_{olig}]_{i}
+    [P_{T}]_{i} =   [P]_{i} + [PL]_{i} + [PL_{2}]_{i} + n_{P}[P_{olig}]_{i}
 
 .. math::
     [L_{T}]_{i} = [L]_{i} + [PL]_{i} + 2[PL_{2}]_{i} + n_{L}[P_{olig}]_{i}
@@ -73,7 +75,7 @@ Species
     [PL_{2}]_{i} = K_{1}K_{2}[P]_{i}[L]_{i}^{2}
 
 .. math::
-    [P_{olig}]_{i} = K_{3}[P]_{i}^{4}[L]_{i}^{n_{L}}
+    [P_{olig}]_{i} = K_{3}^{n_{L}+n_{P}-1}[P]_{i}^{4}[L]_{i}^{n_{L}}
 
 
 Heat
