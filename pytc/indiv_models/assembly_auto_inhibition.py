@@ -21,8 +21,8 @@ class AssemblyAutoInhibition(ITCModel):
     related to the prozone effect.
     """
 
-    def param_definition(Klig1=1e7,Klig2=1e5,Kolig=1e6,dHlig1=-30.,
-                            dHlig2=-30.,dHolig=-210.,n_lig=5.,n_prot=4.,fx_prot_competent=1.0,fx_lig_competent=1.0): 
+    def param_definition(Klig1=1e7,Klig2=1e5,Kolig=1e6,dHlig1=-5000.,
+                            dHlig2=-5000.,dHolig=-10000.,n_lig=5.,n_prot=4.,fx_prot_competent=1.0,fx_lig_competent=1.0): 
         """
         Klig1: association constant for binding of the first ligand to the protein (M)
         Klig2: association constant for binding of the second ligand to the protein (M)
