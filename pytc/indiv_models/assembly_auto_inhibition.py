@@ -21,8 +21,8 @@ class AssemblyAutoInhibition(ITCModel):
     related to the prozone effect.
     """
 
-    def param_definition(Klig1=1e7,Klig2=1e5,Kolig=1e6,dHlig1=-30.,
-                            dHlig2=-30.,dHolig=-210.,n_lig=5.,n_prot=4.,fx_prot_competent=1.0,fx_lig_competent=1.0): 
+    def param_definition(Klig1=1e7,Klig2=1e5,Kolig=1e6,dHlig1=-5000.,
+                            dHlig2=-5000.,dHolig=-10000.,n_lig=5.,n_prot=4.,fx_prot_competent=1.0,fx_lig_competent=1.0): 
         """
         Klig1: association constant for binding of the first ligand to the protein (M)
         Klig2: association constant for binding of the second ligand to the protein (M)
@@ -32,6 +32,8 @@ class AssemblyAutoInhibition(ITCModel):
         dHolig: enthalpy for formation of the protein oligomer
         n_lig: stoichiometry of ligands in the protein oligomer
         n_prot: stoichiometry of proteins in the protein oligomer
+        fx_prot_competent: fraction of binding competent protein
+        fx_lig_competent: fraction of binding competent ligand
         """
         
         pass
@@ -84,9 +86,6 @@ class AssemblyAutoInhibition(ITCModel):
         heat_array = np.zeros((num_shots-1),dtype=float)
         prot_free = np.zeros((num_shots),dtype=float)
         lig_free = np.zeros((num_shots),dtype=float)
-
-        # number of moles of titrant injected
-        n_mol_inj = (T_conc_corr[1:] - T_conc_corr[:-1]) * self._cell_volume*1e-6
         
         # call function to compute the free species by numerical solution of the mass balance equations        
         (prot_free, lig_free) = solve_mb(self._is_reverse, num_shots, 
@@ -95,7 +94,7 @@ class AssemblyAutoInhibition(ITCModel):
             T_conc_corr)
         
         # compute the heat of each injection
-        heat_array = self._cell_volume*1e-6 * \
+        heat_array = self._cell_volume * \
                 (self.param_values["dHlig1"] * (self.param_values["Klig1"] * prot_free[1:] * lig_free[1:] -   \
                             self.param_values["Klig1"] * prot_free[:-1] * lig_free[:-1] * (1. - self._shot_volumes/self._cell_volume)) +   \
                 (self.param_values["dHlig1"] + self.param_values["dHlig2"]) * (self.param_values["Klig1"] * self.param_values["Klig2"] * prot_free[1:] * lig_free[1:]**2 -   \
@@ -103,8 +102,8 @@ class AssemblyAutoInhibition(ITCModel):
                 self.param_values["dHolig"] * (self.param_values["Kolig"]**(self.param_values["n_lig"] + self.param_values["n_prot"] - 1) * prot_free[1:]**self.param_values["n_prot"] * lig_free[1:]**self.param_values["n_lig"] -   \
                             self.param_values["Kolig"]**(self.param_values["n_lig"] + self.param_values["n_prot"] - 1) * prot_free[:-1]**self.param_values["n_prot"] * lig_free[:-1]**self.param_values["n_lig"] * (1. - self._shot_volumes/self._cell_volume)))
         
-        # normalise the heat by the moles of titrant injected and correct for the heats of dilution        
-        return heat_array/n_mol_inj + self.dilution_heats
+        # correct for the heats of dilution        
+        return heat_array + self.dilution_heats
 
 
 def solve_mb(reverse, N_points, K1, K2, K3, n_oligL, n_oligP, Pt, Lt):
