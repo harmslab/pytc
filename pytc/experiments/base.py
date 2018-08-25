@@ -8,8 +8,9 @@ model.
 Units: 
     Volumes are in microliters
     Temperatures are in Kelvin
-    Energy is `units`/mol, where `units` is specified when instantiating the 
-    ITCExperiment class.
+    Concentrations are in molar
+    Energy is `units`, where `units` is specified when instantiating the 
+    ITCExperiment class.  It must be a in the AVAIL_UNITS dictionary.
 """
 __author__ = "Michael J. Harms"
 __date__ = "2016-06-22"
@@ -196,6 +197,15 @@ class BaseITCExperiment:
 
         self._heats_stdev[self._shot_start:] = heats_stdev[:]
 
+    @property
+    def mol_injected(self):
+        """
+        Return the mols injected over shots.
+        """
+
+        # uL * mol/L * L/1e6 uL -> mol
+        return self._shots[self._shot_start:]*self.titrant_syringe_conc*1e-6
+ 
     @property
     def mole_ratio(self):
         """

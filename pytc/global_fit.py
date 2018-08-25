@@ -476,7 +476,8 @@ class GlobalFit:
         self._prep_fit()
 
     def plot(self,correct_molar_ratio=False,subtract_dilution=False,
-             color_list=None,data_symbol="o",linewidth=1.5,num_samples=100):
+             normalize_heat_to_shot=False,color_list=None,
+             data_symbol="o",linewidth=1.5,num_samples=100):
         """
         Plot the experimental data and fit results.
 
@@ -486,6 +487,8 @@ class GlobalFit:
             correct the molar ratio using fx_competent
         subtract_dilution : bool
             subtract the heat of dilution
+        normalize_heat_to_shot : bool
+            divide heats by mols titrant injected
         color_list : list of things matplotlib can interpret as colors
             color of each series
         data_symol : character
@@ -523,7 +526,13 @@ class GlobalFit:
 
         # Add labels to top plot and remove x-axis
         u = self._expt_dict[self._expt_list_stable_order[0]].units
-        ax[0].set_ylabel("heat per shot ({})".format(u))
+    
+        if normalize_heat_to_shot:
+            ax[0].set_ylabel("heat per mol titrant ({})".format(u))
+        else:
+            new_u = u.split("/")[0]
+            ax[0].set_ylabel("observed heat ({})".format(new_u))
+
         plt.setp(ax[0].get_xticklabels(), visible=False)
 
         # Add labels to the residuals plot
@@ -586,6 +595,10 @@ class GlobalFit:
                     if subtract_dilution:
                         heats = heats - e.dilution_heats
                         calc = calc - e.dilution_heats
+
+                    if normalize_heat_to_shot:
+                        heats = heats/e.mol_injected
+                        calc = calc/e.mol_injected
 
                 # Draw fit lines and residuals
                 if len(e.dQ) > 0:
