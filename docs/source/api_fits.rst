@@ -28,7 +28,7 @@ listed below.
 Fitter choice
 -------------
 + Using maximum likelihood to fit a model. `00_fit-single-site.ipynb <https://github.com/harmslab/pytc-demos/blob/master/00_fit-single-site.ipynb>`_.
-+ Using a Bayesian sampler. `01_single-site-Bayesian.ipynb <https://github.com/harmslab/pytc-demos/blob/master/01_single-site-Bayesian.ipynb`_.
++ Using a Bayesian sampler. `01_single-site-Bayesian.ipynb <https://github.com/harmslab/pytc-demos/blob/master/01_single-site-Bayesian.ipynb>`_.
 + Comparision of maximum likelihood, bootstrap, or Bayesian methods. `04_ml-v-bootstrap-v-bayesian.ipynb <https://github.com/harmslab/pytc-demos/blob/master/03_fit-competitor-model.ipynb>`_.
 
 Model choice
