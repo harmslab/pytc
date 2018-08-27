@@ -2,7 +2,7 @@
 pytc
 ====
 Open source python software for extracting thermodynamic information from
-Isothermal Titration Calorimetry expriements.
+Isothermal Titration Calorimetry experiments.
 
 + We welcome bug reports, patches, and new thermodynamic models. See the
   `contributing <contributing.html>`_ page for how to get involved.
