@@ -23,15 +23,17 @@ Parameters
 +================================+========================+============================+===============+
 |macroscopic association constant|                        |                            |               |
 |for binding of the first ligand |                        |                            |               |
-|to the protein (M\ :sup:`-1`)   | :math:`K_{1}`          | :code:`Klig1`              | thermodynamic |
+|to the protein monomer          |                        |                            |               |
+|(M\ :sup:`-1`)                  | :math:`K_{1}`          | :code:`Klig1`              | thermodynamic |
 +--------------------------------+------------------------+----------------------------+---------------+
-|macroscopic association constant|                        |                            |               |
-|for binding of the second ligand|                        |                            |               |
-|to the protein (M\ :sup:`-1`)   | :math:`K_{2}`          | :code:`Klig2`              | thermodynamic |
+|average* association constant   |                        |                            |               |
+|for binding of the remaining    |                        |                            |               |
+|ligands to the protein monomer  |                        |                            |               |
+|(M\ :sup:`-1`)                  | :math:`K_{2}`          | :code:`Klig2`              | thermodynamic |
 +--------------------------------+------------------------+----------------------------+---------------+
-|"unit normalized" association   |                        |                            |               |
-|constant for formation of the   |                        |                            |               |
-|protein oligomer (M\ :sup:`-1`) | :math:`K_{3}`          | :code:`Kolig`              | thermodynamic |
+|average* association constant   |                        |                            |               |
+|for formation of the protein    |                        |                            |               |
+|oligomer (M\ :sup:`-1`)         | :math:`K_{3}`          | :code:`Kolig`              | thermodynamic |
 +--------------------------------+------------------------+----------------------------+---------------+
 |enthalpy change for             |                        |                            |               |
 |binding of the first ligand to  |                        |                            |               |
