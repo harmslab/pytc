@@ -2,9 +2,9 @@
 
 Assembly Auto Inhibition
 ------------------------
-+ Ligand binding at two sites that prompts oligomerization. Oligomerization is auto-inhibited by excess ligand (related to the prozone effect).
++ Ligand binding that promotes protein oligomerization, which is auto-inhibited by saturation of ligand (related to the prozone effect).
 + Model contributed by: Martin Rennie, PhD
-+ This model is not yet published.
++ Rennie & Crowley (2019). *ChemPhysChem* `(link) <https://onlinelibrary.wiley.com/doi/10.1002/cphc.201900153>`_.
 + `indiv_models\.AssemblyAutoInhibition <https://github.com/harmslab/pytc/blob/master/pytc/indiv_models/assembly_auto_inhibition.py>`_
 
 Scheme
@@ -14,6 +14,7 @@ Scheme
     :scale: 25%
     :alt: model scheme
     :align: center
+Illustrated with :math:`m=2`, :math:`n_L=5`, :math:`n_P=4`. 
 
 Parameters
 ~~~~~~~~~~
@@ -22,33 +23,39 @@ Parameters
 +================================+========================+============================+===============+
 |macroscopic association constant|                        |                            |               |
 |for binding of the first ligand |                        |                            |               |
-|to the protein (M\ :sup:`-1`)   | :math:`K_{1}`          | :code:`Klig1`              | thermodynamic |
+|to the protein monomer          |                        |                            |               |
+|(M\ :sup:`-1`)                  | :math:`K_{1}`          | :code:`Klig1`              | thermodynamic |
 +--------------------------------+------------------------+----------------------------+---------------+
-|macroscopic association constant|                        |                            |               |
-|for binding of the second ligand|                        |                            |               |
-|to the protein (M\ :sup:`-1`)   | :math:`K_{2}`          | :code:`Klig2`              | thermodynamic |
+|average* association constant   |                        |                            |               |
+|for binding of the remaining    |                        |                            |               |
+|ligands to the protein monomer  |                        |                            |               |
+|(M\ :sup:`-1`)                  | :math:`K_{2}`          | :code:`Klig2`              | thermodynamic |
 +--------------------------------+------------------------+----------------------------+---------------+
-|"unit normalized" association   |                        |                            |               |
-|constant for formation of the   |                        |                            |               |
-|protein oligomer (M\ :sup:`-1`) | :math:`K_{3}`          | :code:`Kolig`              | thermodynamic |
+|average* association constant   |                        |                            |               |
+|for formation of the protein    |                        |                            |               |
+|oligomer (M\ :sup:`-1`)         | :math:`K_{3}`          | :code:`Kolig`              | thermodynamic |
 +--------------------------------+------------------------+----------------------------+---------------+
 |enthalpy change for             |                        |                            |               |
 |binding of the first ligand to  |                        |                            |               |
-|the protein                     | :math:`\Delta H_{1}`   | :code:`dHlig1`             | thermodynamic |
+|the protein monomer             | :math:`\Delta H_{1}`   | :code:`dHlig1`             | thermodynamic |
 +--------------------------------+------------------------+----------------------------+---------------+
 |enthalpy change for             |                        |                            |               |
-|binding of the second ligand to |                        |                            |               |
-|the protein                     | :math:`\Delta H_{2}`   | :code:`dHlig2`             | thermodynamic |
+|binding of the remaining ligands|                        |                            |               |
+|to the protein monomer          | :math:`\Delta H_{2}`   | :code:`dHlig2`             | thermodynamic |
 +--------------------------------+------------------------+----------------------------+---------------+
 |enthalpy change for formation   |                        |                            |               |
 |of the protein oligomer         |                        |                            |               |
 |                                | :math:`\Delta H_{3}`   | :code:`dHolig`             | thermodynamic |
 +--------------------------------+------------------------+----------------------------+---------------+
-| stoichiometry of ligands in    | :math:`n_{L}`          | :code:`n_lig`              | thermodynamic |
-| the protein oligomer           |                        |                            |               |
+|stoichiometry of ligands in     | :math:`m`              | :code:`m`                  | thermodynamic |
+|the saturated protein monomer,  |                        |                            |               |
+|must be ≥2                      |                        |                            |               |
 +--------------------------------+------------------------+----------------------------+---------------+
-| stoichiometry of proteins in   | :math:`n_{P}`          | :code:`n_prot`             | thermodynamic |
-| the protein oligomer           |                        |                            |               |
+|stoichiometry of ligands in     | :math:`n_{L}`          | :code:`n_lig`              | thermodynamic |
+|the protein oligomer            |                        |                            |               |
++--------------------------------+------------------------+----------------------------+---------------+
+|stoichiometry of proteins in    | :math:`n_{P}`          | :code:`n_prot`             | thermodynamic |
+|the protein oligomer            |                        |                            |               |
 +--------------------------------+------------------------+----------------------------+---------------+
 |fraction competent protein      | ---                    | :code:`fx_prot_competent`  | nuisance      |
 +--------------------------------+------------------------+----------------------------+---------------+
@@ -58,21 +65,24 @@ Parameters
 +--------------------------------+------------------------+----------------------------+---------------+
 |intercept of heat of dilution   | ---                    | :code:`dilution_intercept` | nuisance      |
 +--------------------------------+------------------------+----------------------------+---------------+
+\*equilibrium constants for the higher order equilibria are "averaged" using :math:`\sqrt[N]{K}`,
+where :math:`N` is the order of the equilibrium, such that the units are M\ :sup:`-1`
+(see Rennie & Crowley (2019). *ChemPhysChem* `(link) <https://onlinelibrary.wiley.com/doi/10.1002/cphc.201900153>`_)
 
 Species
 ~~~~~~~
 
 .. math::
-    [P_{T}]_{i} =   [P]_{i} + [PL]_{i} + [PL_{2}]_{i} + n_{P}[P_{olig}]_{i}
+    [P_{T}]_{i} =   [P]_{i} + [PL]_{i} + [PL_{m}]_{i} + n_{P}[P_{olig}]_{i}
 
 .. math::
-    [L_{T}]_{i} = [L]_{i} + [PL]_{i} + 2[PL_{2}]_{i} + n_{L}[P_{olig}]_{i}
+    [L_{T}]_{i} = [L]_{i} + [PL]_{i} + m[PL_{m}]_{i} + n_{L}[P_{olig}]_{i}
 
 .. math::
     [PL]_{i} = K_{1}[P]_{i}[L]_{i}
 
 .. math::
-    [PL_{2}]_{i} = K_{1}K_{2}[P]_{i}[L]_{i}^{2}
+    [PL_{2}]_{i} = K_{1}K_{2}^{m-1}[P]_{i}[L]_{i}^{m}
 
 .. math::
     [P_{olig}]_{i} = K_{3}^{n_{L}+n_{P}-1}[P]_{i}^{n_{P}}[L]_{i}^{n_{L}}
